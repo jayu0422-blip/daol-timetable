@@ -317,7 +317,7 @@ function suggest(conf){
 
 /* ===== 생성 ===== */
 function generate(){
-  const courses=selectedCourses();
+  const courses=selectedCourses().filter(c=>(c.course_name||"").trim() && (c.grade||"").trim());
   const conf=findConflicts(courses);
   renderConflicts(conf);
   const flag=new Set(); conf.forEach(c=>{flag.add(c.a.id);flag.add(c.b.id);});

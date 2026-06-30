@@ -47,6 +47,16 @@
   .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px}
   .pill.중등{background:#dcfce7;color:#166534}.pill.고등{background:#ffedd5;color:#9a3412}
   .demo{background:#fff7ed;border:1px dashed var(--brand);color:var(--brand-ink);font-size:12px;border-radius:8px;padding:6px 10px;margin-bottom:10px}
+
+  /* 모바일(폰 입력) */
+  @media(max-width:640px){
+    .wrap{padding:12px 10px 130px}
+    .top h1{font-size:16px}
+    .card-body{grid-template-columns:1fr}      /* 2열 → 1열 세로 */
+    .f input,.f select,.f textarea{font-size:16px}  /* iOS 입력 시 자동 확대 방지 */
+    .savebar{gap:8px}
+    .savebar .btn{flex:0 0 auto}
+  }
 </style>
 </head>
 <body>
@@ -84,7 +94,8 @@ const divisionOf = g => g.startsWith("중") ? "중등" : "고등";
 
 /* ---------- 백엔드: Supabase 있으면 사용, 없으면 localStorage ---------- */
 const cfg = window.DAOL_CONFIG || {};
-const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
+const intendSupa = !!(cfg.url && cfg.anonKey);
+const useSupa = intendSupa && !!window.supabase;
 let sb = null;
 if(useSupa){ sb = window.supabase.createClient(cfg.url, cfg.anonKey); document.getElementById("demoNote").style.display="none"; }
 
@@ -94,18 +105,27 @@ const token = params.get("t") || "";
 let me = null, TEACHER = "";
 function lskey(){ return "daol_courses_" + TEACHER; }
 async function resolveTeacher(){
+  if(intendSupa && !window.supabase) return "error"; // supabase 라이브러리 로드 실패(네트워크 등)
   if(useSupa){
-    const {data} = await sb.from("teachers").select("name,subject").eq("token",token).limit(1);
-    if(data && data.length) me = {name:data[0].name, subject:data[0].subject};
-  } else {
-    me = (window.DAOL_TEACHERS||[]).find(t=>t.token===token) || null;
+    try{
+      const {data,error} = await sb.from("teachers").select("name,subject").eq("token",token).limit(1);
+      if(error) return "error";
+      if(data && data.length){ me = {name:data[0].name, subject:data[0].subject}; return "ok"; }
+      return "invalid";
+    }catch(e){ return "error"; }
   }
+  me = (window.DAOL_TEACHERS||[]).find(t=>t.token===token) || null;
+  return me ? "ok" : "invalid";
 }
-function invalidLink(){
+function screenMsg(emoji,title,desc,withReload){
   document.body.innerHTML = '<div style="max-width:540px;margin:90px auto;text-align:center;font-family:system-ui,sans-serif">'
-    + '<div style="font-size:42px">🔒</div><h2 style="margin:10px 0">유효하지 않은 링크입니다</h2>'
-    + '<p style="color:#6b7280">담당자에게 <b>본인 전용 입력 링크</b>를 다시 요청해 주세요.</p></div>';
+    + '<div style="font-size:42px">'+emoji+'</div><h2 style="margin:10px 0">'+title+'</h2>'
+    + '<p style="color:#6b7280">'+desc+'</p>'
+    + (withReload?'<button onclick="location.reload()" style="margin-top:8px;padding:9px 18px;border:1px solid #f59e0b;background:#f59e0b;color:#fff;border-radius:9px;font-weight:700;cursor:pointer">새로고침</button>':'')
+    + '</div>';
 }
+function invalidLink(){ screenMsg('🔒','유효하지 않은 링크입니다','담당자에게 <b>본인 전용 입력 링크</b>를 다시 요청해 주세요.',false); }
+function connError(){ screenMsg('📶','연결이 불안정합니다','인터넷 연결을 확인하고 <b>새로고침</b> 해주세요. 잠시 후 다시 시도하면 정상 작동합니다.',true); }
 
 let rows = [];      // {id, grade, subject, course_name, schedule_text, target_school, audience, content, course_type, sort_order}
 let saveTimer = null;
@@ -214,9 +234,13 @@ document.getElementById("submitBtn").addEventListener("click", async ()=>{
   alert(`${TEACHER} 선생님, 제출 완료되었습니다! (총 ${rows.length}개 강좌)\n수정이 필요하면 언제든 다시 입력 후 저장하시면 됩니다.`);
 });
 
+// 폰에서 앱 전환·화면 끄기 시 마지막 입력 즉시 저장
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden && TEACHER) save(); });
+
 async function init(){
-  await resolveTeacher();
-  if(!me){ invalidLink(); return; }
+  const st = await resolveTeacher();
+  if(st==="error"){ connError(); return; }
+  if(st!=="ok"){ invalidLink(); return; }
   TEACHER = me.name;
   document.getElementById("who").textContent = TEACHER + " 선생님";
   document.title = `[${TEACHER}] 시간표 입력`;
