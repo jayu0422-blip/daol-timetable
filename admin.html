@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 시간표 — 운영자</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#10b981; --danger:#ef4444; --info:#2563eb;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+    /* 학년 색띠 */
+    --g-중1:#ffe8cc; --g-중2:#ffd8a8; --g-중3:#ffc078; --g-중등공통:#ffec99;
+    --g-고1:#d0ebff; --g-고2:#a5d8ff; --g-고3:#74c0fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1280px;margin:0 auto;padding:16px 14px 100px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .top h1{font-size:19px;font-weight:800;margin:0}
+  .tag{font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .tabbar{display:flex;gap:6px;margin:14px 0}
+  .tab{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer}
+  .tab.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .hide{display:none!important}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 13px;font:inherit;font-weight:600;cursor:pointer}
+  .btn:hover{background:#f8fafc}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand-ink)}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+  .muted{color:var(--muted);font-size:12.5px}
+
+  /* ===== 대시보드 ===== */
+  .summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:120px}
+  .stat .n{font-size:26px;font-weight:800}
+  .stat .l{font-size:12px;color:var(--muted)}
+  table.dash{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  table.dash th,table.dash td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px}
+  table.dash th{background:#f8fafc;font-size:12px;color:var(--muted)}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 9px}
+  .badge.done{background:#dcfce7;color:#166534}.badge.wip{background:#fef9c3;color:#854d0e}.badge.none{background:#fee2e2;color:#991b1b}
+  .linkbtn{font-size:12px}
+
+  /* ===== 생성기 ===== */
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .preset{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .preset:hover{border-color:var(--brand);color:var(--brand-ink)}.preset.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .filters{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}
+  .filters .f{display:flex;flex-direction:column;gap:4px}
+  .filters label{font-size:12px;font-weight:700;color:var(--muted)}
+  .filters select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:150px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 11px;font-size:12.5px;cursor:pointer;user-select:none}
+  .chip.on{background:#fff7ed;border-color:var(--brand);color:var(--brand-ink);font-weight:700}
+
+  /* 충돌 */
+  .conflicts{background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:12px 14px;margin:12px 0}
+  .conflicts h3{margin:0 0 8px;font-size:14px;color:#9f1239}
+  .conflicts.ok{background:#f0fdf4;border-color:#bbf7d0}
+  .conflicts.ok h3{color:#166534}
+  .cf{padding:8px 0;border-top:1px dashed #fecdd3;font-size:13px}
+  .cf:first-of-type{border-top:none}
+  .cf .sug{color:var(--info);font-size:12.5px;margin-top:2px}
+
+  /* ===== 시간표 출력(PPT 느낌) ===== */
+  #sheet{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:0;overflow:hidden}
+  .sheet-title{text-align:center;font-size:24px;font-weight:800;padding:16px;background:linear-gradient(90deg,#fff7ed,#ffedd5);letter-spacing:-.5px}
+  .sheet-title .yr{color:var(--brand-ink)}
+  table.tt{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.tt th{background:#374151;color:#fff;font-size:12.5px;padding:8px 6px;border:1px solid #4b5563}
+  table.tt td{border:1px solid #e5e7eb;padding:7px 8px;font-size:12px;vertical-align:top;word-break:break-word}
+  table.tt td.grade{font-weight:800;font-size:15px;text-align:center;writing-mode:vertical-lr;white-space:nowrap}
+  table.tt td.subject{font-weight:700;text-align:center;background:#f8fafc}
+  table.tt td.cname{font-weight:700}
+  table.tt td.time{white-space:pre-line;font-size:11.5px}
+  table.tt td.txt{white-space:pre-line;font-size:11px;line-height:1.45;color:#374151}
+  table.tt td.conflict{box-shadow:inset 0 0 0 2px var(--danger)}
+  .typebadge{display:inline-block;font-size:9.5px;font-weight:800;border-radius:4px;padding:0 4px;margin-left:4px;vertical-align:middle}
+  .typebadge.특강{background:#dcfce7;color:#166534}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .col-g{width:42px}.col-s{width:54px}.col-cn{width:16%}.col-tn{width:8%}.col-tm{width:13%}
+
+  @media print{ body{background:#fff} .noprint{display:none!important} .wrap{max-width:none;padding:0} #sheet{box-shadow:none;border:none} table.tt td.conflict{box-shadow:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🖥️ 다올105 시간표 — 운영자</h1>
+    <span class="tag" id="modeTag">데모 모드</span>
+    <span style="flex:1"></span>
+    <button class="btn sm noprint" id="refresh">🔄 새로고침</button>
+  </div>
+
+  <div class="tabbar noprint">
+    <button class="tab on" data-tab="dash">📊 대시보드</button>
+    <button class="tab" data-tab="gen">🎨 시간표 생성</button>
+  </div>
+
+  <!-- ===== 대시보드 ===== -->
+  <section id="tab-dash">
+    <div class="summary" id="summary"></div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <table class="dash">
+        <thead><tr><th>강사</th><th>과목</th><th>입력 강좌수</th><th>상태</th><th>최근 저장</th><th class="noprint">전용 입력 링크</th></tr></thead>
+        <tbody id="dashBody"></tbody>
+      </table>
+    </div>
+    <p class="muted">강사에게는 위 “전용 입력 링크”만 전달하세요. 링크에는 토큰만 있어 다른 강사 명단·내용은 보이지 않습니다.</p>
+  </section>
+
+  <!-- ===== 생성 ===== -->
+  <section id="tab-gen" class="hide">
+    <div class="panel noprint">
+      <div class="presets" id="presets">
+        <button class="preset on" data-preset="mid">중등부 전체</button>
+        <button class="preset" data-preset="high">고등부 전체</button>
+        <button class="preset" data-preset="all">중·고등부 전체</button>
+        <button class="preset" data-preset="school">학교·학년 지정</button>
+      </div>
+      <div class="filters" id="schoolFilters" style="display:none">
+        <div class="f"><label>학교</label><select id="selSchool"></select></div>
+        <div class="f"><label>학년</label>
+          <div class="chips" id="gradeChips"></div>
+        </div>
+      </div>
+      <div class="filters" style="margin-top:12px">
+        <button class="btn primary" id="genBtn">⚡ 시간표 생성</button>
+        <button class="btn sm" id="printBtn">🖨️ PDF/인쇄</button>
+        <button class="btn sm" id="pngBtn">🖼️ PNG</button>
+        <span class="muted" id="genStat"></span>
+      </div>
+    </div>
+
+    <div id="conflictBox"></div>
+    <div id="sheet"><div class="empty">‘시간표 생성’을 누르세요.</div></div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ===== 상수 ===== */
+const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+const SUBJECT_ORDER = ["국어","영어","수학","과학","사회","기타"];
+const HIGH_SCHOOLS = ["미사고","미사강변고","하남고","풍산고","미강고"];
+const divisionOf = g => (g||"").startsWith("중") ? "중등" : "고등";
+const gradeColor = g => g==="고3/수능" ? "var(--g-고3)" : (getComputedStyle(document.documentElement).getPropertyValue("--g-"+g)||"#eee");
+
+const cfg = window.DAOL_CONFIG||{};
+let ROSTER = window.DAOL_TEACHERS||[];
+const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
+let sb = useSupa ? window.supabase.createClient(cfg.url,cfg.anonKey) : null;
+if(useSupa) document.getElementById("modeTag").textContent = "실시간 (Supabase)";
+
+let DATA = [];   // 전체 강좌
+let META = {};   // teacher -> {submitted_at, last}
+
+/* ===== 데이터 로드 ===== */
+async function loadData(){
+  if(useSupa){
+    const {data} = await sb.from("courses").select("*");
+    DATA = (data||[]);
+    const {data:tt} = await sb.from("teachers").select("*");
+    ROSTER = (tt||[]).map(t=>({name:t.name,subject:t.subject,token:t.token}))
+      .sort((a,b)=>(SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))||a.name.localeCompare(b.name,"ko"));
+    META = {}; (tt||[]).forEach(t=>META[t.name]={submitted_at:t.submitted_at});
+  } else {
+    DATA = []; META = {};
+    ROSTER.forEach(t=>{
+      let rows=[]; try{ rows=JSON.parse(localStorage.getItem("daol_courses_"+t.name)||"[]"); }catch(e){}
+      rows.forEach(r=>DATA.push({...r, teacher:t.name, division:divisionOf(r.grade)}));
+      META[t.name]={submitted_at:localStorage.getItem("daol_submitted_"+t.name)||null};
+    });
+  }
+  renderDash();
+}
+
+/* ===== 대시보드 ===== */
+function renderDash(){
+  const base = location.href.replace(/admin\.html.*$/, "input.html");
+  let done=0, started=0;
+  const rowsHtml = ROSTER.map(t=>{
+    const courses = DATA.filter(c=>c.teacher===t.name);
+    const cnt = courses.length;
+    const sub = META[t.name] && META[t.name].submitted_at;
+    let status = '<span class="badge none">미시작</span>';
+    if(sub){ status='<span class="badge done">제출완료</span>'; done++; }
+    else if(cnt>0){ status='<span class="badge wip">작성중</span>'; started++; }
+    const link = base+"?t="+t.token;
+    return `<tr>
+      <td><b>${t.name}</b></td><td>${t.subject}</td>
+      <td>${cnt>0?cnt+"개":"—"}</td><td>${status}</td>
+      <td class="muted">${sub?new Date(sub).toLocaleString("ko-KR"):"—"}</td>
+      <td class="noprint"><button class="btn sm linkbtn" data-link="${link}">📋 링크 복사</button></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("dashBody").innerHTML = rowsHtml;
+  document.getElementById("summary").innerHTML = `
+    <div class="stat"><div class="n">${ROSTER.length}</div><div class="l">전체 강사</div></div>
+    <div class="stat"><div class="n" style="color:var(--ok)">${done}</div><div class="l">제출 완료</div></div>
+    <div class="stat"><div class="n" style="color:var(--brand-ink)">${started}</div><div class="l">작성 중</div></div>
+    <div class="stat"><div class="n">${DATA.length}</div><div class="l">총 강좌</div></div>`;
+}
+document.getElementById("dashBody").addEventListener("click", e=>{
+  const b=e.target.closest("[data-link]"); if(!b) return;
+  navigator.clipboard.writeText(b.dataset.link).then(()=>{ b.textContent="✓ 복사됨"; setTimeout(()=>b.textContent="📋 링크 복사",1500); });
+});
+
+/* ===== 탭 ===== */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
+  document.getElementById("tab-dash").classList.toggle("hide",t.dataset.tab!=="dash");
+  document.getElementById("tab-gen").classList.toggle("hide",t.dataset.tab!=="gen");
+}));
+
+/* ===== 생성 필터 ===== */
+let preset="mid";
+document.querySelectorAll(".preset").forEach(p=>p.addEventListener("click",()=>{
+  document.querySelectorAll(".preset").forEach(x=>x.classList.remove("on")); p.classList.add("on");
+  preset=p.dataset.preset;
+  document.getElementById("schoolFilters").style.display = preset==="school"?"flex":"none";
+}));
+function buildSchoolFilter(){
+  const sel=document.getElementById("selSchool");
+  sel.innerHTML = HIGH_SCHOOLS.map(s=>`<option>${s}</option>`).join("");
+  const gc=document.getElementById("gradeChips");
+  gc.innerHTML = ["고1","고2","고3/수능","중1","중2","중3"].map(g=>`<span class="chip" data-g="${g}">${g}</span>`).join("");
+  gc.addEventListener("click",e=>{const c=e.target.closest(".chip"); if(c)c.classList.toggle("on");});
+}
+
+/* ===== 필터링 ===== */
+function selectedCourses(){
+  if(preset==="mid")  return DATA.filter(c=>c.division==="중등");
+  if(preset==="high") return DATA.filter(c=>c.division==="고등");
+  if(preset==="all")  return DATA.slice();
+  // school: 특정 학교+학년 — 해당 학교 전용 + 공통
+  const school=document.getElementById("selSchool").value;
+  const grades=[...document.querySelectorAll("#gradeChips .chip.on")].map(c=>c.dataset.g);
+  return DATA.filter(c=>{
+    if(grades.length && !grades.includes(c.grade)) return false;
+    if(c.division==="고등") return !c.target_school || c.target_school==="공통" || c.target_school===school;
+    return true; // 중등은 학교 구분 없음
+  });
+}
+function titleFor(){
+  if(preset==="mid") return "중등";
+  if(preset==="high") return "고등";
+  if(preset==="all") return "중·고등";
+  const school=document.getElementById("selSchool").value;
+  const grades=[...document.querySelectorAll("#gradeChips .chip.on")].map(c=>c.dataset.g);
+  return school+(grades.length?" "+grades.join("·"):"");
+}
+
+/* ===== 시간 파싱 & 충돌 ===== */
+const DAYS=["월","화","수","목","금","토","일"];
+function toMin(t){const m=String(t).match(/(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):null;}
+function fmt(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+function sessions(scheduleText){
+  const out=[];
+  String(scheduleText||"").split(/\n/).forEach(line=>{
+    const m=line.match(/([월화수목금토일][월화수목금토일·,\s]*)\s*(\d{1,2}:\d{2})\s*[~\-–]\s*(\d{1,2}:\d{2})/);
+    if(!m) return;
+    const days=(m[1].match(/[월화수목금토일]/g)||[]);
+    const s=toMin(m[2]), e=toMin(m[3]); if(s==null||e==null||e<=s) return;
+    days.forEach(d=>out.push({day:d,start:s,end:e}));
+  });
+  return out;
+}
+function overlaps(a,b){ return a.day===b.day && a.start<b.end && b.start<a.end; }
+
+// 충돌 그룹: 중등=학년 / 고등=학교+학년
+function conflictGroups(courses){
+  const groups={};
+  courses.forEach(c=>{
+    if(c.division==="중등"){ (groups["중등 "+c.grade]=groups["중등 "+c.grade]||[]).push(c); }
+    else {
+      const schools = (!c.target_school||c.target_school==="공통") ? HIGH_SCHOOLS : [c.target_school];
+      schools.forEach(s=>{ const k=s+" "+c.grade; (groups[k]=groups[k]||[]).push(c); });
+    }
+  });
+  return groups;
+}
+function findConflicts(courses){
+  const groups=conflictGroups(courses), res=[];
+  Object.entries(groups).forEach(([key,cs])=>{
+    for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){
+      const A=sessions(cs[i].schedule_text), B=sessions(cs[j].schedule_text);
+      for(const a of A)for(const b of B){
+        if(overlaps(a,b)){
+          res.push({key, a:cs[i], b:cs[j], day:a.day, time:`${fmt(Math.max(a.start,b.start))}~${fmt(Math.min(a.end,b.end))}`, group:cs});
+          i=i; // keep
+          break;
+        }
+      }
+    }
+  });
+  // 중복 제거
+  const seen=new Set();
+  return res.filter(r=>{const k=r.key+r.a.id+r.b.id;if(seen.has(k))return false;seen.add(k);return true;});
+}
+// 재배치 제안: 그룹 내 b강좌를 겹치지 않는 빈 시간대로
+function suggest(conf){
+  const occupied={}; DAYS.forEach(d=>occupied[d]=[]);
+  conf.group.forEach(c=>{ if(c.id===conf.b.id) return; sessions(c.schedule_text).forEach(s=>occupied[s.day].push(s)); });
+  const dur = (()=>{const s=sessions(conf.b.schedule_text)[0];return s?s.end-s.start:120;})();
+  for(const d of DAYS){
+    for(let t=9*60;t+dur<=22*60;t+=30){
+      const clash=occupied[d].some(s=>t<s.end && s.start<t+dur);
+      if(!clash) return `「${conf.b.course_name}」 → ${d} ${fmt(t)}~${fmt(t+dur)} 로 이동하면 충돌 해소`;
+    }
+  }
+  return `「${conf.b.course_name}」 시간 조정 필요 (빈 슬롯 없음 — 요일 확대 검토)`;
+}
+
+/* ===== 생성 ===== */
+function generate(){
+  const courses=selectedCourses();
+  const conf=findConflicts(courses);
+  renderConflicts(conf);
+  const flag=new Set(); conf.forEach(c=>{flag.add(c.a.id);flag.add(c.b.id);});
+  renderSheet(courses, flag, titleFor());
+  document.getElementById("genStat").textContent = `${courses.length}개 강좌 · 충돌 ${conf.length}건`;
+}
+function renderConflicts(conf){
+  const box=document.getElementById("conflictBox");
+  if(!conf.length){ box.innerHTML=`<div class="conflicts ok"><h3>✅ 시간 충돌 없음</h3><div class="muted">선택 범위에서 같은 ${'{학년/학교+학년}'} 기준 겹치는 수업이 없습니다.</div></div>`; return; }
+  box.innerHTML = `<div class="conflicts"><h3>⚠️ 시간 충돌 ${conf.length}건 — 재배치 검토</h3>`+
+    conf.map(c=>`<div class="cf"><b>[${c.key}]</b> ${c.day} ${c.time} · 「${c.a.course_name}」(${c.a.teacher}) ↔ 「${c.b.course_name}」(${c.b.teacher})
+      <div class="sug">↳ 제안: ${suggest(c)}</div></div>`).join("")+`</div>`;
+}
+function renderSheet(courses, flag, title){
+  const sheet=document.getElementById("sheet");
+  if(!courses.length){ sheet.innerHTML=`<div class="empty">해당 범위에 강좌가 없습니다.</div>`; return; }
+  // 정렬
+  courses.sort((a,b)=>{
+    const g=GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade); if(g) return g;
+    const s=SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject); if(s) return s;
+    return (a.sort_order||0)-(b.sort_order||0);
+  });
+  // 그룹핑 rowspan 계산
+  const byGrade={}; courses.forEach(c=>{(byGrade[c.grade]=byGrade[c.grade]||[]).push(c);});
+  let body="";
+  Object.keys(byGrade).sort((a,b)=>GRADE_ORDER.indexOf(a)-GRADE_ORDER.indexOf(b)).forEach(grade=>{
+    const list=byGrade[grade]; const gColor=gradeColor(grade);
+    const bySub={}; list.forEach(c=>{(bySub[c.subject]=bySub[c.subject]||[]).push(c);});
+    let gradeFirst=true;
+    Object.keys(bySub).sort((a,b)=>SUBJECT_ORDER.indexOf(a)-SUBJECT_ORDER.indexOf(b)).forEach(sub=>{
+      const scs=bySub[sub]; let subFirst=true;
+      scs.forEach(c=>{
+        const cf = flag.has(c.id) ? " conflict" : "";
+        body+=`<tr>`;
+        if(gradeFirst){ body+=`<td class="grade" rowspan="${list.length}" style="background:${gColor}">${grade}</td>`; gradeFirst=false; }
+        if(subFirst){ body+=`<td class="subject" rowspan="${scs.length}">${sub}</td>`; subFirst=false; }
+        body+=`<td class="cname${cf}">${esc(c.course_name)}${c.course_type==="특강"?'<span class="typebadge 특강">특강</span>':''}</td>`
+          + `<td>${esc(c.teacher)}</td>`
+          + `<td class="time">${esc(c.schedule_text)}</td>`
+          + `<td class="txt">${esc(c.audience)}</td>`
+          + `<td class="txt">${esc(c.content)}</td>`
+          + `</tr>`;
+      });
+    });
+  });
+  sheet.innerHTML = `<div class="sheet-title"><span class="yr">2026</span> 다올105학원 ${esc(title)} 시간표</div>
+    <table class="tt">
+      <colgroup><col class="col-g"><col class="col-s"><col class="col-cn"><col class="col-tn"><col class="col-tm"><col><col></colgroup>
+      <thead><tr><th>학년</th><th>과목</th><th>강좌명</th><th>강사명</th><th>시간(정규/관리)</th><th>강좌 대상</th><th>강좌 내용·특징</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+document.getElementById("genBtn").addEventListener("click",generate);
+document.getElementById("refresh").addEventListener("click",loadData);
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("pngBtn").addEventListener("click",async()=>{
+  if(!window.html2canvas){const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";s.onload=savePng;s.onerror=()=>alert("PNG 모듈 로드 실패 — PDF/인쇄를 이용하세요.");document.body.appendChild(s);}else savePng();
+});
+async function savePng(){const c=await html2canvas(document.getElementById("sheet"),{scale:2,backgroundColor:"#fff"});const a=document.createElement("a");a.download="시간표.png";a.href=c.toDataURL();a.click();}
+
+/* 실시간 구독 (Supabase) */
+if(useSupa){ sb.channel("rt").on("postgres_changes",{event:"*",schema:"public",table:"courses"},loadData).subscribe(); }
+
+buildSchoolFilter();
+loadData();
+</script>
+</body>
+</html>

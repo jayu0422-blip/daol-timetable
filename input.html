@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 시간표 입력 (강사용)</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#10b981; --danger:#ef4444;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1240px;margin:0 auto;padding:16px 14px 120px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .top h1{font-size:18px;font-weight:800;margin:0}
+  .top .who{background:var(--brand);color:#fff;font-weight:800;border-radius:999px;padding:4px 14px;font-size:14px}
+  .sub{color:var(--muted);font-size:13px;margin:2px 0 16px}
+  .savebar{position:sticky;top:0;z-index:20;background:var(--bg);padding:8px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 13px;font:inherit;font-weight:600;cursor:pointer}
+  .btn:hover{background:#f8fafc}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-ink)}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn.sm{padding:5px 9px;font-size:12px;font-weight:600}
+  .status{font-size:12.5px;color:var(--muted)}
+  .status b{color:var(--ok)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin:14px 0;overflow:hidden}
+  .card-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffaf0;border-bottom:1px solid var(--line);cursor:pointer}
+  .card-head .grip{color:#cbd5e1}
+  .card-head .ttl{font-weight:800;font-size:14px;flex:1}
+  .card-head .meta{font-size:12px;color:var(--muted)}
+  .card-body{padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .f{display:flex;flex-direction:column;gap:4px}
+  .f.full{grid-column:1 / -1}
+  .f label{font-size:12px;font-weight:700;color:var(--muted)}
+  .f input,.f select,.f textarea{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);width:100%}
+  .f textarea{min-height:92px;resize:vertical;line-height:1.55}
+  .f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+  .row-actions{display:flex;gap:6px;padding:0 12px 12px;justify-content:flex-end}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .addbar{display:flex;justify-content:center;margin:18px 0}
+  .empty{padding:30px;text-align:center;color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px}
+  .pill.중등{background:#dcfce7;color:#166534}.pill.고등{background:#ffedd5;color:#9a3412}
+  .demo{background:#fff7ed;border:1px dashed var(--brand);color:var(--brand-ink);font-size:12px;border-radius:8px;padding:6px 10px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>📝 다올105 여름방학 시간표 입력</h1>
+    <span class="who" id="who">강사</span>
+  </div>
+  <div class="sub">담당 강좌를 아래에 작성해 주세요. <b>비슷한 강좌는 “복제” 버튼</b>으로 복사 후 시간만 바꾸면 됩니다. 입력은 <b>자동 저장</b>됩니다.</div>
+
+  <div class="demo" id="demoNote">⚙️ 데모 모드 — 이 브라우저에만 임시 저장됩니다(localStorage). Supabase 연결 후 실시간 중앙 저장으로 전환됩니다.</div>
+
+  <div class="savebar">
+    <button class="btn primary sm" id="addTop">+ 강좌 추가</button>
+    <span class="status" id="saveStatus">—</span>
+    <span style="flex:1"></span>
+    <span class="status" id="countStat"></span>
+    <button class="btn ok sm" id="submitBtn">✅ 작성 완료 제출</button>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="addbar"><button class="btn primary" id="addBottom">+ 강좌 추가</button></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ---------- 설정/상수 ---------- */
+const GRADES = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+const SUBJECTS = ["국어","영어","수학","과학","사회","기타"];
+const SCHOOLS = ["공통","미사고","미사강변고","하남고","풍산고","미강고","미사중","미사강변중","은가람중","윤슬중"];
+const TYPES = ["정규","특강"];
+const divisionOf = g => g.startsWith("중") ? "중등" : "고등";
+
+/* ---------- 백엔드: Supabase 있으면 사용, 없으면 localStorage ---------- */
+const cfg = window.DAOL_CONFIG || {};
+const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
+let sb = null;
+if(useSupa){ sb = window.supabase.createClient(cfg.url, cfg.anonKey); document.getElementById("demoNote").style.display="none"; }
+
+/* ---------- 강사 식별 (?t=토큰 → DB에서 본인 1명만 조회) ---------- */
+const params = new URLSearchParams(location.search);
+const token = params.get("t") || "";
+let me = null, TEACHER = "";
+function lskey(){ return "daol_courses_" + TEACHER; }
+async function resolveTeacher(){
+  if(useSupa){
+    const {data} = await sb.from("teachers").select("name,subject").eq("token",token).limit(1);
+    if(data && data.length) me = {name:data[0].name, subject:data[0].subject};
+  } else {
+    me = (window.DAOL_TEACHERS||[]).find(t=>t.token===token) || null;
+  }
+}
+function invalidLink(){
+  document.body.innerHTML = '<div style="max-width:540px;margin:90px auto;text-align:center;font-family:system-ui,sans-serif">'
+    + '<div style="font-size:42px">🔒</div><h2 style="margin:10px 0">유효하지 않은 링크입니다</h2>'
+    + '<p style="color:#6b7280">담당자에게 <b>본인 전용 입력 링크</b>를 다시 요청해 주세요.</p></div>';
+}
+
+let rows = [];      // {id, grade, subject, course_name, schedule_text, target_school, audience, content, course_type, sort_order}
+let saveTimer = null;
+
+function uid(){ return (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
+  : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16)); }
+function blankRow(){ return {id:uid(), grade:"", subject:(me&&me.subject)||"", course_name:"", schedule_text:"", target_school:"공통", audience:"", content:"", course_type:"정규", sort_order:rows.length}; }
+
+/* ---------- 로드 ---------- */
+async function load(){
+  if(useSupa){
+    const {data,error} = await sb.from("courses").select("*").eq("teacher",TEACHER).order("sort_order");
+    if(error){ setStatus("불러오기 오류: "+error.message); }
+    rows = (data||[]).map(r=>({...r}));
+  } else {
+    try{ rows = JSON.parse(localStorage.getItem(lskey())||"[]"); }catch(e){ rows=[]; }
+  }
+  if(!rows.length) rows=[blankRow()];
+  render();
+}
+
+/* ---------- 저장 (디바운스) ---------- */
+function scheduleSave(){
+  setStatus("입력 중…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 700);
+}
+async function save(){
+  rows.forEach((r,i)=>r.sort_order=i);
+  if(useSupa){
+    const payload = rows.map(r=>({...r, teacher:TEACHER, division:divisionOf(r.grade||"중1")}));
+    const {error} = await sb.from("courses").upsert(payload,{onConflict:"id"});
+    setStatus(error ? ("저장 오류: "+error.message) : "저장됨 ✓");
+  } else {
+    localStorage.setItem(lskey(), JSON.stringify(rows));
+    setStatus("저장됨 ✓ (데모)");
+  }
+  updateCount();
+}
+function setStatus(t){ document.getElementById("saveStatus").innerHTML = t.includes("저장됨")?`<b>${t}</b>`:t; }
+function updateCount(){ document.getElementById("countStat").textContent = `총 ${rows.length}개 강좌`; }
+
+/* ---------- 렌더 ---------- */
+const opt = (arr,v)=>arr.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
+function render(){
+  const list = document.getElementById("list");
+  if(!rows.length){ list.innerHTML=`<div class="card"><div class="empty">아직 강좌가 없습니다. ‘+ 강좌 추가’를 누르세요.</div></div>`; updateCount(); return; }
+  list.innerHTML = rows.map((r,i)=>`
+    <div class="card" data-id="${r.id}">
+      <div class="card-head">
+        <span class="grip">⋮⋮</span>
+        <span class="ttl">${i+1}. ${r.course_name||"<span style='color:#9ca3af'>강좌명 미입력</span>"}</span>
+        ${r.grade?`<span class="pill ${divisionOf(r.grade)}">${divisionOf(r.grade)}</span>`:""}
+        <span class="meta">${[r.grade,r.subject,r.schedule_text].filter(Boolean).join(" · ")}</span>
+      </div>
+      <div class="card-body">
+        <div class="f"><label>학년</label><select data-k="grade"><option value="">선택</option>${opt(GRADES,r.grade)}</select></div>
+        <div class="f"><label>과목</label><select data-k="subject"><option value="">선택</option>${opt(SUBJECTS,r.subject)}</select></div>
+        <div class="f full"><label>강좌명</label><input data-k="course_name" value="${esc(r.course_name)}" placeholder="예: 미사고1 영어 / 통합영어 / [특강]고1 영어"/></div>
+        <div class="f"><label>시간 (정규/관리, 여러 줄 가능)</label><textarea data-k="schedule_text" style="min-height:64px" placeholder="예: 월수 16:30~18:00&#10;금 16:30~">${esc(r.schedule_text)}</textarea></div>
+        <div class="f">
+          <label>대상학교 (고등 학교별 강좌용 / 학년공통이면 ‘공통’)</label>
+          <select data-k="target_school">${opt(SCHOOLS,r.target_school)}</select>
+          <span class="hint">‘미사고 1학년 시간표’ 같은 학교별 출력에 쓰입니다.</span>
+        </div>
+        <div class="f"><label>강좌 대상 (어떤 학생이 들어야 하나)</label><textarea data-k="audience" placeholder="- 미사고1 내신 선행이 필요한 학생&#10;- ...">${esc(r.audience)}</textarea></div>
+        <div class="f"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="- 2026년 미사고1 예상 시험범위 총정리&#10;- ...">${esc(r.content)}</textarea></div>
+        <div class="f"><label>유형</label><select data-k="course_type">${opt(TYPES,r.course_type)}</select></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn sm" data-act="dup">⧉ 복제</button>
+        <button class="btn sm" data-act="del" style="color:var(--danger)">🗑 삭제</button>
+      </div>
+    </div>`).join("");
+  updateCount();
+}
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
+
+/* ---------- 이벤트 (위임) ---------- */
+document.getElementById("list").addEventListener("input", e=>{
+  const card = e.target.closest(".card"); if(!card) return;
+  const r = rows.find(x=>x.id===card.dataset.id); if(!r) return;
+  const k = e.target.dataset.k; if(!k) return;
+  r[k] = e.target.value;
+  if(k==="course_name"||k==="grade"||k==="subject"||k==="schedule_text"){
+    const i = rows.indexOf(r);
+    card.querySelector(".ttl").innerHTML = `${i+1}. ${r.course_name||"<span style='color:#9ca3af'>강좌명 미입력</span>"}`;
+    card.querySelector(".meta").textContent = [r.grade,r.subject,r.schedule_text].filter(Boolean).join(" · ");
+  }
+  scheduleSave();
+});
+document.getElementById("list").addEventListener("click", e=>{
+  const btn = e.target.closest("[data-act]"); if(!btn) return;
+  const card = e.target.closest(".card"); const id = card.dataset.id;
+  const idx = rows.findIndex(x=>x.id===id);
+  if(btn.dataset.act==="dup"){ const c={...rows[idx], id:uid()}; rows.splice(idx+1,0,c); render(); save(); }
+  if(btn.dataset.act==="del"){ if(rows.length<=1 || confirm("이 강좌를 삭제할까요?")){ const removed=rows.splice(idx,1)[0]; if(useSupa&&removed) sb.from("courses").delete().eq("id",removed.id); if(!rows.length) rows=[blankRow()]; render(); save(); } }
+});
+function addRow(){ rows.push(blankRow()); render(); document.querySelector(".card:last-child")?.scrollIntoView({behavior:"smooth",block:"center"}); save(); }
+document.getElementById("addTop").addEventListener("click",addRow);
+document.getElementById("addBottom").addEventListener("click",addRow);
+document.getElementById("submitBtn").addEventListener("click", async ()=>{
+  await save();
+  if(useSupa){ await sb.from("teachers").upsert({name:TEACHER, submitted_at:new Date().toISOString(), course_count:rows.length},{onConflict:"name"}); }
+  else { localStorage.setItem("daol_submitted_"+TEACHER, new Date().toISOString()); }
+  alert(`${TEACHER} 선생님, 제출 완료되었습니다! (총 ${rows.length}개 강좌)\n수정이 필요하면 언제든 다시 입력 후 저장하시면 됩니다.`);
+});
+
+async function init(){
+  await resolveTeacher();
+  if(!me){ invalidLink(); return; }
+  TEACHER = me.name;
+  document.getElementById("who").textContent = TEACHER + " 선생님";
+  document.title = `[${TEACHER}] 시간표 입력`;
+  await load();
+}
+init();
+</script>
+</body>
+</html>
