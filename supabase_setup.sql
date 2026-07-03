@@ -37,7 +37,7 @@ insert into public.teachers (name, subject, token) values
   ('이정관','국어','65b0e3ad'),
   ('임결','수학','c211bc44'),
   ('유용권','수학','f712867b'),
-  ('김서령','과학','5bf0a12b')
+  ('윤재영','영어','47276347')
 on conflict (name) do nothing;
 
 -- 4) 접근 정책 (내부용 — anon 키로 읽기/쓰기 허용)
