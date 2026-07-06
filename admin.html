@@ -153,6 +153,10 @@
       <span style="flex:1"></span>
       <span class="muted" id="feeStat"></span>
     </div>
+    <div class="panel noprint" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px">
+      <span class="muted" style="font-weight:700">강사별 보기</span>
+      <div class="chips" id="feeTeacherChips"></div>
+    </div>
     <div class="panel" style="padding:0;overflow:auto">
       <table class="dash" id="feeTable">
         <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:70px">회차</th><th style="width:120px">수강료(원)</th><th>비고</th></tr></thead>
@@ -474,8 +478,16 @@ function feeSave(id,patch){
     else st.textContent="저장됨 ✓ (데모)";
   },500);
 }
+let feeTeacher="전체";
 function renderFee(){
-  const rows=DATA.slice().sort((a,b)=>(GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade))||String(a.teacher).localeCompare(b.teacher,"ko"));
+  // 강사별 필터 칩
+  const teachers=(ROSTER.length?ROSTER.map(t=>t.name):[...new Set(DATA.map(c=>c.teacher))]);
+  document.getElementById("feeTeacherChips").innerHTML=["전체",...teachers].map(n=>{
+    const cnt = n==="전체"?DATA.length:DATA.filter(c=>c.teacher===n).length;
+    return `<span class="chip ${feeTeacher===n?"on":""}" data-t="${escA(n)}">${esc(n)}${n==="전체"?"":` (${cnt})`}</span>`;
+  }).join("");
+  const rows=DATA.filter(c=>feeTeacher==="전체"||c.teacher===feeTeacher)
+    .sort((a,b)=>(GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade))||String(a.teacher).localeCompare(b.teacher,"ko"));
   document.getElementById("feeBody").innerHTML=rows.map(c=>{
     const r=rulePrice(c); c._base=r.base??null; c._baseSess=r.baseSess??null;
     const cat=c.course_type==="특강"?"특강":(c.division==="중등"?"월":"회차");
@@ -488,8 +500,12 @@ function renderFee(){
       <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:220px"></td>
     </tr>`;
   }).join("");
-  document.getElementById("feeStat").textContent=`합계(참고) ${won(DATA.reduce((a,c)=>a+(c.tuition||0),0))}원`;
+  const sub=rows.reduce((a,c)=>a+(c.tuition||0),0);
+  document.getElementById("feeStat").textContent=`${feeTeacher==="전체"?"전체 합계":feeTeacher+" 소계"}(참고) ${won(sub)}원 · ${rows.length}강좌`;
 }
+document.getElementById("feeTeacherChips").addEventListener("click",e=>{
+  const c=e.target.closest(".chip"); if(!c) return; feeTeacher=c.dataset.t; renderFee();
+});
 document.getElementById("feeBody").addEventListener("input",e=>{
   const inp=e.target.closest(".fee-in"); if(!inp) return;
   const tr=e.target.closest("tr"); const id=tr.dataset.id; const k=inp.dataset.k; const c=DATA.find(x=>x.id===id);
