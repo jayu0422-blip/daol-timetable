@@ -494,7 +494,8 @@ document.getElementById("feeBody").addEventListener("input",e=>{
   const inp=e.target.closest(".fee-in"); if(!inp) return;
   const tr=e.target.closest("tr"); const id=tr.dataset.id; const k=inp.dataset.k; const c=DATA.find(x=>x.id===id);
   if(k==="sessions"){ const v=inp.value===""?null:+inp.value; const patch={sessions:v};
-    if(c._base!=null&&c._baseSess!=null){ const t=prorate(c._base,c._baseSess,v); patch.tuition=t; tr.querySelector('[data-k=tuition]').value=won(t); }
+    const r=rulePrice(c);  // 기준값을 매번 규칙에서 새로 계산(실시간 갱신에 견고)
+    if(r.base!=null&&r.baseSess!=null){ const t=prorate(r.base,r.baseSess,v); patch.tuition=t; tr.querySelector('[data-k=tuition]').value=won(t); }
     feeSave(id,patch);
   } else if(k==="tuition"){ const n=String(inp.value).replace(/[^0-9]/g,""); feeSave(id,{tuition:n===""?null:+n}); }
   else if(k==="note"){ feeSave(id,{tuition_note:inp.value}); }
