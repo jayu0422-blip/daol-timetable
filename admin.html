@@ -151,8 +151,21 @@
 /* ===== 상수 ===== */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
 const SUBJECT_ORDER = ["국어","영어","수학","과학","사회","기타"];
-const HIGH_SCHOOLS = ["미사고","미사강변고","하남고","풍산고","미강고"];
+const HIGH_SCHOOLS = ["미사고","미사강변고","하남고","풍산고"];
 const divisionOf = g => (g||"").startsWith("중") ? "중등" : "고등";
+// 학교명 정규화 (미강고 = 미사강변고 줄임말)
+const normSchool = s => s==="미강고" ? "미사강변고" : s;
+// 강좌가 '특정 고등학교' 소속인지 판별 (대상학교 값 → 없으면 강좌명에서 인식). null = 공통(전 학교).
+function courseSchool(c){
+  const t = normSchool((c.target_school||"").trim());
+  if(HIGH_SCHOOLS.includes(t)) return t;
+  const name = c.course_name||"";
+  if(/미사강변고|미강고/.test(name)) return "미사강변고";
+  if(/미사고/.test(name)) return "미사고";
+  if(/하남고/.test(name)) return "하남고";
+  if(/풍산고/.test(name)) return "풍산고";
+  return null;
+}
 const gradeColor = g => g==="고3/수능" ? "var(--g-고3)" : (getComputedStyle(document.documentElement).getPropertyValue("--g-"+g)||"#eee");
 
 const cfg = window.DAOL_CONFIG||{};
@@ -255,7 +268,8 @@ function selectedCourses(){
       if(grades.length && !grades.includes(c.grade)) return false;
       if(subjects.length && !subjects.includes(c.subject)) return false;
       if(schools.length && c.division==="고등"){
-        if(!(!c.target_school || c.target_school==="공통" || schools.includes(c.target_school))) return false;
+        const cs=courseSchool(c);
+        if(cs && !schools.map(normSchool).includes(cs)) return false;
       }
       return true;
     });
@@ -265,7 +279,7 @@ function selectedCourses(){
   const grades=[...document.querySelectorAll("#gradeChips .chip.on")].map(c=>c.dataset.g);
   return DATA.filter(c=>{
     if(grades.length && !grades.includes(c.grade)) return false;
-    if(c.division==="고등") return !c.target_school || c.target_school==="공통" || c.target_school===school;
+    if(c.division==="고등"){ const cs=courseSchool(c); return !cs || cs===normSchool(school); }
     return true; // 중등은 학교 구분 없음
   });
 }
