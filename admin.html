@@ -97,6 +97,7 @@
   <div class="tabbar noprint">
     <button class="tab on" data-tab="dash">📊 대시보드</button>
     <button class="tab" data-tab="gen">🎨 시간표 생성</button>
+    <button class="tab" data-tab="fee">💰 수강료</button>
   </div>
 
   <!-- ===== 대시보드 ===== -->
@@ -142,6 +143,23 @@
 
     <div id="conflictBox"></div>
     <div id="sheet"><div class="empty">‘시간표 생성’을 누르세요.</div></div>
+  </section>
+
+  <!-- ===== 수강료 ===== -->
+  <section id="tab-fee" class="hide">
+    <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn primary" id="autoFeeBtn">⚙️ 규칙 자동 적용(전체)</button>
+      <span class="muted">회차를 바꾸면 고등 강좌 수강료가 자동 재계산됩니다. 값은 자동 저장됩니다.</span>
+      <span style="flex:1"></span>
+      <span class="muted" id="feeStat"></span>
+    </div>
+    <div class="panel" style="padding:0;overflow:auto">
+      <table class="dash" id="feeTable">
+        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:70px">회차</th><th style="width:120px">수강료(원)</th><th>비고</th></tr></thead>
+        <tbody id="feeBody"></tbody>
+      </table>
+    </div>
+    <p class="muted">중등=월수강료(회차 무관) · 고등=회차수강료 · 특강=방학기간. 빈칸은 미정(강사 확인 대기)입니다.</p>
   </section>
 </div>
 
@@ -231,8 +249,8 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  document.getElementById("tab-dash").classList.toggle("hide",t.dataset.tab!=="dash");
-  document.getElementById("tab-gen").classList.toggle("hide",t.dataset.tab!=="gen");
+  ["dash","gen","fee"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  if(t.dataset.tab==="fee") renderFee();
 }));
 
 /* ===== 생성 필터 ===== */
@@ -424,6 +442,70 @@ async function savePng(){const c=await html2canvas(document.getElementById("shee
 
 /* 실시간 구독 (Supabase) */
 if(useSupa){ sb.channel("rt").on("postgres_changes",{event:"*",schema:"public",table:"courses"},loadData).subscribe(); }
+
+/* ===== 수강료 관리 ===== */
+const escA = s => esc(s).replace(/"/g,"&quot;");
+const won = n => (n==null||n==="")?"":Number(n).toLocaleString("ko-KR");
+function parseSess(s){ const m=String(s||"").match(/총\s*(\d+)\s*회/); return m?+m[1]:null; }
+function ggf(g){ return (/고3|수능/.test(g||"")) ? "고3" : g; }
+function rulePrice(c){
+  const {division:div,grade,subject:subj,course_type:ctype,teacher,schedule_text:sched}=c; const G=ggf(grade);
+  if(ctype==="특강"){
+    if(teacher==="유용권"){ const s=parseSess(sched); return {sessions:s,tuition:360000,note:"방학특강 · 기본 360,000원 · 재원생(타과목 포함) 20%할인 시 288,000원"+(s?` · 총 ${s}회`:"")}; }
+    if(subj==="국어") return {sessions:4,tuition:290000,note:"국어특강 · 주1회 4회차 기준 · ※기간/회차 확정 필요"};
+    return {sessions:null,tuition:null,note:"특강 기간·회차·수강료 미정 (강사 확인 대기)"};
+  }
+  if(div==="중등"){ const m={국어:200000,영어:320000,수학:360000,과학:200000}; return (subj in m)?{sessions:null,tuition:m[subj],note:`중등 ${subj} 월수강료`}:{sessions:null,tuition:null,note:"중등 수강료 미지정"}; }
+  if(div==="고등"){
+    if(subj==="국어"){ const b={고1:290000,고2:290000,고3:340000}[G]; return b?{sessions:4,tuition:b,note:"고등국어 회차수강료 · 주1회 4회차 기준",base:b,baseSess:4}:{sessions:null,tuition:null,note:"미지정"}; }
+    if(subj==="영어"){ if(G==="고3") return {sessions:4,tuition:390000,note:"고등영어 회차수강료 · 주1회 4회차(정규만, 클리닉 제외) · 최대 450,000원",base:390000,baseSess:4}; return {sessions:4,tuition:360000,note:"고등영어 회차수강료 · 주1회 4회차(정규만, 클리닉 제외)",base:360000,baseSess:4}; }
+    if(subj==="수학"){ if(teacher==="임결"){ const b={고1:[400000,10],고2:[420000,10],고3:[450000,8]}[G]; if(b) return {sessions:b[1],tuition:b[0],note:`임결 고등수학 · ${b[1]}회차 기준 · 초과 시 동일, 미달 시 (기준액÷${b[1]})×부족회차 차감`,base:b[0],baseSess:b[1]}; } return {sessions:null,tuition:null,note:"고등 수학(유용권 등) 수강료 미지정 — 확인 필요"}; }
+  }
+  return {sessions:null,tuition:null,note:"수강료 미지정"};
+}
+function prorate(base,baseSess,actual){ if(base==null||baseSess==null||actual==null||actual==="") return null; actual=+actual; if(actual>=baseSess) return base; return base-Math.round(base/baseSess)*(baseSess-actual); }
+let feeTimer={};
+function feeSave(id,patch){
+  const c=DATA.find(x=>x.id===id); if(c) Object.assign(c,patch);
+  clearTimeout(feeTimer[id]);
+  feeTimer[id]=setTimeout(async()=>{
+    const st=document.getElementById("feeStat"); st.textContent="저장 중…";
+    if(useSupa){ const {error}=await sb.from("courses").update(patch).eq("id",id); st.textContent=error?("저장 오류: "+error.message):"저장됨 ✓"; }
+    else st.textContent="저장됨 ✓ (데모)";
+  },500);
+}
+function renderFee(){
+  const rows=DATA.slice().sort((a,b)=>(GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade))||String(a.teacher).localeCompare(b.teacher,"ko"));
+  document.getElementById("feeBody").innerHTML=rows.map(c=>{
+    const r=rulePrice(c); c._base=r.base??null; c._baseSess=r.baseSess??null;
+    const cat=c.course_type==="특강"?"특강":(c.division==="중등"?"월":"회차");
+    const midReg=(c.division==="중등"&&c.course_type!=="특강");
+    return `<tr data-id="${c.id}">
+      <td><b>${esc(c.teacher)}</b></td><td>${cat}</td><td>${esc(c.grade||"")}</td><td>${esc(c.subject||"")}</td>
+      <td>${esc(c.course_name||"")}</td>
+      <td><input type="number" class="fee-in" data-k="sessions" value="${c.sessions??""}" style="width:56px" ${midReg?'disabled':''}></td>
+      <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="tuition" value="${won(c.tuition)}" style="width:108px"></td>
+      <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:220px"></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("feeStat").textContent=`합계(참고) ${won(DATA.reduce((a,c)=>a+(c.tuition||0),0))}원`;
+}
+document.getElementById("feeBody").addEventListener("input",e=>{
+  const inp=e.target.closest(".fee-in"); if(!inp) return;
+  const tr=e.target.closest("tr"); const id=tr.dataset.id; const k=inp.dataset.k; const c=DATA.find(x=>x.id===id);
+  if(k==="sessions"){ const v=inp.value===""?null:+inp.value; const patch={sessions:v};
+    if(c._base!=null&&c._baseSess!=null){ const t=prorate(c._base,c._baseSess,v); patch.tuition=t; tr.querySelector('[data-k=tuition]').value=won(t); }
+    feeSave(id,patch);
+  } else if(k==="tuition"){ const n=String(inp.value).replace(/[^0-9]/g,""); feeSave(id,{tuition:n===""?null:+n}); }
+  else if(k==="note"){ feeSave(id,{tuition_note:inp.value}); }
+});
+document.getElementById("feeBody").addEventListener("blur",e=>{ const i=e.target.closest(".fee-won"); if(i){ const n=String(i.value).replace(/[^0-9]/g,""); i.value=won(n===""?"":+n); } },true);
+document.getElementById("autoFeeBtn").addEventListener("click",async()=>{
+  if(!confirm("모든 강좌에 규칙을 자동 적용합니다. 직접 입력한 값도 규칙값으로 덮어씁니다. 진행할까요?")) return;
+  document.getElementById("feeStat").textContent="적용 중…";
+  for(const c of DATA){ const r=rulePrice(c); const patch={sessions:r.sessions,tuition:r.tuition,tuition_note:r.note}; Object.assign(c,patch); if(useSupa) await sb.from("courses").update(patch).eq("id",c.id); }
+  renderFee(); document.getElementById("feeStat").textContent="규칙 자동 적용 완료 ✓";
+});
 
 buildSchoolFilter();
 loadData();
