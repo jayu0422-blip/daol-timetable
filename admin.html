@@ -121,6 +121,10 @@
         <button class="preset" data-preset="all">중·고등부 전체</button>
         <button class="preset" data-preset="school">학교·학년 지정</button>
         <button class="preset" data-preset="detail">🎯 학교·학년·과목</button>
+        <button class="preset" data-preset="teacher">👤 강사별</button>
+      </div>
+      <div class="filters" id="teacherFilters" style="display:none">
+        <div class="f"><label>강사 (복수 선택)</label><div class="chips" id="teacherChipsG"></div></div>
       </div>
       <div class="filters" id="schoolFilters" style="display:none">
         <div class="f"><label>학교</label><select id="selSchool"></select></div>
@@ -217,6 +221,7 @@ async function loadData(){
     });
   }
   renderDash();
+  buildTeacherChips();
 }
 
 /* ===== 대시보드 ===== */
@@ -264,7 +269,13 @@ document.querySelectorAll(".preset").forEach(p=>p.addEventListener("click",()=>{
   preset=p.dataset.preset;
   document.getElementById("schoolFilters").style.display = preset==="school"?"flex":"none";
   document.getElementById("detailFilters").style.display = preset==="detail"?"flex":"none";
+  document.getElementById("teacherFilters").style.display = preset==="teacher"?"flex":"none";
 }));
+function buildTeacherChips(){
+  const names = ROSTER.length?ROSTER.map(t=>t.name):[...new Set(DATA.map(c=>c.teacher))];
+  document.getElementById("teacherChipsG").innerHTML = names.map(n=>`<span class="chip" data-v="${n}">${n}</span>`).join("");
+}
+document.getElementById("teacherChipsG").addEventListener("click",e=>{const c=e.target.closest(".chip"); if(c)c.classList.toggle("on");});
 function buildSchoolFilter(){
   const sel=document.getElementById("selSchool");
   sel.innerHTML = HIGH_SCHOOLS.map(s=>`<option>${s}</option>`).join("");
@@ -284,6 +295,10 @@ function selectedCourses(){
   if(preset==="mid")  return DATA.filter(c=>c.division==="중등");
   if(preset==="high") return DATA.filter(c=>c.division==="고등");
   if(preset==="all")  return DATA.slice();
+  if(preset==="teacher"){
+    const ts=chipsOn("teacherChipsG");
+    return ts.length ? DATA.filter(c=>ts.includes(c.teacher)) : DATA.slice();
+  }
   if(preset==="detail"){
     const schools=chipsOn("schoolChipsD"), grades=chipsOn("gradeChipsD"), subjects=chipsOn("subjectChipsD");
     return DATA.filter(c=>{
@@ -309,6 +324,7 @@ function titleFor(){
   if(preset==="mid") return "중등";
   if(preset==="high") return "고등";
   if(preset==="all") return "중·고등";
+  if(preset==="teacher"){ const ts=chipsOn("teacherChipsG"); return ts.length ? ts.join("·")+" 선생님" : "전체 강사"; }
   if(preset==="detail"){
     const schools=chipsOn("schoolChipsD"), grades=chipsOn("gradeChipsD"), subjects=chipsOn("subjectChipsD");
     return [schools.join(" "), grades.join("·"), subjects.join("·")].filter(Boolean).join(" ") || "상세";
