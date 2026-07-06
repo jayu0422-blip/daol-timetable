@@ -119,12 +119,18 @@
         <button class="preset" data-preset="high">고등부 전체</button>
         <button class="preset" data-preset="all">중·고등부 전체</button>
         <button class="preset" data-preset="school">학교·학년 지정</button>
+        <button class="preset" data-preset="detail">🎯 학교·학년·과목</button>
       </div>
       <div class="filters" id="schoolFilters" style="display:none">
         <div class="f"><label>학교</label><select id="selSchool"></select></div>
         <div class="f"><label>학년</label>
           <div class="chips" id="gradeChips"></div>
         </div>
+      </div>
+      <div class="filters" id="detailFilters" style="display:none">
+        <div class="f"><label>학교 (복수 선택 · 고등)</label><div class="chips" id="schoolChipsD"></div></div>
+        <div class="f"><label>학년 (복수 선택)</label><div class="chips" id="gradeChipsD"></div></div>
+        <div class="f"><label>과목 (복수 선택 · 미선택=전체)</label><div class="chips" id="subjectChipsD"></div></div>
       </div>
       <div class="filters" style="margin-top:12px">
         <button class="btn primary" id="genBtn">⚡ 시간표 생성</button>
@@ -222,6 +228,7 @@ document.querySelectorAll(".preset").forEach(p=>p.addEventListener("click",()=>{
   document.querySelectorAll(".preset").forEach(x=>x.classList.remove("on")); p.classList.add("on");
   preset=p.dataset.preset;
   document.getElementById("schoolFilters").style.display = preset==="school"?"flex":"none";
+  document.getElementById("detailFilters").style.display = preset==="detail"?"flex":"none";
 }));
 function buildSchoolFilter(){
   const sel=document.getElementById("selSchool");
@@ -229,13 +236,30 @@ function buildSchoolFilter(){
   const gc=document.getElementById("gradeChips");
   gc.innerHTML = ["고1","고2","고3/수능","중1","중2","중3"].map(g=>`<span class="chip" data-g="${g}">${g}</span>`).join("");
   gc.addEventListener("click",e=>{const c=e.target.closest(".chip"); if(c)c.classList.toggle("on");});
+  // 상세 지정(학교·학년·과목) 다중 칩
+  const mk=(id,arr)=>{const h=document.getElementById(id); h.innerHTML=arr.map(v=>`<span class="chip" data-v="${v}">${v}</span>`).join(""); h.addEventListener("click",e=>{const c=e.target.closest(".chip"); if(c)c.classList.toggle("on");});};
+  mk("schoolChipsD", HIGH_SCHOOLS);
+  mk("gradeChipsD", ["고1","고2","고3/수능","중1","중2","중3"]);
+  mk("subjectChipsD", ["국어","영어","수학","과학"]);
 }
+function chipsOn(id){ return [...document.querySelectorAll("#"+id+" .chip.on")].map(c=>c.dataset.v); }
 
 /* ===== 필터링 ===== */
 function selectedCourses(){
   if(preset==="mid")  return DATA.filter(c=>c.division==="중등");
   if(preset==="high") return DATA.filter(c=>c.division==="고등");
   if(preset==="all")  return DATA.slice();
+  if(preset==="detail"){
+    const schools=chipsOn("schoolChipsD"), grades=chipsOn("gradeChipsD"), subjects=chipsOn("subjectChipsD");
+    return DATA.filter(c=>{
+      if(grades.length && !grades.includes(c.grade)) return false;
+      if(subjects.length && !subjects.includes(c.subject)) return false;
+      if(schools.length && c.division==="고등"){
+        if(!(!c.target_school || c.target_school==="공통" || schools.includes(c.target_school))) return false;
+      }
+      return true;
+    });
+  }
   // school: 특정 학교+학년 — 해당 학교 전용 + 공통
   const school=document.getElementById("selSchool").value;
   const grades=[...document.querySelectorAll("#gradeChips .chip.on")].map(c=>c.dataset.g);
@@ -249,6 +273,10 @@ function titleFor(){
   if(preset==="mid") return "중등";
   if(preset==="high") return "고등";
   if(preset==="all") return "중·고등";
+  if(preset==="detail"){
+    const schools=chipsOn("schoolChipsD"), grades=chipsOn("gradeChipsD"), subjects=chipsOn("subjectChipsD");
+    return [schools.join(" "), grades.join("·"), subjects.join("·")].filter(Boolean).join(" ") || "상세";
+  }
   const school=document.getElementById("selSchool").value;
   const grades=[...document.querySelectorAll("#gradeChips .chip.on")].map(c=>c.dataset.g);
   return school+(grades.length?" "+grades.join("·"):"");
