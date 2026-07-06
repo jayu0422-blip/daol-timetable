@@ -472,7 +472,7 @@ function rulePrice(c){
   const {division:div,grade,subject:subj,course_type:ctype,teacher,schedule_text:sched}=c; const G=ggf(grade);
   if(ctype==="특강"){
     if(teacher==="유용권"){ const s=parseSess(sched); return {sessions:s,tuition:360000,note:"방학특강 · 기본 360,000원 · 재원생(타과목 포함) 20%할인 시 288,000원"+(s?` · 총 ${s}회`:"")}; }
-    if(subj==="국어") return {sessions:4,tuition:290000,note:"국어특강 · 주1회 4회차 기준 · ※기간/회차 확정 필요"};
+    if(subj==="국어") return {sessions:4,tuition:290000,note:"국어특강 · 주1회 4회차 기준(방학 4회)"};
     return {sessions:null,tuition:null,note:"특강 기간·회차·수강료 미정 (강사 확인 대기)"};
   }
   if(div==="중등"){ const m={국어:200000,영어:320000,수학:360000,과학:200000}; return (subj in m)?{sessions:null,tuition:m[subj],note:`중등 ${subj} 월수강료`}:{sessions:null,tuition:null,note:"중등 수강료 미지정"}; }
