@@ -595,11 +595,19 @@ const ROOMS=[
 ];
 const CLASS_ROOMS=ROOMS.filter(r=>!r.testOnly);
 function korToMin(str){ const m=String(str).match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/); if(m){ let h=(+m[2])%12; if(m[1]==="오후") h+=12; return h*60+(m[3]?+m[3]:0); } return null; }
+// 요일 추출 (단어 속 글자 오인식 방지: "수업"의 수, "목표"의 목 제외)
+function extractDays(seg){
+  const set=new Set();
+  (seg.match(/[월화수목금토일]요일/g)||[]).forEach(m=>set.add(m[0]));          // 화요일 → 화
+  (seg.match(/[월화수목금토일]{2,}/g)||[]).forEach(run=>{ for(const ch of run) set.add(ch); }); // 월수금, 화목토
+  for(let i=0;i<seg.length;i++){ const ch=seg[i]; if("월화수목금토일".includes(ch)){ const nxt=seg[i+1]||"", prev=seg[i-1]||""; if(!/[가-힣]/.test(nxt)&&!/[가-힣]/.test(prev)) set.add(ch); } } // 단독 요일: 앞뒤가 한글이 아님
+  return [...set];
+}
 function parseDayTimes(text){
   const out=[]; let hadTime=false, failedAny=false;
   String(text||"").split(/\n|\//).forEach(seg=>{
     seg=seg.trim(); if(!seg) return;
-    const days=(seg.match(/[월화수목금토일]/g)||[]); if(!days.length) return;
+    const days=extractDays(seg); if(!days.length) return;
     const type=/클리닉/.test(seg)?"클리닉":(/관리/.test(seg)?"관리":(/직보/.test(seg)?"직보":"정규"));
     let s=null,e=null;
     let m=seg.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
