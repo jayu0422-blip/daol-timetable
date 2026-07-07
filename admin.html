@@ -589,8 +589,8 @@ const ROOMS=[
   {key:"본관2",label:"2강의실",bldg:"다올105"},
   {key:"본관3",label:"3강의실",bldg:"다올105"},
   {key:"스터디홀",label:"스터디홀",bldg:"다올105"},
+  {key:"복도",label:"복도테이블(재시)",bldg:"다올105",testOnly:true},
   {key:"상담실",label:"상담실",bldg:"다올105"},
-  {key:"복도",label:"복도테이블(테스트)",bldg:"다올105",testOnly:true},
   {key:"대치1",label:"대치더올 1강의실",bldg:"대치더올"},
   {key:"대치2",label:"대치더올 2강의실",bldg:"대치더올"},
   {key:"대치클리닉",label:"대치더올 클리닉룸",bldg:"대치더올"}
@@ -682,6 +682,16 @@ function assignDay(day){
   return {items, unparsed};
 }
 const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
+const GRID_ROOMS=ROOMS;   // 그리드는 복도테이블 포함 전체 표시(배정은 CLASS_ROOMS만)
+// 복도테이블 중등영어 재시 일정 (수업 끝난 뒤~22시, 중3은 수/목 18시 소집)
+const RETESTS=[
+  {days:["월","수","금"], start:18*60+30, end:22*60, label:"중1 영어 재시"},
+  {days:["월","수","금"], start:20*60,    end:22*60, label:"중2 영어 재시"},
+  {days:["수"],           start:18*60,    end:20*60, label:"중3 영어 재시(소집)"},
+  {days:["화","목","토"], start:19*60,    end:22*60, label:"중1 영어 재시"},
+  {days:["화","목","토"], start:20*60,    end:22*60, label:"중2 영어 재시"},
+  {days:["목"],           start:18*60,    end:20*60, label:"중3 영어 재시(소집)"}
+];
 function roomOptions(selKey){ return ['<option value="">자동</option>', ...CLASS_ROOMS.map(r=>`<option value="${r.key}" ${r.key===selKey?"selected":""}>${r.label}</option>`)].join(""); }
 function buildDayChips(){ document.getElementById("dayChips").innerHTML=DAY_LIST.map(d=>`<span class="chip ${d===selDay?"on":""}" data-d="${d}">${d}</span>`).join(""); }
 document.getElementById("dayChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selDay=c.dataset.d; buildDayChips(); renderDay(); });
@@ -713,7 +723,7 @@ document.getElementById("dayList").addEventListener("change", async e=>{
 });
 function renderDay(){
   const {items,unparsed}=assignDay(selDay);
-  const cols=CLASS_ROOMS, START=10*60, END=22*60, PX=1.0, H=(END-START)*PX;
+  const cols=GRID_ROOMS, START=10*60, END=22*60, PX=1.0, H=(END-START)*PX;
   const gc=`54px repeat(${cols.length},1fr)`;
   let html=`<div class="day-title">2026 다올105 · ${selDay}요일 시간표 (강의실 배정)</div>`;
   html+=`<div class="rgrid" style="grid-template-columns:${gc}">`;
@@ -730,6 +740,12 @@ function renderDay(){
       const role=it.roomRole?`<span class="rtype" style="background:#fde68a">${it.roomRole}</span>`:"";
       html+=`<div class="rblk ${it.conflict?"conflict":""}" style="top:${top}px;height:${h}px;background:${col}"><div class="rt">${esc(it.c.course_name)}</div><div class="rteam">[${esc(it.c.teacher)}T] <span class="rtype">${it.s.type}</span>${role}</div><div class="rteam">${fmt(it.s.start)}~${fmt(it.s.end)}</div></div>`;
     });
+    if(r.key==="복도"){
+      RETESTS.filter(rt=>rt.days.includes(selDay)).forEach(rt=>{
+        const st=Math.max(rt.start,START), en=Math.min(rt.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26);
+        html+=`<div class="rblk" style="top:${top}px;height:${h}px;background:#fee2e2;border:1px dashed #f87171"><div class="rt">${rt.label}</div><div class="rteam">재시</div><div class="rteam">${fmt(rt.start)}~${fmt(rt.end)}</div></div>`;
+      });
+    }
     html+=`</div>`;
   });
   html+=`</div></div>`;
