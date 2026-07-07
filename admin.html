@@ -198,6 +198,7 @@
       <div class="chips" id="dayChips"></div>
       <span style="flex:1"></span>
       <button class="btn sm" id="dayPrint">🖨️ PDF/인쇄</button>
+      <button class="btn sm" id="dayPng">🖼️ 이미지저장</button>
       <span class="muted" id="dayStat"></span>
     </div>
     <div id="daySheet"><div class="empty">요일을 선택하세요.</div></div>
@@ -634,17 +635,26 @@ function orderByPref(teacher,day,rooms){
   return [...pref.filter(r=>rooms.includes(r)), ...rooms.filter(r=>!pref.includes(r))];
 }
 function ovl(a,b){ return a.start<b.end && b.start<a.end; }
+function fitCheck(list, rooms, occ, day){
+  const sim={}; rooms.forEach(r=>sim[r]=[...(occ[r]||[])]);
+  for(const it of list){ if((it.c.room_overrides||{})[day]) continue; let ok=false; for(const r of rooms){ if(!sim[r].some(x=>ovl(x,it.s))){ sim[r].push(it.s); ok=true; break; } } if(!ok) return false; }
+  return true;
+}
 function assignDay(day){
   const items=[], unparsed=[];
   DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c); p.sessions.filter(s=>s.day===day).forEach(s=>items.push({c,s})); });
   const occ={}; CLASS_ROOMS.forEach(r=>occ[r.key]=[]);
+  const DACI=["대치1","대치2","대치클리닉"], BON=["본관1","본관2","본관3","스터디홀"];
   const byT={}; items.forEach(it=>{ (byT[it.c.teacher]=byT[it.c.teacher]||[]).push(it); });
-  Object.keys(byT).sort((a,b)=>a.localeCompare(b,"ko")).forEach(tch=>{
+  const prio=t=> t==="임결"?0 : t==="유용권"?1 : 2;      // 대치더올 우선권: 임결 > 유용권
+  Object.keys(byT).sort((a,b)=> prio(a)-prio(b) || a.localeCompare(b,"ko")).forEach(tch=>{
     const list=byT[tch].sort((a,b)=> a.s.start-b.s.start || (GRADE_ORDER.indexOf(a.c.grade)-GRADE_ORDER.indexOf(b.c.grade)) || ((a.s.type==="정규"?0:1)-(b.s.type==="정규"?0:1)));
     const sci=list.some(it=>it.c.subject==="수학"||it.c.subject==="과학");
-    const primary=sci?"대치더올":"다올105";               // (B) 강사별 같은 관
-    const primaryRooms=orderByPref(tch,day,CLASS_ROOMS.filter(r=>r.bldg===primary).map(r=>r.key));
-    const otherRooms=CLASS_ROOMS.filter(r=>r.bldg!==primary).map(r=>r.key);
+    // (B) 같은 관 보장: 우선건물에 이 강사 전 세션이 다 들어가면 그 건물, 아니면 통째로 다른 건물로
+    let primaryRooms;
+    if(sci){ const daciPref=orderByPref(tch,day,DACI); primaryRooms = (tch==="임결"||fitCheck(list,daciPref,occ,day)) ? daciPref : orderByPref(tch,day,BON); }
+    else primaryRooms=orderByPref(tch,day,BON);
+    const otherRooms=CLASS_ROOMS.map(r=>r.key).filter(k=>!primaryRooms.includes(k));
     list.forEach(it=>{
       const ov=(it.c.room_overrides||{})[day];                // (A) 수동 지정 우선
       let chosen=null;
@@ -674,7 +684,23 @@ const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#dd
 function roomOptions(selKey){ return ['<option value="">자동</option>', ...CLASS_ROOMS.map(r=>`<option value="${r.key}" ${r.key===selKey?"selected":""}>${r.label}</option>`)].join(""); }
 function buildDayChips(){ document.getElementById("dayChips").innerHTML=DAY_LIST.map(d=>`<span class="chip ${d===selDay?"on":""}" data-d="${d}">${d}</span>`).join(""); }
 document.getElementById("dayChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selDay=c.dataset.d; buildDayChips(); renderDay(); });
-document.getElementById("dayPrint").addEventListener("click",()=>window.print());
+function loadH2C(){ return new Promise((res,rej)=>{ if(window.html2canvas) return res(); const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"; s.onload=res; s.onerror=rej; document.body.appendChild(s); }); }
+async function dayCanvas(){ await loadH2C(); return await html2canvas(document.getElementById("daySheet"),{scale:2,backgroundColor:"#ffffff"}); }
+document.getElementById("dayPng").addEventListener("click", async ()=>{
+  document.getElementById("dayStat").textContent="이미지 생성 중…";
+  try{ const c=await dayCanvas(); const a=document.createElement("a"); a.download=`${selDay}요일_강의실배정.png`; a.href=c.toDataURL("image/png"); a.click(); document.getElementById("dayStat").textContent="이미지 저장 완료 ✓"; }
+  catch(e){ alert("이미지 생성 실패 — 인터넷 연결을 확인하세요."); }
+});
+document.getElementById("dayPrint").addEventListener("click", async ()=>{
+  document.getElementById("dayStat").textContent="PDF 준비 중…";
+  try{
+    const c=await dayCanvas(); const img=c.toDataURL("image/png");
+    const landscape = c.width>=c.height;   // 그리드가 가로로 넓으면 가로 인쇄
+    const w=window.open("","_blank");
+    w.document.write(`<!doctype html><html><head><title>${selDay}요일 강의실배정</title><style>@page{size:A4 ${landscape?"landscape":"portrait"};margin:6mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:${landscape?"192mm":"280mm"}}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
+    w.document.close(); document.getElementById("dayStat").textContent="";
+  }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
+});
 document.getElementById("dayList").addEventListener("change", async e=>{
   const sel=e.target.closest(".roomsel"); if(!sel) return;
   const c=DATA.find(x=>x.id===sel.dataset.cid); if(!c) return;
