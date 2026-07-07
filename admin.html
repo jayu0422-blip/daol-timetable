@@ -589,6 +589,7 @@ const ROOMS=[
   {key:"본관2",label:"2강의실",bldg:"다올105"},
   {key:"본관3",label:"3강의실",bldg:"다올105"},
   {key:"스터디홀",label:"스터디홀",bldg:"다올105"},
+  {key:"상담실",label:"상담실",bldg:"다올105"},
   {key:"복도",label:"복도테이블(테스트)",bldg:"다올105",testOnly:true},
   {key:"대치1",label:"대치더올 1강의실",bldg:"대치더올"},
   {key:"대치2",label:"대치더올 2강의실",bldg:"대치더올"},
@@ -627,11 +628,11 @@ function parseDayTimes(text){
 }
 function orderByPref(teacher,day,rooms){
   let pref=[];
-  if(teacher==="윤재영") pref=(day==="토")?["본관1","본관2"]:["본관2"];
+  if(teacher==="윤재영") pref=["본관2","본관3","스터디홀","상담실","본관1"];   // 중등영어: 2강의실 우선, 넘치면 3강의실·스터디홀·상담실
   else if(teacher==="이정관") pref=["본관2"];
   else if(teacher==="김영하"&&day==="토") pref=["본관3"];
-  else if(teacher==="유용권") pref=["대치2","대치1","대치클리닉"];   // 유용권 → 대치더올 2강의실 우선
-  else if(teacher==="임결") pref=["대치1","대치2","대치클리닉"];     // 임결 → 대치더올 1강의실 우선
+  else if(teacher==="유용권") pref=["대치2","대치1","대치클리닉","본관1","본관3","스터디홀","본관2"]; // 대치2 우선; 다올105로 밀리면 1강의실(수업)·3강·스터디홀(관리)
+  else if(teacher==="임결") pref=["대치1","대치2","대치클리닉","본관2","본관3","스터디홀","본관1"];   // 대치1 우선
   return [...pref.filter(r=>rooms.includes(r)), ...rooms.filter(r=>!pref.includes(r))];
 }
 function ovl(a,b){ return a.start<b.end && b.start<a.end; }
@@ -644,7 +645,7 @@ function assignDay(day){
   const items=[], unparsed=[];
   DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c); p.sessions.filter(s=>s.day===day).forEach(s=>items.push({c,s})); });
   const occ={}; CLASS_ROOMS.forEach(r=>occ[r.key]=[]);
-  const DACI=["대치1","대치2","대치클리닉"], BON=["본관1","본관2","본관3","스터디홀"];
+  const DACI=["대치1","대치2","대치클리닉"], BON=["본관1","본관2","본관3","스터디홀","상담실"];
   const byT={}; items.forEach(it=>{ (byT[it.c.teacher]=byT[it.c.teacher]||[]).push(it); });
   const prio=t=> t==="임결"?0 : t==="유용권"?1 : 2;      // 대치더올 우선권: 임결 > 유용권
   Object.keys(byT).sort((a,b)=> prio(a)-prio(b) || a.localeCompare(b,"ko")).forEach(tch=>{
