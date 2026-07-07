@@ -202,6 +202,7 @@
     </div>
     <div id="daySheet"><div class="empty">요일을 선택하세요.</div></div>
     <div id="dayUnparsed"></div>
+    <div id="dayList" class="noprint"></div>
     <p class="muted noprint">강의실은 규칙(수학·과학→대치더올 우선, 선생님 선호, 같은날 수업+클리닉 같은관, 시간 겹침 방지)으로 <b>자동 배정</b>됩니다. 시간 표기가 애매한 강좌는 그리드 아래에 따로 표시됩니다.</p>
   </section>
 </div>
@@ -615,35 +616,64 @@ function parseDayTimes(text){
   });
   return {sessions:out, ok:hadTime, failed:failedAny&&!hadTime};
 }
-function roomPrefs(c,day){
-  const sci=(c.subject==="수학"||c.subject==="과학");
-  const daci=["대치1","대치2","대치클리닉"], bon=["본관1","본관2","본관3","스터디홀"];
-  if(sci) return [...daci,...bon];
+function orderByPref(teacher,day,rooms){
   let pref=[];
-  if(c.teacher==="윤재영") pref=(day==="토")?["본관1","본관2"]:["본관2"];
-  else if(c.teacher==="이정관") pref=["본관2"];
-  else if(c.teacher==="김영하"&&day==="토") pref=["본관3"];
-  const rest=bon.filter(r=>!pref.includes(r));
-  return [...pref,...rest,...daci];
+  if(teacher==="윤재영") pref=(day==="토")?["본관1","본관2"]:["본관2"];
+  else if(teacher==="이정관") pref=["본관2"];
+  else if(teacher==="김영하"&&day==="토") pref=["본관3"];
+  return [...pref.filter(r=>rooms.includes(r)), ...rooms.filter(r=>!pref.includes(r))];
 }
 function ovl(a,b){ return a.start<b.end && b.start<a.end; }
 function assignDay(day){
   const items=[], unparsed=[];
   DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c); p.sessions.filter(s=>s.day===day).forEach(s=>items.push({c,s})); });
-  items.sort((a,b)=> a.s.start-b.s.start || String(a.c.subject).localeCompare(b.c.subject,"ko") || String(a.c.teacher).localeCompare(b.c.teacher,"ko"));
   const occ={}; CLASS_ROOMS.forEach(r=>occ[r.key]=[]);
-  items.forEach(it=>{
-    const prefs=roomPrefs(it.c,day); let chosen=null;
-    for(const rk of prefs){ if(occ[rk] && !occ[rk].some(x=>ovl(x,it.s))){ chosen=rk; break; } }
-    if(!chosen){ chosen=prefs.find(rk=>occ[rk])||"본관1"; it.conflict=true; }
-    it.room=chosen; occ[chosen].push(it.s);
+  const byT={}; items.forEach(it=>{ (byT[it.c.teacher]=byT[it.c.teacher]||[]).push(it); });
+  Object.keys(byT).sort((a,b)=>a.localeCompare(b,"ko")).forEach(tch=>{
+    const list=byT[tch].sort((a,b)=> a.s.start-b.s.start || (GRADE_ORDER.indexOf(a.c.grade)-GRADE_ORDER.indexOf(b.c.grade)) || ((a.s.type==="정규"?0:1)-(b.s.type==="정규"?0:1)));
+    const sci=list.some(it=>it.c.subject==="수학"||it.c.subject==="과학");
+    const primary=sci?"대치더올":"다올105";               // (B) 강사별 같은 관
+    const primaryRooms=orderByPref(tch,day,CLASS_ROOMS.filter(r=>r.bldg===primary).map(r=>r.key));
+    const otherRooms=CLASS_ROOMS.filter(r=>r.bldg!==primary).map(r=>r.key);
+    list.forEach(it=>{
+      const ov=(it.c.room_overrides||{})[day];                // (A) 수동 지정 우선
+      let chosen=null;
+      if(ov && occ[ov]){ chosen=ov; if(occ[ov].some(x=>ovl(x,it.s))) it.conflict=true; }
+      else{
+        for(const rk of [...primaryRooms, ...otherRooms]){
+          if(occ[rk] && !occ[rk].some(x=>ovl(x,it.s))){ chosen=rk; if(!primaryRooms.includes(rk)) it.spill=true; break; }
+        }
+        if(!chosen){ chosen=primaryRooms[0]||"본관1"; it.conflict=true; }
+      }
+      it.room=chosen; occ[chosen].push(it.s);
+    });
+    // (C) 동시 복수반 → 수업실 1 + 관리실 N
+    list.forEach(base=>{
+      const grp=list.filter(x=>ovl(x.s,base.s));
+      if(grp.length>=2){
+        grp.forEach(x=>{ if(x.s.type==="클리닉"||x.s.type==="관리") x.roomRole="관리실"; });
+        const reg=grp.filter(x=>x.s.type==="정규"||x.s.type==="직보").sort((a,b)=>GRADE_ORDER.indexOf(a.c.grade)-GRADE_ORDER.indexOf(b.c.grade));
+        if(reg.length>=2) reg.forEach((x,idx)=>{ x.roomRole=idx===0?"수업실":"관리실"; });
+      }
+    });
   });
+  items.sort((a,b)=>a.s.start-b.s.start);
   return {items, unparsed};
 }
 const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
+function roomOptions(selKey){ return ['<option value="">자동</option>', ...CLASS_ROOMS.map(r=>`<option value="${r.key}" ${r.key===selKey?"selected":""}>${r.label}</option>`)].join(""); }
 function buildDayChips(){ document.getElementById("dayChips").innerHTML=DAY_LIST.map(d=>`<span class="chip ${d===selDay?"on":""}" data-d="${d}">${d}</span>`).join(""); }
 document.getElementById("dayChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selDay=c.dataset.d; buildDayChips(); renderDay(); });
 document.getElementById("dayPrint").addEventListener("click",()=>window.print());
+document.getElementById("dayList").addEventListener("change", async e=>{
+  const sel=e.target.closest(".roomsel"); if(!sel) return;
+  const c=DATA.find(x=>x.id===sel.dataset.cid); if(!c) return;
+  const ov={...(c.room_overrides||{})}; if(sel.value) ov[selDay]=sel.value; else delete ov[selDay];
+  c.room_overrides=ov;
+  document.getElementById("dayStat").textContent="저장 중…";
+  if(useSupa){ const {error}=await sb.from("courses").update({room_overrides:ov}).eq("id",c.id); if(error){ document.getElementById("dayStat").textContent="저장 오류: "+error.message; return; } }
+  renderDay();
+});
 function renderDay(){
   const {items,unparsed}=assignDay(selDay);
   const cols=CLASS_ROOMS, START=10*60, END=22*60, PX=1.0, H=(END-START)*PX;
@@ -660,7 +690,8 @@ function renderDay(){
     for(let t=START;t<=END;t+=60) html+=`<div class="rg-line" style="top:${(t-START)*PX}px"></div>`;
     items.filter(it=>it.room===r.key).forEach(it=>{
       const st=Math.max(it.s.start,START), en=Math.min(it.s.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26), col=SUBJ_COLOR[it.c.subject]||"#e5e7eb";
-      html+=`<div class="rblk ${it.conflict?"conflict":""}" style="top:${top}px;height:${h}px;background:${col}"><div class="rt">${esc(it.c.course_name)}</div><div class="rteam">[${esc(it.c.teacher)}T] <span class="rtype">${it.s.type}</span></div><div class="rteam">${fmt(it.s.start)}~${fmt(it.s.end)}</div></div>`;
+      const role=it.roomRole?`<span class="rtype" style="background:#fde68a">${it.roomRole}</span>`:"";
+      html+=`<div class="rblk ${it.conflict?"conflict":""}" style="top:${top}px;height:${h}px;background:${col}"><div class="rt">${esc(it.c.course_name)}</div><div class="rteam">[${esc(it.c.teacher)}T] <span class="rtype">${it.s.type}</span>${role}</div><div class="rteam">${fmt(it.s.start)}~${fmt(it.s.end)}</div></div>`;
     });
     html+=`</div>`;
   });
@@ -668,6 +699,12 @@ function renderDay(){
   document.getElementById("daySheet").innerHTML=html;
   const box=document.getElementById("dayUnparsed");
   box.innerHTML = unparsed.length ? `<div class="unparsed"><b>⚠️ 시간 표기 확인 필요 ${unparsed.length}건</b> (자동 배치 불가 — 강사 입력을 "요일 HH:MM~HH:MM" 형식으로 정리 권장)<br>`+unparsed.map(c=>`· [${esc(c.teacher)}] ${esc(c.course_name)} — "${esc((c.schedule_text||"").replace(/\n/g," / "))}"`).join("<br>")+`</div>` : "";
+  // 수동 배정 리스트
+  const seen={}, rows=[]; items.forEach(it=>{ if(!seen[it.c.id]){ seen[it.c.id]=1; rows.push(it); } });
+  document.getElementById("dayList").innerHTML = rows.length ? `<div class="panel" style="padding:0;overflow:auto;margin-top:12px"><table class="dash"><thead><tr><th>강사</th><th>강좌</th><th>자동 배정</th><th>수동 지정(저장)</th></tr></thead><tbody>`+rows.map(it=>{
+    const ov=(it.c.room_overrides||{})[selDay]||""; const rlabel=(CLASS_ROOMS.find(r=>r.key===it.room)||{}).label||it.room;
+    return `<tr><td><b>${esc(it.c.teacher)}</b></td><td>${esc(it.c.course_name)}</td><td>${esc(rlabel)}${it.roomRole?` <span style="color:#b45309">(${it.roomRole})</span>`:""}${it.spill?` <span style="color:#9a3412">↔타관</span>`:""}</td><td><select class="roomsel" data-cid="${it.c.id}">${roomOptions(ov)}</select></td></tr>`;
+  }).join("")+`</tbody></table></div>` : "";
   document.getElementById("dayStat").textContent=`${items.length}개 수업 · 배정충돌 ${items.filter(it=>it.conflict).length}건`;
 }
 
