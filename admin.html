@@ -643,7 +643,12 @@ function fitCheck(list, rooms, occ, day){
 }
 function assignDay(day){
   const items=[], unparsed=[];
-  DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c); p.sessions.filter(s=>s.day===day).forEach(s=>items.push({c,s})); });
+  DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c);
+    p.sessions.filter(s=>s.day===day).forEach(s=>{
+      const sp=SESSION_SPLITS.find(x=>x.days.includes(day)&&x.match(c)&&s.start<x.at&&s.end>x.at);
+      if(sp){ items.push({c,s:{...s,end:sp.at},forced:sp.roomBefore}); items.push({c,s:{...s,start:sp.at},forced:sp.roomAfter}); }
+      else items.push({c,s});
+    }); });
   const occ={}; CLASS_ROOMS.forEach(r=>occ[r.key]=[]);
   const DACI=["대치1","대치2","대치클리닉"], BON=["본관1","본관2","본관3","스터디홀","상담실"];
   const byT={}; items.forEach(it=>{ (byT[it.c.teacher]=byT[it.c.teacher]||[]).push(it); });
@@ -657,6 +662,7 @@ function assignDay(day){
     else primaryRooms=orderByPref(tch,day,BON);
     const otherRooms=CLASS_ROOMS.map(r=>r.key).filter(k=>!primaryRooms.includes(k));
     list.forEach(it=>{
+      if(it.forced){ it.room=it.forced; occ[it.forced]&&occ[it.forced].push(it.s); return; }  // 세션 분할 강제 강의실
       const ov=(it.c.room_overrides||{})[day];                // (A) 수동 지정 우선
       let chosen=null;
       if(ov && occ[ov]){ chosen=ov; if(occ[ov].some(x=>ovl(x,it.s))) it.conflict=true; }
@@ -691,6 +697,11 @@ const RETESTS=[
   {days:["화","목","토"], start:19*60,    end:22*60, label:"중1 영어 재시"},
   {days:["화","목","토"], start:20*60,    end:22*60, label:"중2 영어 재시"},
   {days:["목"],           start:18*60,    end:20*60, label:"중3 영어 재시(소집)"}
+];
+// 한 수업이 중간에 방을 옮기는 경우(그리드에서만 분할, 데이터는 1강좌 유지)
+const SESSION_SPLITS=[
+  { days:["화","목","토"], at:18*60+15, roomBefore:"본관1", roomAfter:"본관2",
+    match:c=>c.teacher==="윤재영" && (c.course_name||"").includes("중1") && (c.course_name||"").includes("화목토") }
 ];
 // 같은 강의실에 겹치는 블록 → 좌우 분할(합반/통합관리 시각화)
 function layoutRoom(blks){
