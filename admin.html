@@ -692,6 +692,13 @@ const RETESTS=[
   {days:["화","목","토"], start:20*60,    end:22*60, label:"중2 영어 재시"},
   {days:["목"],           start:18*60,    end:20*60, label:"중3 영어 재시(소집)"}
 ];
+// 같은 강의실에 겹치는 블록 → 좌우 분할(합반/통합관리 시각화)
+function layoutRoom(blks){
+  blks.sort((a,b)=>a.start-b.start||a.end-b.end);
+  const laneEnd=[];
+  blks.forEach(b=>{ let i=0; for(;i<laneEnd.length;i++){ if(laneEnd[i]<=b.start) break; } b.lane=i; laneEnd[i]=b.end; });
+  blks.forEach(b=>{ const grp=blks.filter(x=>x.start<b.end&&b.start<x.end); b.cols=Math.max(0,...grp.map(x=>x.lane))+1; });
+}
 function roomOptions(selKey){ return ['<option value="">자동</option>', ...CLASS_ROOMS.map(r=>`<option value="${r.key}" ${r.key===selKey?"selected":""}>${r.label}</option>`)].join(""); }
 function buildDayChips(){ document.getElementById("dayChips").innerHTML=DAY_LIST.map(d=>`<span class="chip ${d===selDay?"on":""}" data-d="${d}">${d}</span>`).join(""); }
 document.getElementById("dayChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selDay=c.dataset.d; buildDayChips(); renderDay(); });
@@ -735,17 +742,16 @@ function renderDay(){
   cols.forEach(r=>{
     html+=`<div class="rg-body" style="height:${H}px">`;
     for(let t=START;t<=END;t+=60) html+=`<div class="rg-line" style="top:${(t-START)*PX}px"></div>`;
-    items.filter(it=>it.room===r.key).forEach(it=>{
-      const st=Math.max(it.s.start,START), en=Math.min(it.s.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26), col=SUBJ_COLOR[it.c.subject]||"#e5e7eb";
-      const role=it.roomRole?`<span class="rtype" style="background:#fde68a">${it.roomRole}</span>`:"";
-      html+=`<div class="rblk ${it.conflict?"conflict":""}" style="top:${top}px;height:${h}px;background:${col}"><div class="rt">${esc(it.c.course_name)}</div><div class="rteam">[${esc(it.c.teacher)}T] <span class="rtype">${it.s.type}</span>${role}</div><div class="rteam">${fmt(it.s.start)}~${fmt(it.s.end)}</div></div>`;
+    let blks=items.filter(it=>it.room===r.key).map(it=>({start:it.s.start,end:it.s.end,type:it.s.type,role:it.roomRole,name:it.c.course_name,teacher:it.c.teacher,subj:it.c.subject,conflict:it.conflict,kind:"class"}));
+    if(r.key==="복도") blks=blks.concat(RETESTS.filter(rt=>rt.days.includes(selDay)).map(rt=>({start:rt.start,end:rt.end,name:rt.label,kind:"retest"})));
+    layoutRoom(blks);
+    blks.forEach(b=>{
+      const st=Math.max(b.start,START), en=Math.min(b.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26);
+      const L=(b.lane/b.cols*100), W=(100/b.cols);
+      const pos=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);right:auto`;
+      if(b.kind==="retest") html+=`<div class="rblk" style="${pos};background:#fee2e2;border:1px dashed #f87171"><div class="rt">${esc(b.name)}</div><div class="rteam">재시 ${fmt(b.start)}~${fmt(b.end)}</div></div>`;
+      else { const col=SUBJ_COLOR[b.subj]||"#e5e7eb", role=b.role?`<span class="rtype" style="background:#fde68a">${b.role}</span>`:""; html+=`<div class="rblk ${b.conflict?"conflict":""}" style="${pos};background:${col}"><div class="rt">${esc(b.name)}</div><div class="rteam">[${esc(b.teacher)}T] <span class="rtype">${b.type}</span>${role}</div><div class="rteam">${fmt(b.start)}~${fmt(b.end)}</div></div>`; }
     });
-    if(r.key==="복도"){
-      RETESTS.filter(rt=>rt.days.includes(selDay)).forEach(rt=>{
-        const st=Math.max(rt.start,START), en=Math.min(rt.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26);
-        html+=`<div class="rblk" style="top:${top}px;height:${h}px;background:#fee2e2;border:1px dashed #f87171"><div class="rt">${rt.label}</div><div class="rteam">재시</div><div class="rteam">${fmt(rt.start)}~${fmt(rt.end)}</div></div>`;
-      });
-    }
     html+=`</div>`;
   });
   html+=`</div></div>`;
