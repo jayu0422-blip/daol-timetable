@@ -472,6 +472,7 @@ function rulePrice(c){
   const {division:div,grade,subject:subj,course_type:ctype,teacher,schedule_text:sched}=c; const G=ggf(grade);
   if(ctype==="특강"){
     if(teacher==="유용권"){ const s=parseSess(sched); return {sessions:s,tuition:360000,note:"방학특강 · 기본 360,000원 · 재원생(타과목 포함) 20%할인 시 288,000원"+(s?` · 총 ${s}회`:"")}; }
+    if(teacher==="임결"){ const s=c.sessions; return s?{sessions:s,tuition:s*50000,note:`특강 회당 50,000원 · 총 ${s}회 · [옵션] 온라인강의+현장클리닉 월 100,000원(클리닉 일정 선생님과 소통)`}:{sessions:null,tuition:null,note:"특강 기간·회차·수강료 미정 (강사 확인 대기)"}; }
     if(subj==="국어") return {sessions:4,tuition:290000,note:"국어특강 · 주1회 4회차 기준(방학 4회)"};
     return {sessions:null,tuition:null,note:"특강 기간·회차·수강료 미정 (강사 확인 대기)"};
   }
