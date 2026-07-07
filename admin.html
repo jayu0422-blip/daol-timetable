@@ -401,7 +401,7 @@ function suggest(conf){
 /* ===== 생성 ===== */
 function generate(){
   const courses=selectedCourses().filter(c=>(c.course_name||"").trim() && (c.grade||"").trim());
-  const conf=findConflicts(courses);
+  const conf = preset==="special" ? [] : findConflicts(courses);  // 특강은 택일 수강이라 충돌검사 제외
   renderConflicts(conf);
   const flag=new Set(); conf.forEach(c=>{flag.add(c.a.id);flag.add(c.b.id);});
   renderSheet(courses, flag, titleFor());
