@@ -659,7 +659,7 @@ function renderDay(){
     html+=`<div class="rg-body" style="height:${H}px">`;
     for(let t=START;t<=END;t+=60) html+=`<div class="rg-line" style="top:${(t-START)*PX}px"></div>`;
     items.filter(it=>it.room===r.key).forEach(it=>{
-      const top=(it.s.start-START)*PX, h=Math.max((it.s.end-it.s.start)*PX,26), col=SUBJ_COLOR[it.c.subject]||"#e5e7eb";
+      const st=Math.max(it.s.start,START), en=Math.min(it.s.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26), col=SUBJ_COLOR[it.c.subject]||"#e5e7eb";
       html+=`<div class="rblk ${it.conflict?"conflict":""}" style="top:${top}px;height:${h}px;background:${col}"><div class="rt">${esc(it.c.course_name)}</div><div class="rteam">[${esc(it.c.teacher)}T] <span class="rtype">${it.s.type}</span></div><div class="rteam">${fmt(it.s.start)}~${fmt(it.s.end)}</div></div>`;
     });
     html+=`</div>`;
