@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 이번 달 시간표</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+    --g-중1:#ffe8cc; --g-중2:#ffd8a8; --g-중3:#ffc078; --g-중등공통:#ffec99;
+    --g-고1:#d0ebff; --g-고2:#a5d8ff; --g-고3:#74c0fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto;padding:12px 12px 40px}
+  .bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .filt{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;user-select:none}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chip:hover{border-color:var(--brand)}
+  .stat{margin-left:auto;font-size:12.5px;color:var(--muted)}
+  .sync{font-size:11.5px;color:var(--muted)}
+
+  #sheet{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .sheet-title{text-align:center;font-size:22px;font-weight:800;padding:15px;background:linear-gradient(90deg,#fff7ed,#ffedd5);letter-spacing:-.5px}
+  .sheet-title .yr{color:var(--brand-ink)}
+  .scroll{overflow-x:auto}
+  table.tt{width:100%;border-collapse:collapse;table-layout:fixed;min-width:720px}
+  table.tt th{background:#374151;color:#fff;font-size:12.5px;padding:8px 6px;border:1px solid #4b5563}
+  table.tt td{border:1px solid #e5e7eb;padding:7px 8px;font-size:12px;vertical-align:top;word-break:break-word}
+  table.tt td.grade{font-weight:800;font-size:15px;text-align:center;writing-mode:vertical-lr;white-space:nowrap}
+  table.tt td.subject{font-weight:700;text-align:center;background:#f8fafc}
+  table.tt td.cname{font-weight:700}
+  table.tt td.time{white-space:pre-line;font-size:11.5px}
+  table.tt td.room{font-size:11px;color:#2563eb;white-space:pre-line}
+  .typebadge{display:inline-block;font-size:9.5px;font-weight:800;border-radius:4px;padding:0 4px;margin-left:4px;vertical-align:middle;background:#ede9fe;color:#6d28d9}
+  .col-g{width:40px}.col-s{width:52px}.col-cn{width:26%}.col-tn{width:12%}.col-tm{width:22%}.col-rm{width:14%}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:12px}
+  @media(max-width:640px){ .sheet-title{font-size:18px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="filt" id="filt">
+      <span class="chip on" data-v="전체">전체</span>
+      <span class="chip" data-v="중등">중등</span>
+      <span class="chip" data-v="고등">고등</span>
+      <span class="chip" data-v="미사고">미사고</span>
+      <span class="chip" data-v="미사강변고">미사강변고</span>
+      <span class="chip" data-v="하남고">하남고</span>
+      <span class="chip" data-v="풍산고">풍산고</span>
+      <span class="chip" data-v="특강">특강</span>
+    </div>
+    <span class="stat" id="stat"></span>
+  </div>
+  <div id="sheet"><div class="empty">불러오는 중…</div></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const GRADE_ORDER=["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+const SUBJECT_ORDER=["국어","영어","수학","과학","사회","기타"];
+const HIGH_SCHOOLS=["미사고","미사강변고","하남고","풍산고"];
+const normSchool = s => s==="미강고" ? "미사강변고" : s;
+const divisionOf = g => (g||"").startsWith("중") ? "중등" : "고등";
+const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const gradeColor = g => getComputedStyle(document.documentElement).getPropertyValue("--g-"+(/고3|수능/.test(g)?"고3":g))||"#eee";
+function courseSchool(c){
+  const t=normSchool((c.target_school||"").trim());
+  if(HIGH_SCHOOLS.includes(t)) return t;
+  const n=c.course_name||"";
+  if(/미사강변고|미강고/.test(n)) return "미사강변고";
+  if(/미사고/.test(n)) return "미사고";
+  if(/하남고/.test(n)) return "하남고";
+  if(/풍산고/.test(n)) return "풍산고";
+  return null;
+}
+const cfg=window.DAOL_CONFIG||{};
+const useSupa=!!(cfg.url&&cfg.anonKey&&window.supabase);
+const sb=useSupa?window.supabase.createClient(cfg.url,cfg.anonKey):null;
+let DATA=[], filter="전체";
+
+function monthLabel(){ const d=new Date(); return d.getFullYear()+"년 "+(d.getMonth()+1)+"월"; }
+function roomText(c){ try{ const ov=c.room_overrides||{}; const ks=Object.keys(ov); return ks.length?ks.map(d=>`${d} ${ov[d]}`).join("\n"):""; }catch(e){ return ""; } }
+
+function selected(){
+  const valid=DATA.filter(c=>(c.course_name||"").trim()&&(c.grade||"").trim());
+  if(filter==="전체") return valid;
+  if(filter==="중등") return valid.filter(c=>divisionOf(c.grade)==="중등");
+  if(filter==="고등") return valid.filter(c=>divisionOf(c.grade)==="고등");
+  if(filter==="특강") return valid.filter(c=>c.course_type==="특강");
+  // 특정 고교: 그 학교 전용 + 공통 고등
+  return valid.filter(c=>{ if(divisionOf(c.grade)!=="고등") return false; const cs=courseSchool(c); return !cs||cs===normSchool(filter); });
+}
+
+function render(){
+  const courses=selected();
+  const sheet=document.getElementById("sheet");
+  const title = `<div class="sheet-title"><span class="yr">${monthLabel()}</span> 다올105학원 ${filter==="전체"?"전체":esc(filter)} 시간표</div>`;
+  if(!courses.length){ sheet.innerHTML=title+`<div class="empty">해당 범위에 강좌가 없습니다.</div>`; document.getElementById("stat").textContent="0강좌"; return; }
+  courses.sort((a,b)=>{
+    const g=GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade); if(g) return g;
+    const s=SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject); if(s) return s;
+    return (a.sort_order||0)-(b.sort_order||0);
+  });
+  const byGrade={}; courses.forEach(c=>{(byGrade[c.grade]=byGrade[c.grade]||[]).push(c);});
+  let body="";
+  Object.keys(byGrade).sort((a,b)=>GRADE_ORDER.indexOf(a)-GRADE_ORDER.indexOf(b)).forEach(grade=>{
+    const list=byGrade[grade], gColor=gradeColor(grade);
+    const bySub={}; list.forEach(c=>{(bySub[c.subject]=bySub[c.subject]||[]).push(c);});
+    let gradeFirst=true;
+    Object.keys(bySub).sort((a,b)=>SUBJECT_ORDER.indexOf(a)-SUBJECT_ORDER.indexOf(b)).forEach(sub=>{
+      const scs=bySub[sub]; let subFirst=true;
+      scs.forEach(c=>{
+        body+="<tr>";
+        if(gradeFirst){ body+=`<td class="grade" rowspan="${list.length}" style="background:${gColor}">${esc(grade)}</td>`; gradeFirst=false; }
+        if(subFirst){ body+=`<td class="subject" rowspan="${scs.length}">${esc(sub)}</td>`; subFirst=false; }
+        body+=`<td class="cname">${esc(c.course_name)}${c.course_type==="특강"?'<span class="typebadge">특강</span>':''}</td>`
+          + `<td>${esc(c.teacher)}</td>`
+          + `<td class="time">${esc(c.schedule_text)}</td>`
+          + `<td class="room">${esc(roomText(c))}</td>`
+          + "</tr>";
+      });
+    });
+  });
+  sheet.innerHTML = title + `<div class="scroll"><table class="tt">
+    <colgroup><col class="col-g"><col class="col-s"><col class="col-cn"><col class="col-tn"><col class="col-tm"><col class="col-rm"></colgroup>
+    <thead><tr><th>학년</th><th>과목</th><th>강좌명</th><th>강사</th><th>시간</th><th>강의실</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+  document.getElementById("stat").textContent = `${courses.length}강좌`;
+}
+
+document.getElementById("filt").addEventListener("click",e=>{
+  const c=e.target.closest(".chip"); if(!c) return;
+  document.querySelectorAll("#filt .chip").forEach(x=>x.classList.remove("on")); c.classList.add("on");
+  filter=c.dataset.v; render();
+});
+
+async function load(){
+  if(!useSupa){ document.getElementById("sheet").innerHTML='<div class="empty">연결이 필요합니다. 잠시 후 새로고침 해주세요.</div>'; return; }
+  const {data}=await sb.from("courses").select("*");
+  DATA=data||[]; render();
+  document.getElementById("foot").textContent = `실시간 연동(Supabase) · 강사가 입력하면 자동 반영됩니다 · ${new Date().toLocaleString("ko-KR")} 기준`;
+}
+if(useSupa){ sb.channel("board").on("postgres_changes",{event:"*",schema:"public",table:"courses"},load).subscribe(); }
+load();
+</script>
+</body>
+</html>

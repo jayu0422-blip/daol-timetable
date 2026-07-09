@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 내 시간표</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#10b981; --info:#2563eb;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+    --g-중1:#ffe8cc; --g-중2:#ffd8a8; --g-중3:#ffc078; --g-중등공통:#ffec99;
+    --g-고1:#d0ebff; --g-고2:#a5d8ff; --g-고3:#74c0fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 14px 40px}
+  .hero{background:linear-gradient(135deg,#b45309,#f59e0b);color:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 10px 26px rgba(180,83,9,.25)}
+  .hero .kick{font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.9}
+  .hero h1{font-size:22px;font-weight:800;margin:5px 0 2px}
+  .hero .sub{font-size:13px;opacity:.94}
+  .sec-t{font-size:15px;font-weight:800;margin:22px 4px 10px;display:flex;align-items:center;gap:7px}
+  .sec-t .cnt{font-size:12px;font-weight:700;color:var(--muted)}
+
+  .course{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;margin-bottom:11px}
+  .course .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .cname{font-weight:800;font-size:15.5px}
+  .pill{font-size:11px;font-weight:700;border-radius:7px;padding:2px 9px}
+  .pill.중등{background:#dcfce7;color:#166534}.pill.고등{background:#ffedd5;color:#9a3412}
+  .pill.special{background:#ede9fe;color:#6d28d9}
+  .gband{font-size:11px;font-weight:800;border-radius:7px;padding:2px 9px}
+  .sched{white-space:pre-line;font-size:13.5px;color:#374151;background:#f8fafc;border-radius:9px;padding:8px 11px;margin-top:4px}
+  .room{font-size:12px;color:var(--info);margin-top:6px}
+  .cmeta{font-size:12.5px;color:var(--muted);white-space:pre-line;margin-top:7px;line-height:1.5}
+
+  table.fee{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  table.fee th,table.fee td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:13px;text-align:left;vertical-align:top}
+  table.fee th{background:#f8fafc;font-size:11.5px;color:var(--muted)}
+  table.fee td.num{text-align:right;font-weight:800;white-space:nowrap}
+  table.fee td.note{color:var(--muted);font-size:11.5px}
+  .feefoot{font-size:11.5px;color:var(--muted);margin:8px 4px 0}
+
+  .actions{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(244,246,249,0),var(--bg) 30%);padding:16px 0 6px;margin-top:22px;display:flex;gap:9px}
+  .btn{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;text-align:center;text-decoration:none;color:var(--ink)}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn.ghost{background:#fff}
+  .note{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+  .foot{text-align:center;font-size:11.5px;color:var(--muted);margin-top:24px}
+  .center{max-width:460px;margin:80px auto;text-align:center}
+  .center .ic{font-size:40px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="center"><div class="ic">⏳</div><h2>불러오는 중…</h2></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="prices.js"></script>
+<script>
+const divisionOf = g => (g||"").startsWith("중") ? "중등" : "고등";
+const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const cfg = window.DAOL_CONFIG||{};
+const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
+const sb = useSupa ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
+const token = new URLSearchParams(location.search).get("t")||"";
+const P = window.DaolPrice;
+
+function screen(ic,title,desc){
+  document.getElementById("app").innerHTML =
+    `<div class="center"><div class="ic">${ic}</div><h2>${title}</h2><p style="color:#6b7280">${desc}</p></div>`;
+}
+function monthLabel(){ const d=new Date(); return d.getFullYear()+"년 "+(d.getMonth()+1)+"월"; }
+
+async function main(){
+  if(!useSupa){ screen("📶","연결이 필요합니다","잠시 후 새로고침 해주세요."); return; }
+  let me;
+  try{
+    const {data,error} = await sb.from("teachers").select("name,subject").eq("token",token).limit(1);
+    if(error || !data || !data.length){ screen("🔒","유효하지 않은 링크","담당자에게 본인 전용 링크를 다시 요청해 주세요."); return; }
+    me = data[0];
+  }catch(e){ screen("📶","연결이 불안정합니다","인터넷을 확인하고 새로고침 해주세요."); return; }
+
+  const {data:courses} = await sb.from("courses").select("*").eq("teacher",me.name).order("sort_order");
+  render(me, (courses||[]));
+}
+
+function render(me, courses){
+  const valid = courses.filter(c=>(c.course_name||"").trim());
+  // 시간표 카드
+  const cards = valid.map(c=>{
+    const div = c.division || divisionOf(c.grade);
+    const isSp = c.course_type==="특강";
+    const gc = getComputedStyle(document.documentElement).getPropertyValue("--g-"+(/고3|수능/.test(c.grade)?"고3":c.grade))||"#eee";
+    let rooms="";
+    try{ const ov=c.room_overrides||{}; const ks=Object.keys(ov); if(ks.length) rooms = ks.map(d=>`${d} ${ov[d]}`).join(" · "); }catch(e){}
+    const meta = [c.audience && ("👥 "+c.audience.trim()), c.content && ("📘 "+c.content.trim())].filter(Boolean).join("\n");
+    return `<div class="course">
+      <div class="top">
+        <span class="cname">${esc(c.course_name)}</span>
+        ${isSp?`<span class="pill special">특강</span>`:`<span class="pill ${div}">${div}</span>`}
+        ${c.grade?`<span class="gband" style="background:${gc}">${esc(c.grade)}</span>`:""}
+        ${c.subject?`<span class="gband" style="background:#eef2ff;color:#3730a3">${esc(c.subject)}</span>`:""}
+      </div>
+      ${c.schedule_text?`<div class="sched">🕐 ${esc(c.schedule_text)}</div>`:""}
+      ${rooms?`<div class="room">📍 ${esc(rooms)}</div>`:""}
+      ${meta?`<div class="cmeta">${esc(meta)}</div>`:""}
+    </div>`;
+  }).join("") || `<div class="course" style="text-align:center;color:#6b7280">등록된 강좌가 없습니다.</div>`;
+
+  // 수강료 표
+  const feeRows = valid.map(c=>{
+    const f = P.display(c);
+    return `<tr>
+      <td><b>${esc(c.course_name)}</b><div style="font-size:11px;color:#9ca3af">${esc([c.grade,c.subject].filter(Boolean).join(" · "))}</div></td>
+      <td style="text-align:center">${f.sessions?f.sessions+"회":"—"}</td>
+      <td class="num">${f.tuition!=null?P.won(f.tuition)+"원":"미정"}</td>
+      <td class="note">${esc(f.note||"")}</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="hero">
+      <div class="kick">다올105 · ${monthLabel()} 시간표</div>
+      <h1>${esc(me.name)} 선생님</h1>
+      <div class="sub">담당 ${valid.length}개 강좌 · ${esc(me.subject||"")}</div>
+    </div>
+
+    <div class="sec-t">🗓️ 내 시간표 <span class="cnt">${valid.length}강좌</span></div>
+    ${cards}
+
+    <div class="sec-t">💰 강좌별 수강료 <span class="cnt">학생 납부 기준</span></div>
+    <table class="fee">
+      <thead><tr><th>강좌</th><th style="text-align:center">회차</th><th style="text-align:right">수강료</th><th>비고</th></tr></thead>
+      <tbody>${feeRows}</tbody>
+    </table>
+    <div class="feefoot">※ 수강료는 학생이 납부하는 금액 기준입니다(강사 정산과 별개). 회차제는 실제 진행 회차에 따라 조정됩니다.</div>
+
+    <div class="actions">
+      <button class="btn ok" id="keepBtn">✅ 이대로 유지</button>
+      <a class="btn ghost" href="input.html?t=${encodeURIComponent(token)}">✏️ 수정하기</a>
+    </div>
+    <div class="note" id="keepNote">변경이 없으면 <b>‘이대로 유지’</b> 한 번만 눌러주세요. 수정할 게 있으면 ‘수정하기’.</div>
+
+    <div class="foot">다올105 학원 · 문의 0507-1399-8155</div>`;
+
+  document.getElementById("keepBtn").addEventListener("click", async ()=>{
+    const btn=document.getElementById("keepBtn"); btn.textContent="저장 중…"; btn.disabled=true;
+    try{
+      await sb.from("teachers").upsert({name:me.name, submitted_at:new Date().toISOString(), course_count:valid.length},{onConflict:"name"});
+      btn.textContent="✅ 확인 완료";
+      document.getElementById("keepNote").innerHTML="<b style='color:#10b981'>이번 달 시간표를 그대로 확정했습니다. 감사합니다!</b>";
+    }catch(e){ btn.textContent="✅ 이대로 유지"; btn.disabled=false; document.getElementById("keepNote").textContent="저장 오류 — 다시 시도해 주세요."; }
+  });
+}
+main();
+</script>
+</body>
+</html>
