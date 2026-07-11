@@ -13,10 +13,29 @@ create table if not exists public.bookings (
   grade          text,
   subjects       text,
   level_test_min int,
+  -- 상담원서(구 탈리 항목)
+  birth          date,
+  gender         text,
+  address        text,
+  other_academy  text,
+  reason         text,
+  target_school  text,
+  consent        boolean default false,   -- 개인정보 수집·이용 동의
+  signature      text,                    -- 서명 이미지(data URL)
   status         text default '신규',
   synced         boolean default false,   -- 워처가 노션 등록·원장SMS 후 true
   created_at     timestamptz default now()
 );
+
+-- (이미 테이블을 만든 뒤 다시 실행하는 경우를 위한 컬럼 보강 — 신규 실행이면 무해)
+alter table public.bookings add column if not exists birth date;
+alter table public.bookings add column if not exists gender text;
+alter table public.bookings add column if not exists address text;
+alter table public.bookings add column if not exists other_academy text;
+alter table public.bookings add column if not exists reason text;
+alter table public.bookings add column if not exists target_school text;
+alter table public.bookings add column if not exists consent boolean default false;
+alter table public.bookings add column if not exists signature text;
 
 -- 슬롯 중복예약 방지(같은 날짜·시각 1건)
 create unique index if not exists bookings_slot_uniq on public.bookings (slot_date, slot_time);
