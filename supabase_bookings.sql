@@ -54,5 +54,27 @@ grant usage on schema public to anon;
 grant insert on public.bookings to anon;
 grant select on public.booked_slots to anon;
 
+-- ============================================================
+-- 상담전 학생정보 입력(student.html) 저장 — 성적·타학원 이력 (탈리 obA70O 대체)
+-- ============================================================
+create table if not exists public.student_info (
+  id               uuid primary key default gen_random_uuid(),
+  student_name     text,
+  phone            text,
+  grade            text,
+  other_academy    text,
+  scores           jsonb,        -- {"중학교 3학년 1학기": {"국어":"A","수학":"B"}, ...}
+  elective_social  text,         -- 사탐 선택(고2·3)
+  elective_science text,         -- 과탐 선택(고2·3)
+  consent          boolean default false,
+  synced           boolean default false,
+  created_at       timestamptz default now()
+);
+alter table public.student_info enable row level security;
+drop policy if exists student_info_ins on public.student_info;
+create policy student_info_ins on public.student_info for insert with check (true);
+-- (select 정책 없음 = anon은 못 읽음, PII 보호. 워처는 service_role로 읽음)
+grant insert on public.student_info to anon;
+
 -- 워처(PC, service_role)가 읽어 노션 등록 → 실시간 반영은 아래로 구독 가능
 alter publication supabase_realtime add table public.bookings;

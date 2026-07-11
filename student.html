@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>다올105 학생 정보 입력</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#161b26;--sub:#4f5967;--faint:#8b95a4;--line:#e4e8ef;--bg:#f5f7fa;--card:#fff;
+    --brand:#2f6df0;--brand-ink:#1c46b8;--brand-soft:#e8f0fe;--ok:#0e9f6e;--shadow:0 1px 3px rgba(20,26,44,.07);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:22px 18px 70px}
+  .hero{background:linear-gradient(135deg,#12235e,#2f6df0);color:#fff;border-radius:18px;padding:22px 26px;box-shadow:0 10px 28px rgba(18,35,94,.25);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .hero h1{font-size:22px;font-weight:800;margin:0}
+  .hero p{font-size:13px;margin:2px 0 0;opacity:.92}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:18px 20px;margin-top:16px}
+  .lab{font-size:13px;font-weight:800;color:var(--sub);margin:0 0 10px;display:flex;align-items:center;gap:7px}
+  .lab .n{width:21px;height:21px;border-radius:6px;background:var(--brand);color:#fff;font-size:12px;display:grid;place-items:center;flex:none}
+  .fl{font-size:12px;font-weight:700;color:var(--sub);margin:8px 0 4px}
+  .fl .req{color:#e0484d}
+  .hint{font-size:12px;color:var(--faint)}
+  input,select,textarea{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink);width:100%}
+  textarea{min-height:90px;resize:vertical;line-height:1.55}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(47,109,240,.14)}
+  .row3{display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:12px}
+  /* 성적 그리드 (데스크탑 표) */
+  .sem{margin-top:16px}
+  .sem h3{font-size:14.5px;font-weight:800;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .sem h3 .tagx{font-size:11px;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);border-radius:7px;padding:2px 8px}
+  table.gr{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  table.gr th,table.gr td{border:1px solid var(--line);padding:9px 8px;text-align:center;font-size:13.5px}
+  table.gr th{background:#f7f9fc;font-weight:800}
+  table.gr td.subj{font-weight:800;background:#fbfcfe;width:120px}
+  table.gr td label{display:block;cursor:pointer;padding:2px 0}
+  table.gr input[type=radio]{width:17px;height:17px;cursor:pointer;accent-color:var(--brand)}
+  .elect{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .empty-note{color:var(--faint);font-size:12.5px;margin-top:8px}
+  /* 동의 */
+  details.priv{border:1px solid var(--line);border-radius:10px;padding:12px 15px;font-size:12.5px;color:var(--sub);background:#fafbfd}
+  details.priv summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px}
+  details.priv ul{margin:8px 0 2px;padding-left:18px;line-height:1.7}
+  .agree{display:flex;gap:9px;align-items:flex-start;margin-top:12px;font-size:14px;cursor:pointer}
+  .agree input{width:18px;height:18px;margin-top:2px;flex:none}
+  .btn{width:100%;max-width:420px;display:block;margin:20px auto 0;border:none;background:var(--brand);color:#fff;font:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:13px;cursor:pointer}
+  .btn:disabled{background:#c2c8d2;cursor:not-allowed}
+  .miss{font-size:12.5px;color:#e0484d;text-align:center;margin-top:8px;min-height:16px}
+  .foot{text-align:center;font-size:12px;color:var(--faint);margin-top:22px}
+  .center{max-width:520px;margin:80px auto;text-align:center}
+  .center .ic{font-size:46px}
+  @media(max-width:720px){ .row3{grid-template-columns:1fr} .elect{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="hero">
+    <div style="font-size:34px">📝</div>
+    <div>
+      <h1>다올105 신규 학생 정보 입력</h1>
+      <p>상담 전, 학생의 성적과 학원 이력을 입력해 주세요. 시험을 보지 않은 학기는 비워두시면 됩니다.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lab"><span class="n">1</span> 학생 기본 정보</div>
+    <div class="row3">
+      <div>
+        <div class="fl">학생 이름 <span class="req">*</span></div>
+        <input id="name" placeholder="학생 이름"/>
+      </div>
+      <div>
+        <div class="fl">학생(또는 학부모) 연락처 <span class="req">*</span></div>
+        <input id="phone" inputmode="numeric" placeholder="010-1234-1234"/>
+      </div>
+      <div>
+        <div class="fl">현재 학년 <span class="req">*</span></div>
+        <select id="grade">
+          <option value="">선택</option>
+          <option>중2</option><option>중3</option>
+          <option>고1</option><option>고2</option><option>고3</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lab"><span class="n">2</span> 타 학원 현황 <span style="color:#e0484d">*</span></div>
+    <textarea id="academy" placeholder="과목 - 학원명으로 모두 입력해주세요 (마지막까지 다닌 학원 기준)&#10;예시&#10;1. 국어 - 다올105&#10;2. 영어 - 미사영어학원&#10;(다닌 학원이 없으면 '없음')"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lab"><span class="n">3</span> 학교 성적 입력</div>
+    <div class="hint" id="gradeHint">위에서 학년을 선택하면 학기별 성적표가 나타납니다.</div>
+    <div id="grids"></div>
+  </div>
+
+  <div class="card">
+    <div class="lab"><span class="n">4</span> 개인정보 동의</div>
+    <details class="priv">
+      <summary>개인정보 수집·이용 안내 (눌러서 보기)</summary>
+      <p style="margin:8px 0 2px">다올 105학원(이하 '학원')은 상담 신청 접수 및 처리를 위해 아래와 같이 개인정보를 수집·이용합니다.</p>
+      <ul>
+        <li><b>수집·이용 목적:</b> 상담 신청 접수·처리, 상담 일정 조율, 상담 결과 안내, 학원 운영 교육 콘텐츠(설명회 영상, 수업 영상, 학원 이벤트 영상 등) 정보 안내</li>
+        <li><b>수집 항목:</b> 학생 성명, 학교·학년, 연락처(휴대폰 번호), 학교 성적, 타 학원 이력</li>
+        <li><b>보유 및 이용 기간:</b> 수집일로부터 3년 (이후 지체 없이 파기. 상담 후 등록으로 이어지지 않을 경우 요청 시 즉시 폐기)</li>
+        <li><b>동의 거부 권리 안내:</b> 위 동의를 거부할 권리가 있으며, 동의를 거부하실 경우 상담 신청 접수가 불가합니다.</li>
+      </ul>
+      <p style="margin:6px 0 2px">※ 수집된 정보는 위 목적 외에 사용되지 않으며, 수업 권유 등 영리목적의 광고성 정보 전송에는 활용되지 않습니다.</p>
+    </details>
+    <label class="agree"><input type="checkbox" id="agree"/>
+      <span>본인은 상기 내용을 확인하였으며, 본원 <b>개인정보 수집·이용 활용 내용에 동의</b>합니다. <span class="req" style="color:#e0484d">*</span></span></label>
+  </div>
+
+  <button class="btn" id="submit" disabled>제출하기</button>
+  <div class="miss" id="miss"></div>
+  <div class="foot">다올105 학원 · 문의 0507-1399-8155</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ===== 성적 그리드 정의 (탈리 obA70O 구조 그대로) ===== */
+const MID_SUBJ = ["국어","영어","수학","과학"];
+const MID_SCALE = ["A","B","C","D","E이하"];
+const HIGH1_SUBJ = ["국어","영어","수학","통합과학","통합사회","한국사"];
+const HIGH_SUBJ  = ["국어","영어","수학","한국사"];
+const HIGH_SCALE = ["1","2","3","4","5"];
+// 학년별 학기 구성: [라벨, 과목셋, 등급셋]
+const PLANS = {
+  "중2": [["중학교 1학년 2학기",MID_SUBJ,MID_SCALE],["중학교 2학년 1학기",MID_SUBJ,MID_SCALE],["중학교 2학년 2학기",MID_SUBJ,MID_SCALE]],
+  "중3": [["중학교 1학년 2학기",MID_SUBJ,MID_SCALE],["중학교 2학년 1학기",MID_SUBJ,MID_SCALE],["중학교 2학년 2학기",MID_SUBJ,MID_SCALE],["중학교 3학년 1학기",MID_SUBJ,MID_SCALE],["중학교 3학년 2학기",MID_SUBJ,MID_SCALE]],
+  "고1": [["고등학교 1학년 1학기",HIGH1_SUBJ,HIGH_SCALE],["고등학교 1학년 2학기",HIGH1_SUBJ,HIGH_SCALE]],
+  "고2": [["고등학교 1학년 1학기",HIGH1_SUBJ,HIGH_SCALE],["고등학교 1학년 2학기",HIGH1_SUBJ,HIGH_SCALE],["고등학교 2학년 1학기",HIGH_SUBJ,HIGH_SCALE],["고등학교 2학년 2학기",HIGH_SUBJ,HIGH_SCALE]],
+  "고3": [["고등학교 1학년 1학기",HIGH1_SUBJ,HIGH_SCALE],["고등학교 1학년 2학기",HIGH1_SUBJ,HIGH_SCALE],["고등학교 2학년 1학기",HIGH_SUBJ,HIGH_SCALE],["고등학교 2학년 2학기",HIGH_SUBJ,HIGH_SCALE],["고등학교 3학년 1학기",HIGH_SUBJ,HIGH_SCALE]],
+};
+const NEED_ELECT = g => g==="고2"||g==="고3";   // 사탐/과탐 선택과목 입력
+
+const cfg = window.DAOL_CONFIG||{};
+const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
+const sb = useSupa ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+function renderGrids(){
+  const g=$("grade").value, box=$("grids");
+  const plan=PLANS[g];
+  if(!plan){ box.innerHTML=""; $("gradeHint").style.display="block"; updateBtn(); return; }
+  $("gradeHint").style.display="none";
+  let html="";
+  plan.forEach(([sem,subjects,scale],si)=>{
+    html+=`<div class="sem"><h3>${esc(sem)} <span class="tagx">${scale[0]==="A"?"A~E":"1~5등급"}</span></h3>
+      <div style="overflow-x:auto"><table class="gr"><thead><tr><th style="width:120px">과목</th>${scale.map(s=>`<th>${esc(s)}</th>`).join("")}</tr></thead><tbody>`;
+    subjects.forEach(subj=>{
+      const nm=`s${si}|${subj}`;
+      html+=`<tr><td class="subj">${esc(subj)}</td>${scale.map(sc=>
+        `<td><label><input type="radio" name="${esc(nm)}" value="${esc(sc)}" data-sem="${esc(sem)}" data-subj="${esc(subj)}"></label></td>`).join("")}</tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  });
+  if(NEED_ELECT(g)){
+    html+=`<div class="elect">
+      <div><div class="fl">사탐 선택 (과목명)</div><input id="electSoc" placeholder="예: 사회문화, 생활과윤리"/></div>
+      <div><div class="fl">과탐 선택 (과목명)</div><input id="electSci" placeholder="예: 물리학, 화학"/></div>
+    </div>`;
+  }
+  html+=`<div class="empty-note">※ 아직 시험을 보지 않았거나 성적이 없는 학기·과목은 비워두시면 됩니다.</div>`;
+  box.innerHTML=html;
+  updateBtn();
+}
+$("grade").addEventListener("change",renderGrids);
+
+function collectScores(){
+  const out={};
+  document.querySelectorAll('#grids input[type=radio]:checked').forEach(r=>{
+    const sem=r.dataset.sem, subj=r.dataset.subj;
+    (out[sem]=out[sem]||{})[subj]=r.value;
+  });
+  return out;
+}
+
+function missing(){
+  const m=[];
+  if(!$("name").value.trim()) m.push("학생 이름");
+  if(!/^01\d{8,9}$/.test($("phone").value.replace(/\D/g,""))) m.push("연락처");
+  if(!$("grade").value) m.push("현재 학년");
+  if(!$("academy").value.trim()) m.push("타 학원 현황");
+  if(!$("agree").checked) m.push("개인정보 동의");
+  return m;
+}
+function updateBtn(){
+  const m=missing();
+  $("submit").disabled=m.length>0;
+  $("miss").textContent=(m.length&&m.length<=4)?"남은 항목: "+m.join(", "):"";
+}
+["name","phone","academy"].forEach(id=>$(id).addEventListener("input",updateBtn));
+$("agree").addEventListener("change",updateBtn);
+
+$("submit").addEventListener("click",async()=>{
+  const btn=$("submit"); btn.disabled=true; btn.textContent="제출 중…";
+  const rec={
+    student_name:$("name").value.trim(), phone:$("phone").value.replace(/\D/g,""),
+    grade:$("grade").value, other_academy:$("academy").value.trim(),
+    scores:collectScores(),
+    elective_social:($("electSoc")?$("electSoc").value.trim():""),
+    elective_science:($("electSci")?$("electSci").value.trim():""),
+    consent:true };
+  try{
+    if(useSupa){
+      const {error}=await sb.from("student_info").insert(rec);
+      if(error) throw error;
+    }
+    document.getElementById("app").innerHTML =
+      `<div class="center"><div class="ic">✅</div><h2>${esc(rec.student_name)} 학생의 정보가 제출되었습니다</h2>
+       <p style="color:#4f5967">소중한 정보를 기입해주셔서 감사합니다.<br>기재해주신 성적·학원 이력은 학생에게 맞는 <b>시간표·커리큘럼 구성</b>에 소중한 자료가 됩니다.</p>
+       <p style="color:#8b95a4;font-size:13px">※ 상담 후 등록으로 이어지지 않을 경우, 기입하신 정보는 즉시 폐기됩니다.</p>
+       <p style="font-weight:800">다올105학원 대표원장 드림 🙏</p></div>`;
+    window.scrollTo(0,0);
+  }catch(e){
+    alert("제출 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.");
+    btn.disabled=false; btn.textContent="제출하기"; updateBtn();
+  }
+});
+updateBtn();
+</script>
+</body>
+</html>
