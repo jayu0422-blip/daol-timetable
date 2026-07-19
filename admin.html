@@ -547,11 +547,18 @@ function feeMonthYM(){ const v=(document.getElementById("feeMonth")||{}).value||
 function countInMonth(y,m0,dayChars){ const map={"일":0,"월":1,"화":2,"수":3,"목":4,"금":5,"토":6}; const want=new Set(dayChars.map(d=>map[d])); let n=0; const d=new Date(y,m0,1); while(d.getMonth()===m0){ if(want.has(d.getDay())) n++; d.setDate(d.getDate()+1); } return n; }
 function regularDays(c){ const p=parseDayTimes(c.schedule_text); const s=new Set(); p.sessions.forEach(x=>{ if(x.type==="정규"||x.type==="직보") s.add(x.day); }); return [...s]; }
 function monthlyBill(c,y,m0){
-  if(c.course_type==="특강"){ return {sess:c.sessions, amount:c.tuition, note:"특강 전체(미납분)"}; }
-  if(c.division==="중등"){ return {sess:null, amount:c.tuition, note:"월정액"}; }
+  if(c.course_type==="특강"){ return {sess:c.sessions, amount:c.tuition}; }   // 특강 전체(1회성·미납분)
+  if(c.division==="중등"){ return {sess:null, amount:c.tuition}; }            // 월정액(회차 무관)
   const days=regularDays(c), sess=days.length?countInMonth(y,m0,days):null;
-  const base=c.tuition, baseSess=c.sessions; let amount=base;
-  if(base!=null&&baseSess&&sess!=null){ amount = sess>=baseSess ? base : base-Math.round(base/baseSess)*(baseSess-sess); }
+  const base=c.tuition, baseSess=c.sessions;
+  if(base==null||!baseSess||sess==null) return {sess, amount:base};
+  const ps=Math.round(base/baseSess);                    // 회차당 단가
+  let amount;
+  if(c.subject==="수학"){ amount=Math.min(base, sess*ps); }   // 수학: 기준 초과 시 동일(상한), 미달 시 비례 차감
+  else {                                                       // 국어·영어: 회차당 정산(초과 시 증가)
+    amount=sess*ps;
+    if(c.subject==="영어" && ggf(c.grade)==="고3") amount=Math.min(amount,450000);  // 영어 고3 최대 45만
+  }
   return {sess, amount};
 }
 function renderFee(){
