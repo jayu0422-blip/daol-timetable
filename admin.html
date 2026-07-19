@@ -547,7 +547,10 @@ function feeMonthYM(){ const v=(document.getElementById("feeMonth")||{}).value||
 function countInMonth(y,m0,dayChars){ const map={"일":0,"월":1,"화":2,"수":3,"목":4,"금":5,"토":6}; const want=new Set(dayChars.map(d=>map[d])); let n=0; const d=new Date(y,m0,1); while(d.getMonth()===m0){ if(want.has(d.getDay())) n++; d.setDate(d.getDate()+1); } return n; }
 function regularDays(c){ const p=parseDayTimes(c.schedule_text); const s=new Set(); p.sessions.forEach(x=>{ if(x.type==="정규"||x.type==="직보") s.add(x.day); }); return [...s]; }
 function monthlyBill(c,y,m0){
-  if(c.course_type==="특강"){ return {sess:c.sessions, amount:c.tuition}; }   // 특강 전체(1회성·미납분)
+  if(c.course_type==="특강"){                                                 // 특강 전체(1회성·미납분)
+    const disc = /재원생/.test(c.tuition_note||"") && /20\s*%|할인/.test(c.tuition_note||"");  // 재원생 20%할인 특강(유용권 등) → 할인가 청구
+    return {sess:c.sessions, amount:(c.tuition!=null&&disc)?Math.round(c.tuition*0.8):c.tuition, disc};
+  }
   if(c.division==="중등"){ return {sess:null, amount:c.tuition}; }            // 월정액(회차 무관)
   const days=regularDays(c), sess=days.length?countInMonth(y,m0,days):null;
   const base=c.tuition, baseSess=c.sessions;
@@ -585,7 +588,7 @@ function renderFee(){
       <td><input type="number" class="fee-in" data-k="sessions" value="${c.sessions??""}" style="width:56px" ${midReg?'disabled':''}></td>
       <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="tuition" value="${won(c.tuition)}" style="width:108px"></td>
       <td style="text-align:center;font-weight:700">${mb.sess!=null?mb.sess:(c.division==="중등"?"월":"—")}</td>
-      <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}</td>
+      <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}${mb.disc?`<br><span style="font-size:10px;color:#059669;font-weight:700">재원생 20%↓</span>`:""}</td>
       <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:200px"></td>
     </tr>`;
   }).join("");
