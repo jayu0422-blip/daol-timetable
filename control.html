@@ -128,6 +128,8 @@ let ROSTER = [];        // [{name,subject}]
 let filterTeacher = "전체";
 let searchQ = "";
 const saveTimer = {};
+let localWriteUntil = 0;                 // 이 시각 전까지는 실시간 이벤트를 '내 저장의 메아리'로 보고 무시
+const markLocalWrite = () => { localWriteUntil = Date.now() + 6000; };
 
 function setStat(msg,cls){ const el=document.getElementById("saveStat"); el.textContent=msg; el.style.color = cls==="ok"?"var(--ok)":cls==="err"?"var(--danger)":"var(--muted)"; }
 
@@ -225,7 +227,9 @@ function patchRow(id, patch){
   saveTimer[id]=setTimeout(async()=>{
     const p = pendingPatch[id]||{}; delete pendingPatch[id];
     if(!useSupa){ setStat("저장됨 ✓ (데모)","ok"); return; }
+    markLocalWrite();
     const {error}=await sb.from("courses").update(p).eq("id",id);
+    markLocalWrite();
     setStat(error?("저장 오류: "+error.message):"저장됨 ✓", error?"err":"ok");
   },500);
 }
@@ -242,7 +246,9 @@ function fullPayload(c){
 }
 async function upsertRow(c){
   if(!useSupa){ setStat("추가됨 (데모)","ok"); return; }
+  markLocalWrite();
   const {error}=await sb.from("courses").upsert(fullPayload(c),{onConflict:"id"});
+  markLocalWrite();
   setStat(error?("저장 오류: "+error.message):"저장됨 ✓", error?"err":"ok");
 }
 
@@ -281,7 +287,7 @@ document.getElementById("body").addEventListener("click", e=>{
     if(!confirm(`"${c.teacher||""} · ${c.course_name||"(무제)"}" 강좌를 삭제할까요?\n삭제하면 시간표·수강료에서도 사라집니다.`)) return;
     DATA = DATA.filter(x=>x.id!==id);
     render();
-    if(useSupa) sb.from("courses").delete().eq("id",id).then(({error})=>setStat(error?("삭제 오류: "+error.message):"삭제됨 ✓", error?"err":"ok"));
+    if(useSupa){ markLocalWrite(); sb.from("courses").delete().eq("id",id).then(({error})=>{ markLocalWrite(); setStat(error?("삭제 오류: "+error.message):"삭제됨 ✓", error?"err":"ok"); }); }
     else setStat("삭제됨 (데모)","ok");
   }
 });
@@ -314,9 +320,10 @@ document.getElementById("reloadBtn").addEventListener("click", loadData);
 if(useSupa){
   sb.channel("control-courses")
     .on("postgres_changes",{event:"*",schema:"public",table:"courses"},()=>{
+      if(Date.now() < localWriteUntil) return;                  // 내 저장의 메아리 → 무시
       const active=document.activeElement;
       const editing = active && active.closest && active.closest("#body");
-      if(editing){ setStat("다른 곳에서 변경됨 — 편집 끝나면 ↻ 새로고침","err"); return; }
+      if(editing){ setStat("다른 기기에서 변경됨 — 편집 끝나면 ↻ 새로고침","err"); return; }
       loadData();
     }).subscribe();
 }
