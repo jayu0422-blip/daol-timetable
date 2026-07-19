@@ -191,7 +191,7 @@
     </div>
     <div class="panel" style="padding:0;overflow:auto">
       <table class="dash" id="feeTable">
-        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:64px">기준회차</th><th style="width:110px">기준수강료</th><th style="width:60px" id="thMonSess">회차</th><th style="width:120px" id="thMonAmt">청구액</th><th>비고</th></tr></thead>
+        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:64px">기준회차</th><th style="width:110px">기준수강료</th><th style="width:60px" id="thMonSess">회차</th><th style="width:120px" id="thMonAmt">청구액</th><th style="width:90px">📚교재비</th><th>비고</th></tr></thead>
         <tbody id="feeBody"></tbody>
       </table>
     </div>
@@ -576,12 +576,12 @@ function renderFee(){
   const {y,m0,m}=feeMonthYM();
   const thS=document.getElementById("thMonSess"), thA=document.getElementById("thMonAmt");
   if(thS) thS.textContent=`${m}월 회차`; if(thA) thA.textContent=`${m}월 청구액`;
-  let monthTotal=0;
+  let monthTotal=0, matTotal=0;
   document.getElementById("feeBody").innerHTML=rows.map(c=>{
     const r=rulePrice(c); c._base=r.base??null; c._baseSess=r.baseSess??null;
     const cat=c.course_type==="특강"?"특강":(c.division==="중등"?"월":"회차");
     const midReg=(c.division==="중등"&&c.course_type!=="특강");
-    const mb=monthlyBill(c,y,m0); monthTotal+=(mb.amount||0);
+    const mb=monthlyBill(c,y,m0); monthTotal+=(mb.amount||0); matTotal+=(c.material_fee||0);
     return `<tr data-id="${c.id}">
       <td><b>${esc(c.teacher)}</b></td><td>${cat}</td><td>${esc(c.grade||"")}</td><td>${esc(c.subject||"")}</td>
       <td>${esc(c.course_name||"")}</td>
@@ -589,12 +589,13 @@ function renderFee(){
       <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="tuition" value="${won(c.tuition)}" style="width:108px"></td>
       <td style="text-align:center;font-weight:700">${mb.sess!=null?mb.sess:(c.division==="중등"?"월":"—")}</td>
       <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}${mb.disc?`<br><span style="font-size:10px;color:#059669;font-weight:700">재원생 20%↓</span>`:""}</td>
-      <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:200px"></td>
+      <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="material_fee" value="${won(c.material_fee)}" style="width:78px" placeholder="0"></td>
+      <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:180px"></td>
     </tr>`;
   }).join("");
   const sub=rows.reduce((a,c)=>a+(c.tuition||0),0);
   document.getElementById("feeStat").textContent=`${feeTeacher==="전체"?"전체 합계":feeTeacher+" 소계"}(기준) ${won(sub)}원 · ${rows.length}강좌`;
-  document.getElementById("feeMonthTotal").textContent=`${m}월 청구 합계: ${won(monthTotal)}원`;
+  document.getElementById("feeMonthTotal").textContent=`${m}월 · 수강료 ${won(monthTotal)}원 + 교재비 ${won(matTotal)}원 = 합 ${won(monthTotal+matTotal)}원 (1인 기준)`;
 }
 document.getElementById("feeMonth").addEventListener("change",renderFee);
 document.getElementById("feeTeacherChips").addEventListener("click",e=>{
@@ -608,6 +609,7 @@ document.getElementById("feeBody").addEventListener("input",e=>{
     if(r.base!=null&&r.baseSess!=null){ const t=prorate(r.base,r.baseSess,v); patch.tuition=t; tr.querySelector('[data-k=tuition]').value=won(t); }
     feeSave(id,patch);
   } else if(k==="tuition"){ const n=String(inp.value).replace(/[^0-9]/g,""); feeSave(id,{tuition:n===""?null:+n}); }
+  else if(k==="material_fee"){ const n=String(inp.value).replace(/[^0-9]/g,""); if(c) c.material_fee=(n===""?null:+n); feeSave(id,{material_fee:n===""?null:+n}); }
   else if(k==="note"){ feeSave(id,{tuition_note:inp.value}); }
 });
 document.getElementById("feeBody").addEventListener("blur",e=>{ const i=e.target.closest(".fee-won"); if(i){ const n=String(i.value).replace(/[^0-9]/g,""); i.value=won(n===""?"":+n); } },true);

@@ -132,7 +132,7 @@ let saveTimer = null;
 
 function uid(){ return (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
   : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16)); }
-function blankRow(){ return {id:uid(), grade:"", subject:(me&&me.subject)||"", course_name:"", schedule_text:"", target_school:"공통", audience:"", content:"", course_type:"정규", sort_order:rows.length}; }
+function blankRow(){ return {id:uid(), grade:"", subject:(me&&me.subject)||"", course_name:"", schedule_text:"", target_school:"공통", audience:"", content:"", course_type:"정규", material_fee:null, sort_order:rows.length}; }
 
 /* ---------- 로드 ---------- */
 async function load(){
@@ -156,7 +156,8 @@ function scheduleSave(){
 async function save(){
   rows.forEach((r,i)=>r.sort_order=i);
   if(useSupa){
-    const payload = rows.map(r=>({...r, teacher:TEACHER, division:divisionOf(r.grade||"중1")}));
+    const payload = rows.map(r=>({...r, teacher:TEACHER, division:divisionOf(r.grade||"중1"),
+      material_fee:(r.material_fee===''||r.material_fee==null)?null:(parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null)}));
     const {error} = await sb.from("courses").upsert(payload,{onConflict:"id"});
     setStatus(error ? ("저장 오류: "+error.message) : "저장됨 ✓");
   } else {
@@ -194,6 +195,7 @@ function render(){
         <div class="f"><label>강좌 대상 (어떤 학생이 들어야 하나)</label><textarea data-k="audience" placeholder="- 미사고1 내신 선행이 필요한 학생&#10;- ...">${esc(r.audience)}</textarea></div>
         <div class="f"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="- 2026년 미사고1 예상 시험범위 총정리&#10;- ...">${esc(r.content)}</textarea></div>
         <div class="f"><label>유형</label><select data-k="course_type">${opt(TYPES,r.course_type)}</select></div>
+        <div class="f"><label>📚 교재비 (원, 1인 기준 · 없으면 비움)</label><input type="text" inputmode="numeric" data-k="material_fee" value="${r.material_fee??""}" placeholder="예: 39000"/></div>
       </div>
       <div class="row-actions">
         <button class="btn sm" data-act="dup">⧉ 복제</button>
