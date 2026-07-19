@@ -53,7 +53,16 @@
   .footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 -1px 6px rgba(16,24,40,.06)}
   #saveStat{font-weight:700}
   .hl{background:#fff7ed}
+  /* admin 탭 안에 임베드될 때: 자체 헤더 숨기고 여백 축소 */
+  .embed .top{display:none}
+  .embed .warn{margin-top:0}
+  .embed .wrap{padding:10px 12px 90px}
 </style>
+<script>
+  // 임베드(admin 탭 iframe) 여부를 body 파싱 전에 판별해 헤더 깜빡임 방지
+  if(new URLSearchParams(location.search).get("embed")==="1")
+    document.documentElement.classList.add("embed");
+</script>
 </head>
 <body>
 <div class="wrap">

@@ -119,6 +119,7 @@
     <button class="tab" data-tab="gen">🎨 시간표 생성</button>
     <button class="tab" data-tab="fee">💰 수강료</button>
     <button class="tab" data-tab="day">📅 요일별·강의실</button>
+    <button class="tab" data-tab="edit">✏️ 시간표·수강료 수정</button>
   </div>
 
   <!-- ===== 대시보드 ===== -->
@@ -214,6 +215,16 @@
     <div id="dayList" class="noprint"></div>
     <p class="muted noprint">강의실은 규칙(수학·과학→대치더올 우선, 선생님 선호, 같은날 수업+클리닉 같은관, 시간 겹침 방지)으로 <b>자동 배정</b>됩니다. 시간 표기가 애매한 강좌는 그리드 아래에 따로 표시됩니다.</p>
   </section>
+
+  <section id="tab-edit" class="hide">
+    <div class="panel" style="padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b>✏️ 학원 시간표·수강료 직접 수정</b>
+      <span class="muted">모든 강좌의 학년·강좌명·시간·수강료·📚교재비·비고를 바로 고치고, 강좌를 추가/복제/삭제할 수 있습니다. <b>입력 즉시 자동 저장</b>돼 시간표·수강료에 반영됩니다.</span>
+      <span style="flex:1"></span>
+      <a class="btn sm" href="control.html" target="_blank" style="text-decoration:none">↗ 새 창으로 크게</a>
+    </div>
+    <iframe id="editFrame" title="전체 관리(시간표·수강료 수정)" style="width:100%;height:78vh;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -303,9 +314,10 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","fee","day"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","fee","day","edit"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
+  if(t.dataset.tab==="edit"){ const f=document.getElementById("editFrame"); if(!f.getAttribute("src")) f.src="control.html?embed=1"; }  // 처음 열 때만 로드
 }));
 
 /* ===== 생성 필터 ===== */
