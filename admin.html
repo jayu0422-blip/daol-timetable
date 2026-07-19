@@ -182,13 +182,20 @@
       <span class="muted" style="font-weight:700">강사별 보기</span>
       <div class="chips" id="feeTeacherChips"></div>
     </div>
+    <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#fffaf0">
+      <span class="muted" style="font-weight:700">📅 청구 월</span>
+      <input type="month" id="feeMonth" value="2026-08" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 10px">
+      <span class="muted">선택 월의 <b>정규 회차를 달력으로 자동 계산</b>(휴강 없음 기준) → 청구액 산정. 특강은 전체(미납분).</span>
+      <span style="flex:1"></span>
+      <span id="feeMonthTotal" style="font-weight:800;color:var(--brand-ink)"></span>
+    </div>
     <div class="panel" style="padding:0;overflow:auto">
       <table class="dash" id="feeTable">
-        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:70px">회차</th><th style="width:120px">수강료(원)</th><th>비고</th></tr></thead>
+        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:64px">기준회차</th><th style="width:110px">기준수강료</th><th style="width:60px" id="thMonSess">회차</th><th style="width:120px" id="thMonAmt">청구액</th><th>비고</th></tr></thead>
         <tbody id="feeBody"></tbody>
       </table>
     </div>
-    <p class="muted">중등=월수강료(회차 무관) · 고등=회차수강료 · 특강=방학기간. 빈칸은 미정(강사 확인 대기)입니다.</p>
+    <p class="muted">중등=월수강료(회차 무관) · 고등=선택 월 정규 회차로 청구액 산정 · 특강=전체(미납분). 빈칸은 미정(강사 확인 대기)입니다.</p>
   </section>
 
   <!-- ===== 요일별·강의실 ===== -->
@@ -536,6 +543,17 @@ function feeSave(id,patch){
   },500);
 }
 let feeTeacher="전체";
+function feeMonthYM(){ const v=(document.getElementById("feeMonth")||{}).value||"2026-08"; const p=v.split("-").map(Number); return {y:p[0], m0:p[1]-1, m:p[1]}; }
+function countInMonth(y,m0,dayChars){ const map={"일":0,"월":1,"화":2,"수":3,"목":4,"금":5,"토":6}; const want=new Set(dayChars.map(d=>map[d])); let n=0; const d=new Date(y,m0,1); while(d.getMonth()===m0){ if(want.has(d.getDay())) n++; d.setDate(d.getDate()+1); } return n; }
+function regularDays(c){ const p=parseDayTimes(c.schedule_text); const s=new Set(); p.sessions.forEach(x=>{ if(x.type==="정규"||x.type==="직보") s.add(x.day); }); return [...s]; }
+function monthlyBill(c,y,m0){
+  if(c.course_type==="특강"){ return {sess:c.sessions, amount:c.tuition, note:"특강 전체(미납분)"}; }
+  if(c.division==="중등"){ return {sess:null, amount:c.tuition, note:"월정액"}; }
+  const days=regularDays(c), sess=days.length?countInMonth(y,m0,days):null;
+  const base=c.tuition, baseSess=c.sessions; let amount=base;
+  if(base!=null&&baseSess&&sess!=null){ amount = sess>=baseSess ? base : base-Math.round(base/baseSess)*(baseSess-sess); }
+  return {sess, amount};
+}
 function renderFee(){
   // 강사별 필터 칩
   const teachers=(ROSTER.length?ROSTER.map(t=>t.name):[...new Set(DATA.map(c=>c.teacher))]);
@@ -545,21 +563,30 @@ function renderFee(){
   }).join("");
   const rows=DATA.filter(c=>feeTeacher==="전체"||c.teacher===feeTeacher)
     .sort((a,b)=>(GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade))||String(a.teacher).localeCompare(b.teacher,"ko"));
+  const {y,m0,m}=feeMonthYM();
+  const thS=document.getElementById("thMonSess"), thA=document.getElementById("thMonAmt");
+  if(thS) thS.textContent=`${m}월 회차`; if(thA) thA.textContent=`${m}월 청구액`;
+  let monthTotal=0;
   document.getElementById("feeBody").innerHTML=rows.map(c=>{
     const r=rulePrice(c); c._base=r.base??null; c._baseSess=r.baseSess??null;
     const cat=c.course_type==="특강"?"특강":(c.division==="중등"?"월":"회차");
     const midReg=(c.division==="중등"&&c.course_type!=="특강");
+    const mb=monthlyBill(c,y,m0); monthTotal+=(mb.amount||0);
     return `<tr data-id="${c.id}">
       <td><b>${esc(c.teacher)}</b></td><td>${cat}</td><td>${esc(c.grade||"")}</td><td>${esc(c.subject||"")}</td>
       <td>${esc(c.course_name||"")}</td>
       <td><input type="number" class="fee-in" data-k="sessions" value="${c.sessions??""}" style="width:56px" ${midReg?'disabled':''}></td>
       <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="tuition" value="${won(c.tuition)}" style="width:108px"></td>
-      <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:220px"></td>
+      <td style="text-align:center;font-weight:700">${mb.sess!=null?mb.sess:(c.division==="중등"?"월":"—")}</td>
+      <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}</td>
+      <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:200px"></td>
     </tr>`;
   }).join("");
   const sub=rows.reduce((a,c)=>a+(c.tuition||0),0);
-  document.getElementById("feeStat").textContent=`${feeTeacher==="전체"?"전체 합계":feeTeacher+" 소계"}(참고) ${won(sub)}원 · ${rows.length}강좌`;
+  document.getElementById("feeStat").textContent=`${feeTeacher==="전체"?"전체 합계":feeTeacher+" 소계"}(기준) ${won(sub)}원 · ${rows.length}강좌`;
+  document.getElementById("feeMonthTotal").textContent=`${m}월 청구 합계: ${won(monthTotal)}원`;
 }
+document.getElementById("feeMonth").addEventListener("change",renderFee);
 document.getElementById("feeTeacherChips").addEventListener("click",e=>{
   const c=e.target.closest(".chip"); if(!c) return; feeTeacher=c.dataset.t; renderFee();
 });
