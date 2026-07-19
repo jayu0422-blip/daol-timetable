@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 — 전체 관리(마스터 편집)</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#10b981; --danger:#ef4444; --info:#2563eb;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1500px;margin:0 auto;padding:16px 14px 120px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .top h1{font-size:19px;font-weight:800;margin:0}
+  .tag{font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:9px 13px;font-size:12.5px;margin:12px 0}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 13px;font:inherit;font-weight:600;cursor:pointer}
+  .btn:hover{background:#f8fafc}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand-ink)}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .btn.danger{color:var(--danger);border-color:#fecaca}.btn.danger:hover{background:#fef2f2}
+  .muted{color:var(--muted);font-size:12.5px}
+  a.nav{font-size:12.5px;color:var(--info);text-decoration:none}a.nav:hover{text-decoration:underline}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 11px;font-size:12.5px;cursor:pointer;user-select:none}
+  .chip.on{background:#fff7ed;border-color:var(--brand);color:var(--brand-ink);font-weight:700}
+  input.search{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 11px;min-width:180px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:0;overflow:auto}
+  table.grid{width:100%;border-collapse:collapse;background:#fff;min-width:1180px}
+  table.grid th,table.grid td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px}
+  table.grid th{background:#f8fafc;font-size:11.5px;color:var(--muted);text-align:left;position:sticky;top:0;z-index:2;white-space:nowrap}
+  table.grid tr:hover td{background:#fffdf7}
+  .grid input, .grid select, .grid textarea{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:5px 7px;width:100%;background:#fff}
+  .grid input:focus,.grid select:focus,.grid textarea:focus{outline:2px solid #fde68a;border-color:var(--brand)}
+  .grid textarea{min-height:38px;resize:vertical;line-height:1.35}
+  .cell-teacher{min-width:96px}.cell-grade{min-width:96px}.cell-subj{min-width:80px}
+  .cell-name{min-width:220px}.cell-type{min-width:74px}.cell-sess{min-width:56px}
+  .cell-won{min-width:96px}.cell-note{min-width:150px}
+  .detail-row td{background:#fbfcfe;padding:10px 12px}
+  .detail-grid{display:grid;grid-template-columns:120px 1fr 1fr 1fr;gap:10px;align-items:start}
+  .detail-grid .f{display:flex;flex-direction:column;gap:3px}
+  .detail-grid label{font-size:11px;font-weight:700;color:var(--muted)}
+  .rowbtns{display:flex;gap:4px;white-space:nowrap}
+  .divlbl{font-size:12px;color:var(--muted);font-weight:700;padding-top:6px}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 -1px 6px rgba(16,24,40,.06)}
+  #saveStat{font-weight:700}
+  .hl{background:#fff7ed}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🛠️ 다올105 전체 관리</h1>
+    <span class="tag" id="modeTag">데모 모드</span>
+    <span style="flex:1"></span>
+    <a class="nav" href="admin.html">← 운영자 대시보드</a>
+  </div>
+  <div class="warn">이 페이지는 <b>모든 강사의 모든 강좌</b>를 직접 수정·추가·삭제합니다. 변경은 <b>입력 즉시 자동 저장</b>되어 시간표·수강료·강사 페이지에 그대로 반영됩니다.</div>
+
+  <div class="toolbar">
+    <div class="chips" id="teacherChips"></div>
+    <input class="search" id="search" placeholder="🔍 강좌명·학년·비고 검색"/>
+    <span style="flex:1"></span>
+    <button class="btn primary" id="addBtn">＋ 새 강좌 추가</button>
+    <button class="btn sm" id="reloadBtn">↻ 새로고침</button>
+  </div>
+
+  <div class="panel">
+    <table class="grid">
+      <thead><tr>
+        <th class="cell-teacher">강사</th><th class="cell-grade">학년</th><th class="cell-subj">과목</th>
+        <th class="cell-name">강좌명</th><th class="cell-type">유형</th>
+        <th class="cell-sess">회차</th><th class="cell-won">수강료</th><th class="cell-won">📚교재비</th>
+        <th class="cell-note">비고</th><th style="min-width:118px">관리</th>
+      </tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+    <div id="emptyMsg" class="empty hide">표시할 강좌가 없습니다.</div>
+  </div>
+</div>
+
+<div class="footbar">
+  <span id="saveStat" class="muted">준비됨</span>
+  <span style="flex:1"></span>
+  <span class="muted" id="countStat"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ===== 상수 ===== */
+const GRADES   = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+const SUBJECTS = ["국어","영어","수학","과학","사회","기타"];
+const SCHOOLS  = ["공통","미사고","미사강변고","하남고","풍산고","미강고","미사중","미사강변중","은가람중","윤슬중"];
+const TYPES    = ["정규","특강"];
+const SUBJECT_ORDER = ["국어","영어","수학","과학","사회","기타"];
+const GRADE_ORDER   = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+
+/* ===== 헬퍼 ===== */
+const esc  = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const escA = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const won  = n => (n==null||n==="")?"":Number(n).toLocaleString("ko-KR");
+const digits = s => String(s??"").replace(/[^0-9]/g,"");
+const divisionOf = g => (g||"").startsWith("중") ? "중등" : "고등";
+const uid = () => (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
+  : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
+function optList(arr,v,blank){
+  const head = blank ? `<option value="">${blank}</option>` : "";
+  return head + arr.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join("");
+}
+
+/* ===== 초기화 ===== */
+const cfg = window.DAOL_CONFIG||{};
+const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
+const sb = useSupa ? window.supabase.createClient(cfg.url,cfg.anonKey) : null;
+if(useSupa) document.getElementById("modeTag").textContent = "실시간 (Supabase)";
+
+let DATA = [];          // 전체 강좌
+let ROSTER = [];        // [{name,subject}]
+let filterTeacher = "전체";
+let searchQ = "";
+const saveTimer = {};
+
+function setStat(msg,cls){ const el=document.getElementById("saveStat"); el.textContent=msg; el.style.color = cls==="ok"?"var(--ok)":cls==="err"?"var(--danger)":"var(--muted)"; }
+
+async function loadData(){
+  if(useSupa){
+    const {data,error} = await sb.from("courses").select("*");
+    if(error){ setStat("불러오기 오류: "+error.message,"err"); return; }
+    DATA = data||[];
+    const {data:tt} = await sb.from("teachers").select("*");
+    ROSTER = (tt||[]).map(t=>({name:t.name,subject:t.subject}))
+      .sort((a,b)=>(SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))||a.name.localeCompare(b.name,"ko"));
+  } else {
+    DATA = []; ROSTER = [];
+  }
+  buildTeacherChips();
+  render();
+  setStat("불러옴 ✓","ok");
+}
+
+function buildTeacherChips(){
+  const names = ["전체", ...ROSTER.map(t=>t.name)];
+  document.getElementById("teacherChips").innerHTML = names.map(n=>{
+    const cnt = n==="전체" ? DATA.length : DATA.filter(c=>c.teacher===n).length;
+    return `<span class="chip ${filterTeacher===n?'on':''}" data-t="${escA(n)}">${esc(n)} <b>${cnt}</b></span>`;
+  }).join("");
+}
+
+function teacherOptions(cur){
+  const names = ROSTER.map(t=>t.name);
+  if(cur && !names.includes(cur)) names.unshift(cur);   // 명단에 없는 값도 보존
+  return names.map(n=>`<option ${n===cur?'selected':''}>${esc(n)}</option>`).join("");
+}
+
+function sortRows(rows){
+  return rows.slice().sort((a,b)=>
+    (SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject)) ||
+    (a.teacher||"").localeCompare(b.teacher||"","ko") ||
+    (GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade)) ||
+    (a.sort_order||0)-(b.sort_order||0)
+  );
+}
+
+function render(){
+  let rows = DATA;
+  if(filterTeacher!=="전체") rows = rows.filter(c=>c.teacher===filterTeacher);
+  if(searchQ){
+    const q=searchQ.toLowerCase();
+    rows = rows.filter(c=>[c.course_name,c.grade,c.tuition_note,c.subject,c.teacher].some(v=>String(v||"").toLowerCase().includes(q)));
+  }
+  rows = sortRows(rows);
+  const body = document.getElementById("body");
+  body.innerHTML = rows.map(c=>rowHtml(c)).join("");
+  document.getElementById("emptyMsg").classList.toggle("hide", rows.length>0);
+  document.getElementById("countStat").textContent = `${filterTeacher==="전체"?"전체":filterTeacher} ${rows.length}강좌 / 총 ${DATA.length}강좌`;
+  buildTeacherChips();
+}
+
+function rowHtml(c){
+  const id=c.id;
+  return `
+  <tr data-id="${id}">
+    <td class="cell-teacher"><select data-k="teacher">${teacherOptions(c.teacher)}</select></td>
+    <td class="cell-grade"><select data-k="grade">${optList(GRADES,c.grade,"학년")}</select></td>
+    <td class="cell-subj"><select data-k="subject">${optList(SUBJECTS,c.subject,"과목")}</select></td>
+    <td class="cell-name"><input data-k="course_name" value="${escA(c.course_name)}" placeholder="강좌명"></td>
+    <td class="cell-type"><select data-k="course_type">${optList(TYPES,c.course_type||"정규")}</select></td>
+    <td class="cell-sess"><input type="number" data-k="sessions" value="${c.sessions??""}" min="0" placeholder="—"></td>
+    <td class="cell-won"><input class="won" data-k="tuition" inputmode="numeric" value="${won(c.tuition)}" placeholder="0"></td>
+    <td class="cell-won"><input class="won" data-k="material_fee" inputmode="numeric" value="${won(c.material_fee)}" placeholder="0"></td>
+    <td class="cell-note"><input data-k="tuition_note" value="${escA(c.tuition_note)}" placeholder="비고"></td>
+    <td><div class="rowbtns">
+      <button class="btn sm" data-act="detail" title="시간·대상학교·대상·내용">⋯ 상세</button>
+      <button class="btn sm" data-act="dup" title="복제">⧉</button>
+      <button class="btn sm danger" data-act="del" title="삭제">🗑</button>
+    </div></td>
+  </tr>
+  <tr class="detail-row hide" data-detail="${id}"><td colspan="10">
+    <div class="detail-grid">
+      <div class="f"><label>구분(자동)</label><div class="divlbl">${esc(divisionOf(c.grade))}</div></div>
+      <div class="f"><label>대상학교</label><select data-k="target_school">${optList(SCHOOLS,c.target_school||"공통")}</select></div>
+      <div class="f"><label>시간 (여러 줄 가능)</label><textarea data-k="schedule_text" placeholder="예: 월수금 18:30~20:00">${esc(c.schedule_text)}</textarea></div>
+      <div class="f"><label>강좌 대상</label><textarea data-k="audience" placeholder="어떤 학생이 듣는지">${esc(c.audience)}</textarea></div>
+      <div class="f" style="grid-column:2 / span 3"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="수업 내용">${esc(c.content)}</textarea></div>
+    </div>
+  </td></tr>`;
+}
+
+/* ===== 저장 ===== */
+function patchRow(id, patch){
+  const c=DATA.find(x=>x.id===id); if(c) Object.assign(c,patch);
+  clearTimeout(saveTimer[id]);
+  setStat("입력 중…");
+  saveTimer[id]=setTimeout(async()=>{
+    if(!useSupa){ setStat("저장됨 ✓ (데모)","ok"); return; }
+    const {error}=await sb.from("courses").update(patch).eq("id",id);
+    setStat(error?("저장 오류: "+error.message):"저장됨 ✓", error?"err":"ok");
+  },500);
+}
+function fullPayload(c){
+  return {
+    id:c.id, teacher:c.teacher||"", division:divisionOf(c.grade),
+    grade:c.grade||"", subject:c.subject||"", course_name:c.course_name||"",
+    schedule_text:c.schedule_text||"", target_school:c.target_school||"공통",
+    audience:c.audience||"", content:c.content||"", course_type:c.course_type||"정규",
+    sessions:(c.sessions??null), tuition:(c.tuition??null),
+    tuition_note:c.tuition_note||"", material_fee:(c.material_fee??null),
+    sort_order:(c.sort_order??0)
+  };
+}
+async function upsertRow(c){
+  if(!useSupa){ setStat("추가됨 (데모)","ok"); return; }
+  const {error}=await sb.from("courses").upsert(fullPayload(c),{onConflict:"id"});
+  setStat(error?("저장 오류: "+error.message):"저장됨 ✓", error?"err":"ok");
+}
+
+/* ===== 이벤트: 셀 편집 ===== */
+document.getElementById("body").addEventListener("input", e=>{
+  const inp=e.target.closest("[data-k]"); if(!inp) return;
+  const tr=e.target.closest("tr"); const id=(tr.dataset.id||tr.dataset.detail); const k=inp.dataset.k;
+  let v = inp.value;
+  if(inp.classList.contains("won")) { const n=digits(v); v = n===""?null:+n; }
+  else if(k==="sessions"){ v = v===""?null:+v; }
+  const patch = {[k]:v};
+  if(k==="grade"){ patch.division = divisionOf(v);
+    const dr=document.querySelector(`[data-detail="${id}"] .divlbl`); if(dr) dr.textContent=patch.division; }
+  patchRow(id, patch);
+});
+// 숫자칸 포커스 아웃 → 천단위 콤마 재표기
+document.getElementById("body").addEventListener("blur", e=>{
+  const i=e.target.closest("input.won"); if(!i) return;
+  const n=digits(i.value); i.value = n===""?"":won(+n);
+}, true);
+
+/* ===== 이벤트: 행 버튼 ===== */
+document.getElementById("body").addEventListener("click", e=>{
+  const btn=e.target.closest("[data-act]"); if(!btn) return;
+  const tr=e.target.closest("tr"); const id=tr.dataset.id; const c=DATA.find(x=>x.id===id);
+  const act=btn.dataset.act;
+  if(act==="detail"){
+    const d=document.querySelector(`[data-detail="${id}"]`); if(d) d.classList.toggle("hide");
+  } else if(act==="dup"){
+    if(!c) return;
+    const copy={...c, id:uid(), course_name:(c.course_name||"")+" (복사)", sort_order:(c.sort_order||0)+1};
+    DATA.push(copy); upsertRow(copy); render();
+    const el=document.querySelector(`tr[data-id="${copy.id}"] [data-k=course_name]`); if(el){el.focus();el.select&&el.select();}
+  } else if(act==="del"){
+    if(!c) return;
+    if(!confirm(`"${c.teacher||""} · ${c.course_name||"(무제)"}" 강좌를 삭제할까요?\n삭제하면 시간표·수강료에서도 사라집니다.`)) return;
+    DATA = DATA.filter(x=>x.id!==id);
+    render();
+    if(useSupa) sb.from("courses").delete().eq("id",id).then(({error})=>setStat(error?("삭제 오류: "+error.message):"삭제됨 ✓", error?"err":"ok"));
+    else setStat("삭제됨 (데모)","ok");
+  }
+});
+
+/* ===== 새 강좌 추가 ===== */
+document.getElementById("addBtn").addEventListener("click", ()=>{
+  const t = filterTeacher!=="전체" ? ROSTER.find(r=>r.name===filterTeacher) : null;
+  const c = {
+    id:uid(), teacher:(t?t.name:(ROSTER[0]&&ROSTER[0].name)||""),
+    grade:"", subject:(t?t.subject:""), course_name:"", schedule_text:"",
+    target_school:"공통", audience:"", content:"", course_type:"정규",
+    sessions:null, tuition:null, tuition_note:"", material_fee:null,
+    sort_order:(DATA.reduce((m,x)=>Math.max(m,x.sort_order||0),0)+1)
+  };
+  DATA.push(c); upsertRow(c);
+  searchQ=""; document.getElementById("search").value="";
+  render();
+  const el=document.querySelector(`tr[data-id="${c.id}"] [data-k=course_name]`);
+  if(el){ el.scrollIntoView({block:"center"}); el.focus(); }
+});
+
+/* ===== 필터/검색/새로고침 ===== */
+document.getElementById("teacherChips").addEventListener("click", e=>{
+  const c=e.target.closest(".chip"); if(!c) return; filterTeacher=c.dataset.t; render();
+});
+document.getElementById("search").addEventListener("input", e=>{ searchQ=e.target.value.trim(); render(); });
+document.getElementById("reloadBtn").addEventListener("click", loadData);
+
+/* ===== 실시간(다른 기기 변경 반영) — 편집 중이 아닐 때만 새로고침 ===== */
+if(useSupa){
+  sb.channel("control-courses")
+    .on("postgres_changes",{event:"*",schema:"public",table:"courses"},()=>{
+      const active=document.activeElement;
+      const editing = active && active.closest && active.closest("#body");
+      if(editing){ setStat("다른 곳에서 변경됨 — 편집 끝나면 ↻ 새로고침","err"); return; }
+      loadData();
+    }).subscribe();
+}
+
+/* ===== 시작 ===== */
+loadData();
+</script>
+</body>
+</html>
