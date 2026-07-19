@@ -215,14 +215,17 @@ function rowHtml(c){
   </td></tr>`;
 }
 
-/* ===== 저장 ===== */
+/* ===== 저장 (필드별 patch를 누적해 한 번에 flush — 빠른 연속 편집도 유실 없음) ===== */
+const pendingPatch = {};
 function patchRow(id, patch){
   const c=DATA.find(x=>x.id===id); if(c) Object.assign(c,patch);
+  pendingPatch[id] = Object.assign(pendingPatch[id]||{}, patch);
   clearTimeout(saveTimer[id]);
   setStat("입력 중…");
   saveTimer[id]=setTimeout(async()=>{
+    const p = pendingPatch[id]||{}; delete pendingPatch[id];
     if(!useSupa){ setStat("저장됨 ✓ (데모)","ok"); return; }
-    const {error}=await sb.from("courses").update(patch).eq("id",id);
+    const {error}=await sb.from("courses").update(p).eq("id",id);
     setStat(error?("저장 오류: "+error.message):"저장됨 ✓", error?"err":"ok");
   },500);
 }
