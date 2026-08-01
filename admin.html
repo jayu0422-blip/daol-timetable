@@ -980,15 +980,20 @@ function renderGrade(){
   DAY_LIST.forEach((d,di)=>{
     html+=`<div class="gg-col ${di===6?'last':''}" style="height:${H}px">`;
     for(let t=START;t<=END;t+=60) html+=`<div class="gg-line" style="top:${(t-START)*PX}px"></div>`;
-    const blks=byDay[d]; layoutRoom(blks);
-    blks.forEach(b=>{
+    // 자습(써머스쿨)은 배경으로 깔고, 실제 수업만 좌우 분할 레인 계산
+    const blks=byDay[d], study=blks.filter(b=>/자습/.test(b.name||"")), lessons=blks.filter(b=>!/자습/.test(b.name||""));
+    layoutRoom(lessons); study.forEach(b=>{ b.lane=0; b.cols=1; });
+    [...study,...lessons].forEach(b=>{
       const st=Math.max(b.start,START), en=Math.min(b.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,34);
       const L=b.lane/b.cols*100, W=100/b.cols;
       const col=SUBJ_COLOR[b.subj]||"#e5e7eb", bcol=SUBJ_BORDER[b.subj]||"#6b7280", clinic=b.type==="클리닉";
       // 같은 과목색 유지 + 클리닉은 옅은 그라데이션으로 구분
-      const box=clinic
-        ? `background:linear-gradient(135deg,#fff 0%,${col} 100%);border:1px dashed ${bcol}`
-        : `background:linear-gradient(135deg,${col} 0%,${col} 100%);border:1px solid rgba(0,0,0,.12)`;
+      const selfStudy=/자습/.test(b.name||"");
+      const box=selfStudy
+        ? `background:repeating-linear-gradient(135deg,#f3f4f6 0 8px,#e9ebee 8px 16px);border:1px solid #d1d5db;opacity:.75;z-index:0`
+        : clinic
+          ? `background:repeating-linear-gradient(135deg,${col} 0 7px,#ffffff 7px 14px);border:1.5px dashed ${bcol};z-index:1`
+          : `background:${col};border:1px solid rgba(0,0,0,.12);z-index:1`;
       const style=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}`;
       const schoolTag=b.school?`[${b.school}]`:`[${selGrade}]`;
       const teamTag=(b.subj==="수학"&&b.grade==="고1")?` ${esc(b.teacher)}반`:"";
@@ -1008,8 +1013,9 @@ function renderGrade(){
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>영어</span>
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['수학']}"></span>수학</span>
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['과학']}"></span>과학</span>
-    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>수업(진한색)</span>
-    <span class="k"><span class="gg-sw" style="background:linear-gradient(135deg,#fff,${SUBJ_COLOR['영어']});border:1px dashed ${SUBJ_BORDER['영어']}"></span>관리·클리닉(옅은 그라데이션)</span>
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>수업(단색)</span>
+    <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,${SUBJ_COLOR['영어']} 0 4px,#fff 4px 8px);border:1.5px dashed ${SUBJ_BORDER['영어']}"></span>관리·클리닉(빗금)</span>
+    <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,#f3f4f6 0 4px,#e9ebee 4px 8px);border:1px solid #d1d5db"></span>자습</span>
   </div>`;
   document.getElementById("gradeSheet").innerHTML=html;
   document.getElementById("gradeUnparsed").innerHTML = unparsed.length ? `<div class="unparsed"><b>⚠️ 시간 표기 확인 필요 ${unparsed.length}건</b> — 강사 입력을 "요일 HH:MM~HH:MM" 형식으로 정리하면 자동 배치됩니다.<br>`+unparsed.map(c=>`· [${esc(c.teacher)}] ${esc(c.course_name)} — "${esc((c.schedule_text||"").replace(/\n/g," / "))}"`).join("<br>")+`</div>` : "";
