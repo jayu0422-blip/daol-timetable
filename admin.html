@@ -102,6 +102,37 @@
   .unparsed{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin:12px 0;font-size:12.5px}
   .unparsed b{color:#92400e}
   @media print{ #daySheet{box-shadow:none;border:none} }
+
+  /* ===== 학년별 주간 시간표 ===== */
+  #gradeSheet{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow-x:auto}
+  .gg-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 18px 6px}
+  .gg-brand{font-size:12px;font-weight:800;color:var(--brand-ink);letter-spacing:1px}
+  .gg-title{text-align:center;flex:1}
+  .gg-title .tt{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--brand-ink)}
+  .gg-title .gn{font-size:26px;font-weight:800;color:#7c2d12;margin-top:2px}
+  .gg-note{max-width:300px;background:#fffbe8;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#78350f;line-height:1.45}
+  .gg-note b{color:#b45309}
+  .ggrid{display:grid;grid-template-columns:64px repeat(7,1fr);min-width:900px;padding:0 10px 12px}
+  .gg-h{font-weight:800;font-size:13px;text-align:center;padding:9px 4px;border-bottom:2px solid #374151;background:#fdf6ec}
+  .gg-h.wk{color:#2563eb}.gg-h.sat{color:#2563eb}.gg-h.sun{color:#dc2626}
+  .gg-h.corner{background:transparent;border-bottom:2px solid #374151}
+  .gg-col{position:relative;border-left:1px solid var(--line)}
+  .gg-col.last{border-right:1px solid var(--line)}
+  .gg-timecol{position:relative}
+  .gg-tlabel{position:absolute;left:0;right:4px;text-align:right;font-size:10.5px;color:var(--muted);transform:translateY(-6px)}
+  .gg-line{position:absolute;left:0;right:0;border-top:1px solid #eef0f3}
+  .gblk{position:absolute;border-radius:8px;padding:5px 6px;font-size:11px;overflow:hidden;line-height:1.25;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .gblk .gsch{font-size:10px;font-weight:700;color:#374151}
+  .gblk .gsub{font-weight:800;font-size:12px}
+  .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:middle}
+  .gblk .gtag.reg{background:#1d4ed8;color:#fff}
+  .gblk .gtag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
+  .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
+  .gblk.clinic{background:#fff!important;border:2px dashed currentColor}
+  .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:2px 18px 14px;font-size:11.5px;color:var(--muted)}
+  .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
+  .gg-sw{width:16px;height:12px;border-radius:3px;display:inline-block}
+  @media print{ #gradeSheet{box-shadow:none;border:none} }
 </style>
 </head>
 <body>
@@ -117,6 +148,7 @@
   <div class="tabbar noprint">
     <button class="tab on" data-tab="dash">📊 대시보드</button>
     <button class="tab" data-tab="gen">🎨 시간표 생성</button>
+    <button class="tab" data-tab="grade">🎓 학년별 시간표</button>
     <button class="tab" data-tab="fee">💰 수강료</button>
     <button class="tab" data-tab="day">📅 요일별·강의실</button>
     <button class="tab" data-tab="edit">✏️ 시간표·수강료 수정</button>
@@ -170,6 +202,20 @@
 
     <div id="conflictBox"></div>
     <div id="sheet"><div class="empty">‘시간표 생성’을 누르세요.</div></div>
+  </section>
+
+  <!-- ===== 학년별 주간 시간표 ===== -->
+  <section id="tab-grade" class="hide">
+    <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="chips" id="gradeChips"></div>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="gradePrint">🖨️ PDF/인쇄</button>
+      <button class="btn sm" id="gradePng">🖼️ 이미지저장</button>
+      <span class="muted" id="gradeStat"></span>
+    </div>
+    <div id="gradeSheet"><div class="empty">학년을 선택하세요.</div></div>
+    <div id="gradeUnparsed"></div>
+    <p class="muted noprint">요일·시간·정규/클리닉은 강좌의 ‘시간’ 칸에서 자동 인식합니다. 고1 수학은 미사고·하남고·미사강변고 <b>합반</b>이라 세 학교 시간표에 동일하게(임결반/유용권반) 표시됩니다. 하남고1은 영어·수학이 미사고1과 동일합니다.</p>
   </section>
 
   <!-- ===== 수강료 ===== -->
@@ -314,9 +360,10 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","fee","day","edit"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","grade","fee","day","edit"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
+  if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
   if(t.dataset.tab==="edit"){ const f=document.getElementById("editFrame"); if(!f.getAttribute("src")) f.src="control.html?embed=1"; }  // 처음 열 때만 로드
 }));
 
@@ -829,6 +876,109 @@ function renderDay(){
   }).join("")+`</tbody></table></div>` : "";
   document.getElementById("dayStat").textContent=`${items.length}개 수업 · 배정충돌 ${items.filter(it=>it.conflict).length}건`;
 }
+
+/* ===== 학년별 주간 시간표 ===== */
+const GRADE_BUTTONS=["중1","중2","중3","미사고1","미사강변고1","미사고2","미사강변고2","고3"];
+const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
+let selGrade="미사고1";
+function buildGradeChips(){ document.getElementById("gradeChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
+document.getElementById("gradeChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); });
+// 학년: grade값 우선, 비어있으면 강좌명에서 보완
+function cGrade(c){ let g=ggf(c.grade); if(!g){ const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/); if(m) g=ggf(m[1]); } return g; }
+function coursesForGrade(key){
+  return DATA.filter(c=>{
+    if(!(c.schedule_text||"").trim()) return false;
+    const g=cGrade(c), sub=c.subject, sch=courseSchool(c);   // sch: 미사고/미사강변고/하남고/풍산고 또는 null(공통)
+    if(key==="중1"||key==="중2"||key==="중3") return g===key || g==="중등공통";
+    if(key==="고3") return g==="고3";
+    const wantSchool = key.startsWith("미사강변고") ? "미사강변고" : "미사고";
+    const wantG = key.endsWith("2") ? "고2" : "고1";
+    if(g!==wantG) return false;
+    if(sub==="수학") return true;                       // 수학=합반/공통 → 학교 무관 표시
+    return sch===null || sch===wantSchool;              // 그 외 과목: 공통 또는 해당 학교
+  });
+}
+function renderGrade(){
+  const cs=coursesForGrade(selGrade);
+  const START=9*60, END=22*60, PX=0.9, H=(END-START)*PX;
+  const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
+  const unparsed=[];
+  cs.forEach(c=>{
+    const p=parseDayTimes(c.schedule_text);
+    if(p.failed) unparsed.push(c);
+    p.sessions.forEach(s=>{
+      if(!byDay[s.day]) return;
+      const type=(s.type==="관리"||s.type==="클리닉")?"클리닉":"수업";
+      byDay[s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,grade:cGrade(c),school:courseSchool(c),name:c.course_name});
+    });
+  });
+  // 특이사항 메모
+  const sunKor = cs.some(c=>c.subject==="국어" && /일/.test(c.schedule_text||"") && /(관리|클리닉)/.test(c.schedule_text||""));
+  const notes=[];
+  if(sunKor) notes.push("국어 클리닉은 <b>일요일 유동</b> 운영(학생별 조정).");
+  if(selGrade==="미사고1"||selGrade==="미사강변고1") notes.push("고1 수학은 미사고·하남고·미사강변고 <b>합반</b>(임결반/유용권반).");
+  if(selGrade==="미사고1") notes.push("하남고1은 영어·수학이 미사고1과 동일.");
+  const noteHtml = notes.length ? `<div class="gg-note"><b>[안내]</b><br>${notes.join("<br>")}</div>` : `<div style="width:220px"></div>`;
+  // 헤더
+  let html=`<div class="gg-top">
+    <div class="gg-brand">📘 다올105<br><span style="font-size:9px;color:#9ca3af">미사학원</span></div>
+    <div class="gg-title"><div class="tt">T I M E &nbsp; T A B L E</div><div class="gn">${esc(selGrade)}</div></div>
+    ${noteHtml}
+  </div>`;
+  html+=`<div class="ggrid">`;
+  html+=`<div class="gg-h corner"></div>`+DAY_LIST.map(d=>`<div class="gg-h ${d==='토'?'sat':d==='일'?'sun':'wk'}">${d}</div>`).join("");
+  html+=`<div style="grid-column:1 / -1;display:grid;grid-template-columns:64px repeat(7,1fr);position:relative">`;
+  html+=`<div class="gg-timecol" style="height:${H}px">`;
+  for(let t=START;t<=END;t+=60) html+=`<div class="gg-tlabel" style="top:${(t-START)*PX}px">${fmt(t)}</div>`;
+  html+=`</div>`;
+  DAY_LIST.forEach((d,di)=>{
+    html+=`<div class="gg-col ${di===6?'last':''}" style="height:${H}px">`;
+    for(let t=START;t<=END;t+=60) html+=`<div class="gg-line" style="top:${(t-START)*PX}px"></div>`;
+    const blks=byDay[d]; layoutRoom(blks);
+    blks.forEach(b=>{
+      const st=Math.max(b.start,START), en=Math.min(b.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,34);
+      const L=b.lane/b.cols*100, W=100/b.cols;
+      const col=SUBJ_COLOR[b.subj]||"#e5e7eb", bcol=SUBJ_BORDER[b.subj]||"#6b7280", clinic=b.type==="클리닉";
+      const box=clinic?`background:#fff;border:2px dashed ${bcol}`:`background:${col};border:1px solid rgba(0,0,0,.12)`;
+      const style=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}`;
+      const schoolTag=b.school?`[${b.school}]`:`[${selGrade}]`;
+      const teamTag=(b.subj==="수학"&&b.grade==="고1")?` ${esc(b.teacher)}반`:"";
+      html+=`<div class="gblk ${clinic?'clinic':''}" style="${style}">
+        <div class="gsch">${esc(schoolTag)}${teamTag}</div>
+        <div class="gsub">${esc(b.subj)}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'클리닉':'정규'}</span></div>
+        <div class="gtm">${d} ${fmt(b.start)}~${fmt(b.end)}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`</div></div>`;
+  html+=`<div class="gg-legend">
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['국어']}"></span>국어</span>
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>영어</span>
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['수학']}"></span>수학</span>
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['과학']}"></span>과학</span>
+    <span class="k"><span class="gg-sw" style="background:#1d4ed8"></span>정규(채움)</span>
+    <span class="k"><span class="gg-sw" style="background:#fff;border:2px dashed #f59e0b"></span>클리닉(점선)</span>
+  </div>`;
+  document.getElementById("gradeSheet").innerHTML=html;
+  document.getElementById("gradeUnparsed").innerHTML = unparsed.length ? `<div class="unparsed"><b>⚠️ 시간 표기 확인 필요 ${unparsed.length}건</b> — 강사 입력을 "요일 HH:MM~HH:MM" 형식으로 정리하면 자동 배치됩니다.<br>`+unparsed.map(c=>`· [${esc(c.teacher)}] ${esc(c.course_name)} — "${esc((c.schedule_text||"").replace(/\n/g," / "))}"`).join("<br>")+`</div>` : "";
+  document.getElementById("gradeStat").textContent=`${cs.length}강좌 · 블록 ${DAY_LIST.reduce((a,d)=>a+byDay[d].length,0)}개`;
+}
+async function gradeCanvas(){ await loadH2C(); return await html2canvas(document.getElementById("gradeSheet"),{scale:2,backgroundColor:"#ffffff"}); }
+document.getElementById("gradePng").addEventListener("click", async ()=>{
+  document.getElementById("gradeStat").textContent="이미지 생성 중…";
+  try{ const c=await gradeCanvas(); const a=document.createElement("a"); a.download=`${selGrade}_시간표.png`; a.href=c.toDataURL("image/png"); a.click(); document.getElementById("gradeStat").textContent="이미지 저장 완료 ✓"; }
+  catch(e){ alert("이미지 생성 실패 — 인터넷 연결을 확인하세요."); }
+});
+document.getElementById("gradePrint").addEventListener("click", async ()=>{
+  document.getElementById("gradeStat").textContent="PDF 준비 중…";
+  try{
+    const c=await gradeCanvas(); const img=c.toDataURL("image/png"); const landscape=c.width>=c.height;
+    const w=window.open("","_blank");
+    w.document.write(`<!doctype html><html><head><title>${selGrade} 시간표</title><style>@page{size:A4 ${landscape?"landscape":"portrait"};margin:6mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:${landscape?"192mm":"280mm"}}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
+    w.document.close(); document.getElementById("gradeStat").textContent="";
+  }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
+});
 
 buildSchoolFilter();
 loadData();
