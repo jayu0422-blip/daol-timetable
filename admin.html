@@ -1571,23 +1571,36 @@ document.getElementById("allPrint").addEventListener("click", async ()=>{
   const st=document.getElementById("gradeStat");
   st.style.color=""; st.textContent="PDF 준비 중… (시간표 + 안내)";
   try{
-    const {tt,gd}=await bothCanvas();
-    const ttLand = tt.width>=tt.height;
+    await loadH2C();
+    // 인쇄 가독성: 해상도를 높이고(scale 3) 각 장을 A4에 꽉 차게 배치
+    const tt = await html2canvas(document.getElementById("gradeSheet"),{scale:3,backgroundColor:"#ffffff"});
+    const gd = await html2canvas(document.getElementById("guideSheet"),{scale:3,backgroundColor:"#ffffff"});
+    const ttLand = tt.width >= tt.height;     // 시간표는 보통 가로가 길다 → 가로 인쇄
     const w=window.open("","_blank");
-    w.document.write(`<!doctype html><html><head><title>${selGrade} 시간표·수업방식 안내</title><style>
-      @page{margin:6mm}
-      html,body{margin:0;padding:0}
-      .pg{page-break-after:always;break-after:page;display:flex;align-items:center;justify-content:center;height:100vh}
-      .pg:last-child{page-break-after:auto;break-after:auto}
-      img{display:block;max-width:100%;max-height:100%}
-      @media print{ .pg{height:auto} }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${selGrade} 시간표·수업방식 안내</title><style>
+      /* 시간표는 가로, 안내는 세로로 각각 인쇄한다 */
+      @page tt   { size: A4 ${ttLand?"landscape":"portrait"}; margin: 5mm; }
+      @page gd   { size: A4 portrait;  margin: 6mm; }
+      html,body{margin:0;padding:0;background:#fff}
+      .p{display:flex;align-items:flex-start;justify-content:center;page-break-after:always;break-after:page}
+      .p:last-child{page-break-after:auto;break-after:auto}
+      .p.tt{page:tt}
+      .p.gd{page:gd}
+      .p img{display:block;width:100%;height:auto;image-rendering:-webkit-optimize-contrast}
+      /* 화면 미리보기용 */
+      @media screen{ body{background:#e9edf3;padding:16px} .p{background:#fff;margin:0 auto 16px;max-width:1000px;box-shadow:0 2px 10px rgba(0,0,0,.15)} }
+      @media print{ .p{margin:0;box-shadow:none;max-width:none} }
     </style></head><body>
-      <div class="pg" style="page-break-after:always"><img src="${tt.toDataURL("image/png")}"></div>
-      <div class="pg"><img src="${gd.toDataURL("image/png")}"></div>
-      <script>window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});<\/script>
+      <div class="p tt"><img src="${tt.toDataURL("image/png")}"></div>
+      <div class="p gd"><img src="${gd.toDataURL("image/png")}"></div>
+      <script>
+        var imgs=document.images, left=imgs.length;
+        function go(){ if(--left<=0) setTimeout(function(){window.print()},500); }
+        for(var i=0;i<imgs.length;i++){ imgs[i].complete ? go() : imgs[i].addEventListener("load", go); }
+      <\/script>
     </body></html>`);
     w.document.close();
-    st.textContent="인쇄창에서 ‘용지 방향’을 확인한 뒤 인쇄하세요.";
+    st.textContent="인쇄창이 열렸습니다 — 배율 ‘기본’, 여백 ‘없음/최소’로 두면 가장 잘 나옵니다.";
   }catch(e){ st.style.color="var(--danger)"; st.textContent="PDF 준비 실패 — 인터넷 연결을 확인하세요."; }
 });
 

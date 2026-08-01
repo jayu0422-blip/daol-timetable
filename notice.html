@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 — 학년 안내</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c1a36; --navy:#15294f; --gold:#c6a04a; --gold-b:#e7c56d; --gold-s:#f1e4bf;
+    --cream:#faf6ee; --cream2:#f4ecdb; --paper:#fff;
+    --text:#1b2440; --muted:#5a6480; --line:#e8dfc9; --danger:#c0392b; --ok:#2f7d4f;
+    --serif:"Nanum Myeongjo",serif;
+    --sans:"Pretendard","Malgun Gothic",system-ui,sans-serif;
+    --c국어:#d9799f; --c영어:#4a72c6; --c수학:#d08036; --c과학:#7a5fc0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--cream);color:var(--text);line-height:1.75;font-size:16px;word-break:keep-all;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px}
+  section{padding:34px 0}
+  .paper{background:var(--paper)}
+
+  /* HERO */
+  .hero{background:radial-gradient(700px 380px at 80% -10%,rgba(231,197,109,.2),transparent 60%),linear-gradient(160deg,#0c1a36,#15294f 60%,#1b3160);color:#fff;padding:34px 0 30px}
+  .hero .b{font-size:11px;font-weight:800;letter-spacing:.28em;color:var(--gold-b)}
+  .hero h1{font-family:var(--serif);font-size:clamp(24px,6vw,34px);font-weight:800;margin:10px 0 8px;line-height:1.35}
+  .hero p{margin:0;font-size:14.5px;color:#c3cee2}
+  .hero .who{display:inline-block;margin-top:14px;background:rgba(231,197,109,.14);border:1px solid rgba(231,197,109,.42);border-radius:999px;padding:5px 15px;font-size:13.5px;font-weight:800;color:var(--gold-b)}
+
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--gold);margin-bottom:12px}
+  .eyebrow::before{content:"";width:24px;height:2px;background:var(--gold)}
+  h2.sec{font-family:var(--serif);font-size:clamp(21px,4.6vw,29px);font-weight:800;color:var(--ink);margin:0 0 12px;line-height:1.4}
+  h3.sub{font-family:var(--serif);font-size:clamp(17px,3.6vw,21px);font-weight:800;color:var(--ink);margin:22px 0 8px}
+  .lead{font-size:14.5px;color:var(--muted);margin:0 0 14px;line-height:1.85}
+
+  /* 요일 카드형 시간표 (모바일 우선) */
+  .day{background:var(--paper);border:1px solid var(--line);border-radius:13px;margin-bottom:10px;overflow:hidden;box-shadow:0 6px 18px -14px rgba(12,26,54,.4)}
+  .day-h{display:flex;align-items:center;gap:9px;background:var(--cream2);padding:9px 14px;border-bottom:1px solid var(--line)}
+  .day-h b{font-family:var(--serif);font-size:17px;color:var(--navy)}
+  .day-h span{font-size:11.5px;color:var(--muted);margin-left:auto}
+  .day-b{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .slot{display:flex;gap:10px;align-items:flex-start;border-left:4px solid #ccc;background:#fbfcfe;border-radius:9px;padding:9px 11px}
+  .slot .tm{font-size:12.5px;font-weight:800;color:var(--navy);white-space:nowrap;min-width:96px}
+  .slot .nm{font-size:14px;font-weight:800;color:var(--ink)}
+  .slot .sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .slot .tag{display:inline-block;font-size:10.5px;font-weight:800;border-radius:4px;padding:1px 7px;margin-left:5px;vertical-align:1px}
+  .slot .tag.reg{background:var(--ink);color:#fff}
+  .slot .tag.cli{background:#fff;color:var(--gold);border:1px solid var(--gold)}
+  .day-empty{font-size:13px;color:#a9b0c0;padding:6px 2px}
+
+  /* 과목 안내 */
+  .subj{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 6px 18px -14px rgba(12,26,54,.4)}
+  .subj-h{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .subj-h .dot{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--serif);font-weight:800;font-size:14px}
+  .subj-h .nm{font-family:var(--serif);font-size:20px;font-weight:800;color:var(--ink)}
+  .story{background:var(--cream);border:1px solid var(--line);border-radius:11px;padding:14px 15px;margin-bottom:11px}
+  .story b.t{display:block;font-family:var(--serif);font-size:16px;color:var(--navy);margin-bottom:6px}
+  .story p{margin:0;font-size:14px;line-height:1.85}
+  .pull{margin-top:11px;background:#fff;border-left:4px solid var(--gold);border-radius:9px;padding:12px 14px}
+  .pull b{display:block;font-family:var(--serif);font-size:15px;color:var(--navy);margin-bottom:5px}
+  .pull span{font-size:13.5px;line-height:1.85}
+  .tcard{display:flex;gap:12px;border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;margin-bottom:10px}
+  .tcard img{width:56px;height:72px;object-fit:contain;object-position:bottom;flex:0 0 auto}
+  .tcard .n{font-family:var(--serif);font-size:16px;font-weight:800}
+  .tcard .c{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+  .tcard .q{font-size:13px;color:var(--gold);font-weight:800;margin:5px 0 6px}
+  .tcard b.lb{display:block;font-size:11px;font-weight:800;color:var(--gold);margin-top:6px}
+  .tcard ul{margin:2px 0 0;padding-left:17px}
+  .tcard li{font-size:13px;line-height:1.7}
+  .course{border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:12px 14px;margin-top:10px;background:#fffdf9}
+  .course .cn{font-family:var(--serif);font-size:16px;font-weight:800;color:var(--ink)}
+  .course .ct{font-size:13px;color:var(--navy);font-weight:700;margin:4px 0 7px}
+  .course b.lb{display:block;font-size:11px;font-weight:800;color:var(--gold);margin-top:7px}
+  .course ul{margin:2px 0 0;padding-left:17px}
+  .course li{font-size:13.5px;line-height:1.7}
+
+  /* 중등영어 A/B */
+  .ab{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .ab .card{border-radius:13px;padding:16px}
+  .ab .a{background:#f2f7fd;border:1px solid #c7ddf7}
+  .ab .b{background:#fffaf0;border:1px solid var(--gold-s)}
+  .ab .tagline{display:inline-block;font-size:11px;font-weight:800;border-radius:5px;padding:2px 9px;color:#fff;margin-bottom:7px}
+  .ab .a .tagline{background:#2b5ea8}.ab .b .tagline{background:#b8842c}
+  .ab h4{font-size:15.5px;font-weight:800;margin:0 0 7px}
+  .ab p{margin:0 0 8px;font-size:13.5px;line-height:1.8}
+  .split{display:flex;height:26px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:800;color:#fff;margin:8px 0 5px}
+  .split .s70{flex:0 0 70%;background:#b8842c;display:flex;align-items:center;justify-content:center}
+  .split .s30{flex:0 0 30%;background:var(--gold-s);color:#7c5a17;display:flex;align-items:center;justify-content:center}
+  .alert{background:#fdf1f0;border:1px solid #f3cfcb;border-radius:9px;padding:10px 12px;margin-top:9px}
+  .alert b{display:block;font-size:12px;color:var(--danger);margin-bottom:4px}
+  .alert li{font-size:12.8px;line-height:1.7;color:#7a3b35}
+  .alert ul{margin:0;padding-left:17px}
+  .pact{margin-top:14px;border:1.5px solid var(--gold);border-radius:13px;background:#fffaf0;padding:16px}
+  .pact h4{font-size:16px;font-weight:800;color:#8a5a12;margin:0 0 7px}
+  .pact ol{margin:0;padding-left:19px}
+  .pact li{font-size:13.5px;line-height:1.8;margin-bottom:5px}
+  .seal{margin-top:11px;background:var(--ink);color:#fff;border-radius:9px;padding:12px 14px;font-size:13.5px;font-weight:700;line-height:1.75}
+  .seal span{display:block;margin-top:4px;font-weight:400;font-size:12.5px;color:#c3cee2}
+  .box{background:var(--cream);border:1px solid var(--line);border-radius:11px;padding:13px 15px;font-size:13.5px;line-height:1.8;margin-top:11px}
+  .box.warn{background:#fdf1f0;border-color:#f3cfcb;color:#7a3b35}
+  .box.key{background:#fffbeb;border-color:var(--gold-s);color:#7a5a12;font-weight:700}
+
+  /* CTA */
+  .cta{background:radial-gradient(600px 320px at 80% 0%,rgba(231,197,109,.18),transparent 60%),linear-gradient(160deg,#0c1a36,#15294f);color:#fff;text-align:center;padding:36px 0 40px}
+  .cta h2{font-family:var(--serif);font-size:22px;margin:0 0 10px;color:#fff}
+  .cta p{font-size:14px;color:#c3cee2;margin:0 auto 18px;max-width:460px}
+  .cta a{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--gold-b),var(--gold));color:var(--ink);text-decoration:none;font-weight:800;font-size:16px;border-radius:999px;padding:13px 32px}
+  .foot{background:var(--ink);color:#7e8db0;text-align:center;font-size:11.5px;padding:16px 0 70px}
+  .sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:8px;padding:9px 11px;background:rgba(12,26,54,.96);backdrop-filter:blur(8px);border-top:1px solid rgba(231,197,109,.3)}
+  .sticky a{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;padding:13px;border-radius:11px;font-size:15px;text-decoration:none;background:linear-gradient(180deg,var(--gold-b),var(--gold));color:var(--ink)}
+  .empty{padding:70px 20px;text-align:center;color:var(--muted)}
+  @media(max-width:640px){ .ab{grid-template-columns:1fr} .slot{flex-direction:column;gap:3px} .slot .tm{min-width:0} }
+</style>
+</head>
+<body>
+<div id="app"><div class="empty">불러오는 중…</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="copy.js"></script>
+<script src="scholars.js"></script>
+<script>
+const P=new URLSearchParams(location.search);
+const GRADE=P.get("g")||"중1";
+const TEL="031-794-8105";
+const DAY_LIST=["월","화","수","목","금","토","일"];
+const SUBJECT_ORDER=["국어","영어","수학","과학","사회","기타"];
+const HIGH=["미사고","미사강변고","하남고","풍산고"];
+const SC={국어:"#d9799f",영어:"#4a72c6",수학:"#d08036",과학:"#7a5fc0",사회:"#3f9e6a",기타:"#8b93a7"};
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const escA=s=>esc(s).replace(/"/g,"&quot;");
+const fmt=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const bl=t=>String(t||"").split(/\n/).map(s=>s.replace(/^[-–—·•]\s*/,"").trim()).filter(Boolean);
+const ggf=g=>(/고3|수능/.test(g||""))?"고3":g;
+function courseSchool(c){
+  const t=((c.target_school||"").trim()==="미강고")?"미사강변고":(c.target_school||"").trim();
+  if(HIGH.includes(t)) return t;
+  const n=c.course_name||"";
+  if(/미사강변고|미강고/.test(n)) return "미사강변고";
+  if(/미사고/.test(n)) return "미사고";
+  if(/하남고/.test(n)) return "하남고";
+  return null;
+}
+function extractDays(seg){
+  const set=new Set();
+  (seg.match(/[월화수목금토일]요일/g)||[]).forEach(m=>set.add(m[0]));
+  (seg.match(/[월화수목금토일]{2,}/g)||[]).forEach(r=>{for(const ch of r) set.add(ch);});
+  for(let i=0;i<seg.length;i++){const ch=seg[i];if("월화수목금토일".includes(ch)){const nx=seg[i+1]||"",pv=seg[i-1]||"";if(!/[가-힣]/.test(nx)&&!/[가-힣]/.test(pv)) set.add(ch);}}
+  return [...set];
+}
+function korToMin(s){const m=String(s).match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/);if(m){let h=(+m[2])%12;if(m[1]==="오후")h+=12;return h*60+(m[3]?+m[3]:0);}return null;}
+function parseDayTimes(text){
+  const out=[];
+  String(text||"").split(/\n|\//).forEach(seg=>{
+    seg=seg.trim(); if(!seg) return;
+    const days=extractDays(seg); if(!days.length) return;
+    const type=/클리닉/.test(seg)?"클리닉":(/관리/.test(seg)?"관리":"정규");
+    let s=null,e=null;
+    let m=seg.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+    if(m){s=(+m[1])*60+(+m[2]);e=(+m[3])*60+(+m[4]);}
+    else{
+      const p=seg.split(/[~\-–]/);
+      if(p.length>=2){const a=korToMin(p[0]),b=korToMin(p[1]);if(a!=null&&b!=null){s=a;e=b;}}
+      if(s==null){const m2=seg.match(/(\d{1,2}):(\d{2})/);if(m2)s=(+m2[1])*60+(+m2[2]);else{const a=korToMin(seg);if(a!=null)s=a;}if(s!=null)e=s+120;}
+      if(s==null){const m3=seg.match(/(\d{1,2})\s*[-~]\s*(\d{1,2})\s*시/);if(m3){let h1=+m3[1],h2=+m3[2];if(h1<12)h1+=12;if(h2<12)h2+=12;s=h1*60;e=h2*60;}}
+    }
+    if(s==null) return;
+    if(e==null||e<=s) e=s+120;
+    days.forEach(d=>out.push({day:d,start:s,end:e,type}));
+  });
+  return out;
+}
+const cGrade=c=>{let g=ggf(c.grade);if(!g){const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/);if(m)g=ggf(m[1]);}return g;};
+function coursesForGrade(key,all){
+  return all.filter(c=>{
+    if(!(c.schedule_text||"").trim()) return false;
+    if(/자습|써머스쿨|섬머스쿨|서머스쿨/.test(c.course_name||"")) return false;
+    const g=cGrade(c),sub=c.subject,sch=courseSchool(c);
+    if(["중1","중2","중3"].includes(key)) return g===key||g==="중등공통";
+    if(key==="고3") return g==="고3";
+    const wantG=key.endsWith("2")?"고2":"고1";
+    if(g!==wantG) return false;
+    if(sub==="수학") return true;
+    if(key==="하남고1") return sub==="영어"?(sch===null||sch==="미사고"):sch===null;
+    const ws=key.startsWith("미사강변고")?"미사강변고":"미사고";
+    return sch===null||sch===ws;
+  });
+}
+const COPY=window.DAOL_COPY||[];
+const copyFor=(s,l)=>COPY.find(c=>c.subject===s&&c.level===l)||null;
+function profFor(t,name,level){
+  if(level!=="중등") return t;
+  const m=(window.DAOL_MID_PROFILE||{})[name]; if(!m) return t;
+  return {...t,intro:m.intro||t.intro,principle:(m.principle||[]).join("\n")||t.principle,strategy:(m.strategy||[]).join("\n")||t.strategy};
+}
+/* 중등 영어 요일 규칙 */
+const midEngKind = d => (d==="금"||d==="토") ? "관리(클리닉)" : "수업";
+function midEngDetail(d){
+  return (d==="금"||d==="토")
+    ? "단어 재테스트 · 듣기 · 워크북 재확인 · 1:1 첨삭"
+    : "단어 테스트 2단원 + 어법·서술형 / 독해";
+}
+
+function render(courses,teachers){
+  const level=/^중/.test(GRADE)?"중등":"고등";
+  const mine=coursesForGrade(GRADE,courses);
+  const hasMidEng=mine.some(c=>c.subject==="영어"&&(c.division==="중등"||/^중/.test(cGrade(c)||"")));
+  let h="";
+
+  /* HERO */
+  h+=`<header class="hero"><div class="wrap">
+    <div class="b">D A O L 1 0 5 &nbsp;·&nbsp; 미사학원</div>
+    <h1>${esc(GRADE)} 시간표 &amp; 수업 방식 안내</h1>
+    <p>지금 실제로 운영 중인 시간표와, 각 과목을 어떻게 가르치는지 정리했습니다.</p>
+    <div class="who">${esc(GRADE)}</div>
+  </div></header>`;
+
+  /* 시간표 — 요일 카드 */
+  const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
+  mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{
+    if(!byDay[s.day]) return;
+    const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+    let kind = (s.type==="관리"||s.type==="클리닉") ? "관리(클리닉)" : "수업";
+    if(midEng) kind = midEngKind(s.day);
+    byDay[s.day].push({...s,kind,subj:c.subject,teacher:c.teacher,name:c.course_name,
+      detail: midEng ? midEngDetail(s.day) : ""});
+  }));
+  h+=`<section class="paper"><div class="wrap">
+    <div class="eyebrow">주간 시간표</div>
+    <h2 class="sec">${esc(GRADE)} 시간표</h2>
+    <p class="lead">아래 시간표는 <b>학원 시스템과 실시간으로 연결</b>되어 있어, 수업이 바뀌면 이 페이지도 함께 바뀝니다.</p>
+    ${DAY_LIST.map(d=>{
+      const l=byDay[d].slice().sort((a,b)=>a.start-b.start);
+      return `<div class="day">
+        <div class="day-h"><b>${d}요일</b><span>${l.length?l.length+"개 수업":"수업 없음"}</span></div>
+        <div class="day-b">${l.length? l.map(s=>{
+          const cli=s.kind!=="수업", col=SC[s.subj]||"#8b93a7";
+          return `<div class="slot" style="border-left-color:${col}">
+            <div class="tm">${fmt(s.start)}~${fmt(s.end)}</div>
+            <div><div class="nm">${esc(s.subj||"")}<span class="tag ${cli?'cli':'reg'}">${esc(s.kind)}</span></div>
+            <div class="sub">${esc(s.name||"")}${s.teacher?` · ${esc(s.teacher)} 선생님`:""}</div>
+            ${s.detail?`<div class="sub" style="color:#7a5a12">→ ${esc(s.detail)}</div>`:""}</div>
+          </div>`;}).join("") : `<div class="day-empty">이 요일에는 수업이 없습니다.</div>`}</div>
+      </div>`;
+    }).join("")}
+  </div></section>`;
+
+  /* 과목별 안내 */
+  const bySubj={}; mine.forEach(c=>{(bySubj[c.subject||"기타"]=bySubj[c.subject||"기타"]||[]).push(c);});
+  const order=SUBJECT_ORDER.filter(s=>bySubj[s]).concat(Object.keys(bySubj).filter(s=>!SUBJECT_ORDER.includes(s)));
+  h+=`<section><div class="wrap">
+    <div class="eyebrow">수업 방식</div>
+    <h2 class="sec">과목별로 이렇게 가르칩니다</h2>
+    ${order.map(sub=>{
+      const list=bySubj[sub], cp=copyFor(sub,level);
+      const names=[...new Set(list.map(c=>c.teacher).filter(Boolean))];
+      const profs=names.map(n=>{
+        const t=profFor(teachers[n]||{},n,level), raw=(window.DAOL_SCHOLARS||{})[n]||{};
+        const career=(raw.career||[]).length?raw.career:(t.career?bl(t.career):[]);
+        if(!(t.photo_url||t.principle||t.strategy||career.length)) return "";
+        return `<div class="tcard">
+          ${t.photo_url?`<img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님">`:""}
+          <div><div class="n">${esc(n)} 선생님</div>
+            ${career.length?`<div class="c">${career.map(x=>esc(x)).join(" · ")}</div>`:""}
+            ${t.intro?`<div class="q">“${esc(t.intro)}”</div>`:""}
+            ${t.principle?`<b class="lb">수업 원칙</b><ul>${bl(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+            ${t.strategy?`<b class="lb">점수를 올리는 방식</b><ul>${bl(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+          </div></div>`;}).join("");
+      return `<div class="subj">
+        <div class="subj-h"><span class="dot" style="background:${SC[sub]||'#888'}">${esc(sub[0])}</span><span class="nm">${esc(sub)}</span></div>
+        ${cp?`<div class="story"><b class="t">${esc(cp.problem.title)}</b><p>${esc(cp.problem.body)}</p>
+          ${level==="중등"&&cp.analogy?`<div class="pull"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div>`:""}</div>`:""}
+        ${profs}
+        ${list.map(c=>{
+          const ss=parseDayTimes(c.schedule_text), grp={};
+          const midEng=c.subject==="영어"&&(c.division==="중등"||/^중/.test(cGrade(c)||""));
+          ss.forEach(s=>{ const kind = midEng?midEngKind(s.day):((s.type==="정규")?"수업":"관리(클리닉)");
+            const k=`${kind}|${fmt(s.start)}~${fmt(s.end)}`; (grp[k]=grp[k]||[]).push(s.day); });
+          const tt=Object.entries(grp).map(([k,ds])=>{const[kind,t]=k.split("|");return `${DAY_LIST.filter(d=>ds.includes(d)).join("")} ${t} <b>${kind}</b>`;}).join(" · ");
+          return `<div class="course">
+            <div class="cn">${esc(c.course_name||"")}</div>
+            <div class="ct">🕘 ${tt||esc(c.schedule_text||"")}</div>
+            ${bl(c.audience).length?`<b class="lb">이런 학생을 위한 강좌입니다</b><ul>${bl(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+            ${bl(c.content).length?`<b class="lb">수업에서 실제로 하는 것</b><ul>${bl(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+            ${bl(c.textbook).length?`<b class="lb">사용 교재</b><ul>${bl(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+            ${(c.material_fee||bl(c.textbook).length)?`<div class="box">📚 학원에서 배부하는 교재는 <b>교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
+          </div>`;}).join("")}
+      </div>`;}).join("")}
+  </div></section>`;
+
+  /* 중등 영어 A/B 상세 */
+  if(hasMidEng){
+    h+=`<section class="paper"><div class="wrap">
+      <div class="eyebrow">중등 영어 — 반드시 확인해 주세요</div>
+      <h2 class="sec">영어 수강 방식 — 두 가지 선택</h2>
+
+      <h3 class="sub">1. 요일별 진행 방식</h3>
+      <div class="box"><b>월·수 (또는 화·목) — 수업일</b><br>단어 테스트(2단원) + 어법·서술형 / 독해<br>
+        <span style="color:var(--muted);font-size:12.8px">※ 어법·서술형과 독해는 요일이 고정된 것이 아니라, 하루는 어법·서술형 / 하루는 독해로 번갈아 진행되며 순서가 바뀌거나 섞여 나갈 수 있습니다.</span></div>
+      <div class="box" style="margin-top:8px"><b>금 (또는 토) — 관리(클리닉)일</b><br>주중 단어 재테스트 · 듣기 · 주중 진행한 어법/서술형/독해 <b>워크북 재확인</b> · 모르는 부분 <b>1:1 첨삭</b>(상세 분석서 제공)</div>
+
+      <h3 class="sub">2. 단어 테스트 기준</h3>
+      <div class="box">처음 <b>약 2주</b>까지는 표제어 뜻 <b>하나만</b> 써도 통과입니다.<br>
+        이후에는 <b>뜻 전체 + 유의어 + 파생어</b>까지 요구합니다.<br>
+        최종적으로는 <b>예문 빈칸</b>에서 그 단어가 <b>어떤 뜻으로 쓰였는지</b>까지 확인합니다.<br>
+        이 방식이 아니면 실제 점수 상승으로 이어지지 않기에, 학원은 이 기준을 지향합니다.</div>
+
+      <h3 class="sub">3. 두 가지 선택</h3>
+      <div class="ab">
+        <div class="card a"><span class="tagline">선택 A · 수업 중심</span>
+          <h4>주중 수업만 수강 (월·수 / 화·목)</h4>
+          <p>수업만 듣고, 복습·숙제·정리는 <b>가정에서 학생이 스스로</b> 수행하는 방식입니다.</p>
+          <p style="color:#2b5ea8"><b>이런 학생에게 적합합니다</b><br>
+            · 레벨테스트 <b>만점 또는 1개 정도 오답</b>인 극상위권<br>
+            · 자기주도 학습이 완성되어 스스로 복습이 가능한 학생<br>
+            · 금·토 <b>관리 수업의 강도를 아직 받아들이기 어려운</b> 학생<br>
+            · 당장의 성적 상승보다 <b>과목 수업을 듣는 것 자체에 만족</b>하는 학생</p>
+          <div class="alert"><b>반드시 먼저 알아두셔야 합니다</b>
+            <ul>
+              <li>이 방식은 <b>학생의 자기주도성을 전제로 설계된 커리큘럼</b>입니다. 스스로 복습·암기·오답 정리를 해내지 못하는 학생에게는 <b>성적 향상을 보장할 수 없습니다.</b></li>
+              <li>이해도는 한 번에 무너지지 않습니다. <b>매주 아주 미세하게 조금씩</b> 밀리기 때문에, 문제를 알아차렸을 때는 이미 여러 단원이 지나가 있는 경우가 많습니다.</li>
+              <li>주말 관리까지 함께 하는 학생들과는 <b>시간이 갈수록 격차가 벌어집니다.</b></li>
+            </ul></div>
+          <p style="margin-top:8px;color:#2b5ea8">그럼에도 관리일이 부담스러운 경우 <b>말씀만 주시면 빼 드립니다.</b> 억지로 끌고 가지 않습니다.</p>
+        </div>
+        <div class="card b"><span class="tagline">선택 B · 수업 + 관리 (권장)</span>
+          <h4>주중 수업 + 금(토) 관리 클리닉</h4>
+          <p>성적 향상 과정을 <b>학원에 위탁</b>하는 방식입니다.</p>
+          <div class="split"><span class="s70">학원 책임 70%</span><span class="s30">학생 30%</span></div>
+          <p style="font-size:12.8px;color:#7a5a12">성적은 학원 혼자 만들 수 없습니다. <b>학원이 70% 이상을 책임지고</b>, 나머지 <b>30%는 학생이 채워야</b> 완성됩니다.</p>
+          <p style="color:#8a5a12"><b>학원이 책임지는 70%</b><br>
+            · 주중 단어 재테스트 · 듣기<br>
+            · 주중 어법/서술형/독해 <b>워크북 전면 재확인</b><br>
+            · 상세 분석서를 주고 <b>학생이 직접 해석을 쓰고 단서를 찾도록</b> 유도<br>
+            · 그 과정에서 <b>진짜 모르는 부분만 1:1 첨삭</b><br>
+            · 주간 리포트로 <b>무엇이 되고 무엇이 안 되는지</b> 전달</p>
+        </div>
+      </div>
+
+      <div class="pact">
+        <h4>선택 B — 학생이 채워야 할 30%, 세 가지</h4>
+        <p style="font-size:13.5px;margin:0 0 7px">관리는 학원이 끌고 가지만, <b>학생이 지켜주지 않으면 성립하지 않는 부분</b>이 있습니다.</p>
+        <ol>
+          <li><b>단어는 몰아서 외우지 않습니다.</b> 시험 직전에 한 번에 외우는 방식은 그 주만 넘길 뿐, 다음 주면 사라집니다.</li>
+          <li><b>과제는 밀도 있게 해옵니다.</b> 빈칸만 채워오는 것이 아니라, <b>내가 무엇을 모르는지까지 표시해서</b> 가져와야 합니다.</li>
+          <li><b>출석을 지킵니다.</b> 관리 수업은 <b>한 달 4회 중 최소 3회 이상</b> 참여해야 흐름이 끊기지 않습니다.</li>
+        </ol>
+        <div class="seal">이 세 가지(30%)가 지켜지면, 나머지 70%는 학원이 책임집니다. <b>1년 안에 성적을 끌어올리는 것을 학원이 보장하고 함께 갑니다.</b>
+          <span>반대로 이 30%가 지켜지지 않으면 보장은 성립하지 않습니다. 그 시점에 솔직하게 말씀드리고, 무엇을 바꿔야 하는지 함께 조정합니다.</span></div>
+      </div>
+
+      <h3 class="sub">4. 관리(금·토)를 듣지 않을 경우 — 반드시 확인해 주세요</h3>
+      <div class="box warn">
+        관리 수업은 주중보다 <b>강도가 높습니다.</b> 주중에는 모르는 문제를 강사가 해설해 주지만, 관리일에는 학생이 스스로 해석을 쓰고 문제의 단서를 찾아야 하며 어휘도 다시 복습해야 합니다.
+        그래서 <b>아직 마음의 준비가 되지 않은 학생</b>에게는 미수강을 허용합니다. 다만 아래는 반드시 감안해 주셔야 합니다.<br><br>
+        · <b>선택 A는 자기주도성을 전제로 한 커리큘럼입니다.</b> 집에서 스스로 복습·암기·오답 정리를 해내지 못하는 학생에게는 <b>성적 향상을 보장할 수 없습니다.</b> 예외 없이 적용됩니다.<br>
+        · 이해도는 <b>매주 미세하게 조금씩</b> 밀려, 문제를 알아차렸을 때는 이미 여러 단원이 지나가 있는 경우가 많습니다.<br>
+        · 주말 관리까지 하는 학생들과 <b>시간이 갈수록 격차가 벌어집니다.</b><br>
+        · 주간 리포트가 <b>개별 상황을 담기 어렵고</b>, 주중 단어 테스트 통과 여부 정도만 정리되어 나갑니다.<br>
+        · 그 시점에 학원이 해 드릴 수 있는 부분이 제한됩니다.
+      </div>
+
+      <h3 class="sub">5. 가장 중요한 부분</h3>
+      <div class="box key">성적은 <b>복습과 숙제를 집에서 실제로 해내는 학생</b>에게서만 오릅니다. 주도성이 매우 강한 학생이 아니라면, 수업은 들었지만 <b>점수는 오르지 않는</b> 경우가 대부분입니다. 이 점을 충분히 고려하여 선택해 주시기 바랍니다.</div>
+
+      <h3 class="sub">6. 참고</h3>
+      <div class="box">요일·시간·수강료 등 <b>수업 조건과 수강료는 선택 A/B에 관계없이 동일</b>합니다.</div>
+    </div></section>`;
+  }
+
+  h+=`<section class="cta"><div class="wrap">
+    <h2>궁금한 점은 언제든 문의해 주세요</h2>
+    <p>수강 방식(선택 A / B) 회신도 아래 번호로 주시면 됩니다.</p>
+    <a href="tel:${TEL.replace(/-/g,"")}">📞 ${TEL}</a>
+  </div></section>
+  <div class="foot">다올105 미사학원 · 경기 하남시 미사<br>본 안내는 ${esc(GRADE)} 기준으로 자동 생성되며, 수업 변경 시 자동으로 갱신됩니다.</div>
+  <div class="sticky"><a href="tel:${TEL.replace(/-/g,"")}">📞 학원 문의 ${TEL}</a></div>`;
+
+  document.getElementById("app").innerHTML=h;
+  document.title=`다올105 ${GRADE} 시간표·수업 안내`;
+}
+(async function(){
+  const cfg=window.DAOL_CONFIG||{};
+  if(!(cfg.url&&cfg.anonKey&&window.supabase)){ document.getElementById("app").innerHTML=`<div class="empty">연결 설정이 필요합니다.</div>`; return; }
+  const sb=window.supabase.createClient(cfg.url,cfg.anonKey);
+  const [{data:courses},{data:tt}]=await Promise.all([sb.from("courses").select("*"),sb.from("teachers").select("*")]);
+  const teachers={}; (tt||[]).forEach(t=>teachers[t.name]=t);
+  render(courses||[],teachers);
+})();
+</script>
+</body>
+</html>
