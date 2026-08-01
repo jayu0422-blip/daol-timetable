@@ -72,6 +72,24 @@
   .prof-grid label{font-size:12.5px;font-weight:700;display:block;margin-bottom:4px}
   .prof-grid textarea{width:100%;font:inherit;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;line-height:1.5}
   @media(max-width:760px){ .prof-grid{grid-template-columns:1fr} }
+  /* 배포 미리보기 */
+  .prev-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:8px 12px;margin-top:12px}
+  .prev-bar b{font-size:12.5px;color:#1e40af}
+  .muted2{font-size:11.5px;color:#4b5563;line-height:1.5}
+  .prev{margin-top:10px;border:1px solid var(--line);border-radius:11px;background:#fff;padding:14px 16px}
+  .prev .pv-top{display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
+  .prev .pv-top img{width:58px;height:74px;object-fit:contain;object-position:bottom}
+  .prev .pv-n{font-size:15px;font-weight:800}
+  .prev .pv-c{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+  .prev .pv-q{font-size:13px;color:var(--brand-ink);font-weight:700;margin-top:5px}
+  .prev .pv-b{margin-top:9px}
+  .prev .pv-b>b{display:block;font-size:11.5px;color:var(--brand-ink);margin-bottom:3px}
+  .prev .pv-b ul{margin:0;padding-left:18px}
+  .prev .pv-b li{font-size:12.8px;line-height:1.7;color:#374151;margin-bottom:2px}
+  .prev .pv-sch{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .prev .pv-sch span{font-size:11px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:5px;padding:1px 7px}
+  .prev .pv-empty{color:var(--danger);font-size:12.5px;background:#fef2f2;border:1px dashed #fecaca;border-radius:7px;padding:8px 11px}
+  .prev .pv-where{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--muted);line-height:1.6}
 </style>
 </head>
 <body>
@@ -94,6 +112,13 @@
       </div>
       <span class="status" id="profStat"></span>
     </div>
+    <div class="prev-bar">
+      <b>📢 지금 이렇게 배포되고 있습니다</b>
+      <span class="muted2">아래 내용이 학부모께 나가는 안내문·과목 소개 페이지에 그대로 실립니다. 고칠 부분이 있으면 이 아래 칸에서 바로 수정하세요.</span>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="prevBtn">👁 내 소개 미리보기</button>
+    </div>
+    <div id="prevBox" class="prev hide"></div>
     <div class="prof-grid">
       <div class="f full"><label>① 수업 원칙 <b style="color:#b45309">(필수)</b></label>
         <div class="ask">이 수업에서 <b>절대 타협하지 않는 기준</b>은 무엇인가요? (예: 단어는 몰아서 외우게 하지 않는다 / 해설을 먼저 주지 않고 학생이 먼저 말하게 한다)</div>
@@ -122,6 +147,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="scholars.js?v=017b9187"></script>
 <script src="config.js?v=75abf301"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
@@ -207,6 +233,35 @@ async function save(){
 }
 function setStatus(t){ document.getElementById("saveStatus").innerHTML = t.includes("저장됨")?`<b>${t}</b>`:t; }
 
+/* ---------- 배포 미리보기 (학부모에게 나가는 모습 그대로) ---------- */
+const bl = t => String(t||"").split(/\n/).map(s=>s.replace(/^[-–—·•]\s*/,"").trim()).filter(Boolean);
+function renderPreview(){
+  const v = k => (document.querySelector(`[data-p="${k}"]`)||{}).value || "";
+  const sc = (window.DAOL_SCHOLARS||{})[TEACHER] || {};
+  const pick = window.DAOL_SCHOLAR_PICK || (a=>a||[]);
+  const top = pick(sc.top), up = pick(sc.up);
+  const career = (sc.career||[]);
+  const principle = bl(v("principle")), strategy = bl(v("strategy"));
+  const photo = (me && me.photo_url) || "";
+  document.getElementById("prevBox").innerHTML = `
+    <div class="pv-top">
+      ${photo?`<img src="${esc(photo)}" alt="${esc(TEACHER)}">`:""}
+      <div>
+        <div class="pv-n">${esc(TEACHER)} 선생님</div>
+        ${career.length?`<div class="pv-c">${career.map(x=>esc(x)).join(" · ")}</div>`:""}
+        ${v("intro")?`<div class="pv-q">“${esc(v("intro"))}”</div>`:""}
+      </div>
+    </div>
+    ${principle.length?`<div class="pv-b"><b>수업 원칙</b><ul>${principle.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`
+      :`<div class="pv-empty">수업 원칙이 비어 있습니다 — 이 항목이 없으면 안내문에서 선생님 소개가 빈칸으로 나갑니다.</div>`}
+    ${strategy.length?`<div class="pv-b"><b>점수를 올리는 방식</b><ul>${strategy.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`
+      :`<div class="pv-empty" style="margin-top:8px">점수를 올리는 방식이 비어 있습니다.</div>`}
+    ${top.length?`<div class="pv-b"><b>🏅 주요 성적 우수자</b><div class="pv-sch">${top.map(x=>`<span>${esc(x)}</span>`).join("")}<span>외 다수</span></div></div>`:""}
+    ${up.length?`<div class="pv-b"><b>📈 주요 성적 향상자</b><div class="pv-sch">${up.map(x=>`<span>${esc(x)}</span>`).join("")}<span>외 다수</span></div></div>`:""}
+    <div class="pv-where">이 내용이 실리는 곳 — <b>학년별 시간표의 ‘수업 방식 안내’</b>, <b>상담 오신 학부모께 드리는 인쇄 자료</b>, <b>과목 소개 페이지</b>.
+    위 입력칸을 고치면 <b>즉시 저장되어 세 곳에 함께 반영</b>됩니다.</div>`;
+}
+
 /* ---------- 강사 프로필(수업 원칙·전략) ---------- */
 let profTimer=null;
 function initProfile(){
@@ -215,6 +270,11 @@ function initProfile(){
   if(me && me.photo_url){ img.src=me.photo_url; } else { img.style.display="none"; }
   ["principle","strategy","intro","career"].forEach(k=>{
     const el=document.querySelector(`[data-p="${k}"]`); if(el && me) el.value = me[k]||"";
+  });
+  document.getElementById("prevBtn").addEventListener("click",()=>{
+    const box=document.getElementById("prevBox");
+    box.classList.toggle("hide");
+    if(!box.classList.contains("hide")) renderPreview();
   });
   document.getElementById("profBox").addEventListener("input", e=>{
     const el=e.target.closest("[data-p]"); if(!el) return;
@@ -227,6 +287,7 @@ function initProfile(){
       const {error}=await sb.from("teachers").update(patch).eq("name",TEACHER);
       st.textContent = error ? ("저장 오류: "+error.message) : "저장됨 ✓";
       if(!error && me) Object.assign(me,patch);
+      if(!document.getElementById("prevBox").classList.contains("hide")) renderPreview();
     },600);
   });
 }
