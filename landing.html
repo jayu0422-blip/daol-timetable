@@ -127,27 +127,38 @@
   .flag.ok{background:#eef8f1;color:var(--ok);border:1px solid #cce7d6}
   .flag.no{background:#fdf0ee;color:var(--danger);border:1px solid #f4d4cf}
 
-  /* 주간 시간표 그리드 — 학년별 시간표와 동일 구조 */
-  .ggwrap{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-sm);overflow-x:auto;margin-top:18px}
-  .ggrid{display:grid;grid-template-columns:56px repeat(7,1fr);min-width:860px;padding:0 10px 12px}
-  .gg-h{font-family:var(--serif);font-weight:800;font-size:13.5px;text-align:center;padding:10px 4px;border-bottom:2px solid var(--ink);background:var(--cream-2);color:var(--navy)}
-  .gg-h.sun{color:var(--danger)}
-  .gg-h.corner{background:transparent;border-bottom:2px solid var(--ink)}
-  .gg-col{position:relative;border-left:1px solid var(--line)}
-  .gg-col.last{border-right:1px solid var(--line)}
+  /* 주간 시간표 그리드 — 학년별 시간표와 동일 디자인 */
+  .ggwrap{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-sm);overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:18px}
+  .gg-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 18px 6px}
+  .gg-brand{font-size:12px;font-weight:800;color:var(--navy);letter-spacing:1px}
+  .gg-title{text-align:center;flex:1}
+  .gg-title .tt{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--gold)}
+  .gg-title .gn{font-family:var(--serif);font-size:26px;font-weight:800;color:var(--ink);margin-top:2px}
+  .gg-note{max-width:300px;background:#fffbe8;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#78350f;line-height:1.45}
+  .gg-note b{color:#b45309}
+  .ggrid{display:grid;grid-template-columns:64px repeat(7,1fr);min-width:900px;padding:0 10px 12px}
+  .gg-h{font-weight:800;font-size:13px;text-align:center;padding:9px 4px;border-bottom:2px solid #374151;background:#fdf6ec}
+  .gg-h.wk,.gg-h.sat{color:#2563eb}.gg-h.sun{color:#dc2626}
+  .gg-h.corner{background:transparent;border-bottom:2px solid #374151}
+  .gg-col{position:relative;border-left:1px solid #eef0f3}
+  .gg-col.last{border-right:1px solid #eef0f3}
   .gg-timecol{position:relative}
   .gg-tlabel{position:absolute;left:0;right:5px;text-align:right;font-size:10.5px;color:var(--muted);transform:translateY(-6px)}
-  .gg-line{position:absolute;left:0;right:0;border-top:1px solid #f1ece0}
-  .gblk{position:absolute;border-radius:8px;padding:5px 7px;font-size:11px;overflow:hidden;line-height:1.3;box-shadow:0 1px 3px rgba(12,26,54,.16)}
-  .gblk.dim{opacity:.32}
-  .gblk .gsch{font-size:9.5px;font-weight:700;color:#3b4459}
-  .gblk .gteach{font-weight:800;color:#12182a}
-  .gblk .gsub{font-weight:800;font-size:12.5px;color:#12182a}
-  .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:3px;vertical-align:middle}
-  .gblk .gtag.reg{background:var(--ink);color:#fff}
-  .gblk .gtag.cli{background:#fff;color:var(--gold);border:1px solid var(--gold)}
+  .gg-line{position:absolute;left:0;right:0;border-top:1px solid #eef0f3}
+  .gblk{position:absolute;border-radius:8px;padding:5px 6px;font-size:11px;overflow:hidden;line-height:1.25;box-shadow:0 1px 2px rgba(0,0,0,.12);color:#111827}
+  .gblk.dim{opacity:.34}
+  .gblk .gsch{font-size:10px;font-weight:700;color:#374151}
+  .gblk .gteach{font-weight:800;color:#111827}
+  .gblk .gsub{font-weight:800;font-size:12px}
+  .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:middle}
+  .gblk .gtag.reg{background:#1d4ed8;color:#fff}
+  .gblk .gtag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
   .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
-  .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px 4px;font-size:11.5px;color:var(--muted)}
+  .gblk .gdet{font-size:9.5px;color:#374151;margin-top:2px;line-height:1.3;border-top:1px dotted rgba(0,0,0,.18);padding-top:2px}
+  .gblk .gbadges{margin-top:2px;display:flex;gap:3px;flex-wrap:wrap}
+  .gunit{display:inline-block;font-size:10px;font-weight:800;color:#fff;border-radius:4px;padding:1px 6px}
+  .gsp{display:inline-block;font-size:9.5px;font-weight:800;color:#7f1d1d;background:#fee2e2;border:1px solid #fca5a5;border-radius:4px;padding:0 4px}
+  .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:2px 18px 14px;font-size:11.5px;color:var(--muted)}
   .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
   .gg-sw{width:16px;height:12px;border-radius:3px;display:inline-block}
 
@@ -218,6 +229,59 @@ const DAY_LIST=["월","화","수","목","금","토","일"];
 const SUBJECT_ORDER=["국어","영어","수학","과학","사회","기타"];
 const HIGH_SCHOOLS=["미사고","미사강변고","하남고","풍산고"];
 const SC={국어:"#d9799f",영어:"#4a72c6",수학:"#d08036",과학:"#7a5fc0",사회:"#3f9e6a",기타:"#8b93a7"};
+/* 주간 표(그리드) — 학년별 시간표와 동일 팔레트·규칙 */
+const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
+const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
+const MATH_UNITS=[
+  {re:/공통\s*수학\s*2|공수\s*2/, label:"공통수학2", color:"#6d28d9"},
+  {re:/공통\s*수학\s*1|공수\s*1/, label:"공통수학1", color:"#1d4ed8"},
+  {re:/확률과?\s*통계|확통/,      label:"확률과통계", color:"#047857"},
+  {re:/미적분/,                   label:"미적분",     color:"#b91c1c"},
+  {re:/기하/,                     label:"기하",       color:"#0e7490"},
+  {re:/대수/,                     label:"대수",       color:"#be185d"},
+  {re:/수능|수1|수2/,             label:"수능수학",   color:"#374151"}
+];
+function mathUnit(c){
+  if(c.subject!=="수학") return null;
+  const t=(c.course_name||"")+" "+(c.content||"");
+  for(const u of MATH_UNITS) if(u.re.test(t)) return u;
+  return null;
+}
+const isSpecial=c=>c.course_type==="특강"||/특강/.test(c.course_name||"")||/특강\s*회당/.test(c.tuition_note||"");
+function courseEnd(c){
+  if(c.end_date){ const d=new Date(c.end_date+"T23:59:59"); return isNaN(d)?null:d; }
+  const t=(c.schedule_text||"")+" "+(c.tuition_note||""), Y=new Date().getFullYear();
+  const r=t.match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*[~\-–]\s*(\d{1,2})\s*\/\s*(\d{1,2})/);
+  if(r){ const sm=+r[1],em=+r[3]; if(sm<1||sm>12||em<1||em>12) return null; return new Date(Y+(em<sm?1:0),em-1,+r[4],23,59,59); }
+  const all=[...t.matchAll(/(\d{1,2})\s*\/\s*(\d{1,2})(?!\d)/g)].filter(m=>+m[1]>=1&&+m[1]<=12&&+m[2]>=1&&+m[2]<=31);
+  if(all.length){ const F=all[0],L=all[all.length-1]; return new Date(Y+((+L[1])<(+F[1])?1:0),(+L[1])-1,+L[2],23,59,59); }
+  return null;
+}
+const midEngKind=d=>(d==="금"||d==="토")?"관리(클리닉)":"수업";
+const midEngDetail=d=>(d==="금"||d==="토")
+  ? "단어 재테스트 · 듣기 · 워크북 복습 · 1:1 첨삭"
+  : (d==="월"||d==="화" ? "단어테스트 2단원 + 어법·서술형" : "단어테스트 2단원 + 독해");
+function notesFor(raw,day,start){
+  if(!String(raw||"").trim()) return "";
+  const hit=[],common=[];
+  String(raw).split(/\n|\//).forEach(line=>{
+    let s=line.trim(); if(!s) return;
+    const tm=s.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+    let t0=null,t1=null;
+    if(tm){ t0=(+tm[1])*60+(+tm[2]); t1=(+tm[3])*60+(+tm[4]); }
+    const head=s.split(/[::]/)[0];
+    const days=extractDays(head.length<=12?head:s.slice(0,12));
+    let body=s.replace(/\d{1,2}:\d{2}\s*[~\-–]\s*\d{1,2}:\d{2}\s*/,"")
+              .replace(/^\s*[^::\d]{0,12}[::]\s*/,"")
+              .replace(/^\s*[월화수목금토일]{1,7}(요일)?\s+/,"").trim();
+    if(!body) body=s.trim();
+    const dayOK=days.length?days.includes(day):null;
+    const timeOK=(t0!=null)?(start>=t0-1&&start<t1):null;
+    if(dayOK===false||timeOK===false) return;
+    if(dayOK===null&&timeOK===null) common.push(body); else hit.push(body);
+  });
+  return (hit.length?hit:common).join(" · ");
+}
 
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const escA=s=>esc(s).replace(/"/g,"&quot;");
@@ -423,7 +487,12 @@ function render(courses,teachers){
   const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
   mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{
     if(!byDay[s.day]) return;
-    byDay[s.day].push({...s, subj:c.subject, teacher:c.teacher,
+    const midEng=c.subject==="영어"&&(c.division==="중등"||/^중/.test(cGrade(c)||""));
+    let kind=(s.type==="관리"||s.type==="클리닉")?"관리(클리닉)":"수업";
+    if(midEng) kind=midEngKind(s.day);
+    byDay[s.day].push({...s, kind, subj:c.subject, teacher:c.teacher,
+      detail: notesFor(c.session_notes,s.day,s.start) || (midEng?midEngDetail(s.day):""),
+      unit:mathUnit(c), special:isSpecial(c), endAt:courseEnd(c),
       on:NOW.includes(c.subject)||targets.includes(c.subject)});
   }));
   if(DAY_LIST.some(d=>byDay[d].length)){
@@ -435,9 +504,19 @@ function render(courses,teachers){
       blks.forEach(b=>{ let i=0; for(;i<le.length;i++){ if(le[i]<=b.start) break; } b.lane=i; le[i]=b.end; });
       blks.forEach(b=>{ const g=blks.filter(x=>x.start<b.end&&b.start<x.end); b.cols=Math.max(0,...g.map(x=>x.lane))+1; });
     };
-    let g=`<div class="ggwrap"><div class="ggrid">`;
-    g+=`<div class="gg-h corner"></div>`+DAY_LIST.map(d=>`<div class="gg-h ${d==='일'?'sun':''}">${d}</div>`).join("");
-    g+=`<div style="grid-column:1 / -1;display:grid;grid-template-columns:56px repeat(7,1fr);position:relative">`;
+    const gnotes=[];
+    if(mine.some(c=>c.subject==="국어"&&/일/.test(c.schedule_text||"")&&/(관리|클리닉)/.test(c.schedule_text||"")))
+      gnotes.push("국어 클리닉은 <b>일요일 유동</b> 운영(학생별 조정).");
+    if(mine.some(c=>c.subject==="영어"&&(c.division==="중등"||/^중/.test(cGrade(c)||""))))
+      gnotes.push("영어: <b>월·수(화·목)=수업</b>, <b>금(토)=관리 클리닉</b>. 관리일은 선택 가능합니다.");
+    let g=`<div class="ggwrap">
+      <div class="gg-top">
+        <div class="gg-brand">📘 다올105<br><span style="font-size:9px;color:#9ca3af">미사학원</span></div>
+        <div class="gg-title"><div class="tt">T I M E &nbsp; T A B L E</div><div class="gn">${esc(GRADE)}</div></div>
+        ${gnotes.length?`<div class="gg-note"><b>[안내]</b><br>${gnotes.join("<br>")}</div>`:`<div style="width:220px"></div>`}
+      </div><div class="ggrid">`;
+    g+=`<div class="gg-h corner"></div>`+DAY_LIST.map(d=>`<div class="gg-h ${d==='토'?'sat':d==='일'?'sun':'wk'}">${d}</div>`).join("");
+    g+=`<div style="grid-column:1 / -1;display:grid;grid-template-columns:64px repeat(7,1fr);position:relative">`;
     g+=`<div class="gg-timecol" style="height:${H}px">`;
     for(let t=START;t<=END;t+=60) g+=`<div class="gg-tlabel" style="top:${(t-START)*PX}px">${fmt(t)}</div>`;
     g+=`</div>`;
@@ -450,24 +529,30 @@ function render(courses,teachers){
         if(en<=st) return;
         const top=(st-START)*PX, hh=Math.max((en-st)*PX,34);
         const L=b.lane/b.cols*100, W=100/b.cols;
-        const clinic=(b.type==="관리"||b.type==="클리닉");
-        const col=SC[b.subj]||"#8b93a7";
+        const clinic=b.kind!=="수업";
+        const col=SUBJ_COLOR[b.subj]||"#e5e7eb", bcol=SUBJ_BORDER[b.subj]||"#6b7280";
         const box=clinic
-          ? `background:repeating-linear-gradient(135deg, ${col}33 0 5px, #fff 5px 10px);border:1.5px dashed ${col}`
-          : `background:${col}2e;border:1px solid ${col}`;
+          ? `background:repeating-linear-gradient(135deg,${col} 0 7px,#ffffff 7px 14px);border:1.5px dashed ${bcol}`
+          : `background:${col};border:1px solid rgba(0,0,0,.12)`;
+        const unitBadge=b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:"";
+        const spBadge=b.special?`<span class="gsp">특강${b.endAt?` ~${b.endAt.getMonth()+1}/${b.endAt.getDate()}`:""}</span>`:"";
         g+=`<div class="gblk ${b.on?'':'dim'}" style="top:${top}px;height:${hh}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}">
           <div class="gsch">[${esc(GRADE)}]${b.teacher?` <span class="gteach">${esc(b.teacher)} T</span>`:""}</div>
-          <div class="gsub">${esc(b.subj||"")}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'관리':'수업'}</span></div>
+          <div class="gsub">${esc(b.subj||"")}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'관리(클리닉)':'수업'}</span></div>
+          ${unitBadge||spBadge?`<div class="gbadges">${unitBadge}${spBadge}</div>`:""}
           <div class="gtm">${d} ${fmt(b.start)}~${fmt(b.end)}</div>
+          ${b.detail?`<div class="gdet">${esc(b.detail)}</div>`:""}
         </div>`;
       });
       g+=`</div>`;
     });
     g+=`</div></div>`;
     const used=[...new Set(DAY_LIST.flatMap(d=>byDay[d].map(x=>x.subj)).filter(Boolean))];
-    g+=`<div class="gg-legend">${used.map(s=>`<span class="k"><span class="gg-sw" style="background:${SC[s]||'#8b93a7'}2e;border:1px solid ${SC[s]||'#8b93a7'}"></span>${esc(s)}</span>`).join("")}
-      <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,#8b93a733 0 5px,#fff 5px 10px);border:1.5px dashed #8b93a7"></span>관리(클리닉)</span>
-      <span class="k" style="opacity:.45"><span class="gg-sw" style="background:#8b93a72e;border:1px solid #8b93a7"></span>안내 대상 외</span></div></div>`;
+    const gunits=MATH_UNITS.filter(u=>DAY_LIST.some(d=>byDay[d].some(b=>b.unit&&b.unit.label===u.label)));
+    g+=`<div class="gg-legend">${used.map(s=>`<span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR[s]||'#e5e7eb'}"></span>${esc(s)}</span>`).join("")}
+      <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,${SUBJ_COLOR['영어']} 0 4px,#fff 4px 8px);border:1.5px dashed ${SUBJ_BORDER['영어']}"></span>관리·클리닉(빗금)</span>
+      ${gunits.length?`<span class="k">수학 단원: ${gunits.map(u=>`<span class="gunit" style="background:${u.color};margin-left:3px">${u.label}</span>`).join("")}</span>`:""}
+      <span class="k" style="opacity:.45"><span class="gg-sw" style="background:#e5e7eb;border:1px solid #cbd0d8"></span>안내 대상 외</span></div></div>`;
     h+=`<section class="paper"><div class="wrap reveal">
       <div class="eyebrow">주간 시간표</div>
       <h2 class="sec">${esc(GRADE)} 전체 시간표</h2>

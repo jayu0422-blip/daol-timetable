@@ -52,6 +52,45 @@
   .slot .tag.cli{background:#fff;color:var(--gold);border:1px solid var(--gold)}
   .day-empty{font-size:13px;color:#a9b0c0;padding:6px 2px}
 
+  /* 주간 표(그리드) 시간표 — 학원 내부 시간표와 동일한 디자인 */
+  .vsw{display:flex;gap:6px;margin:0 0 12px}
+  .vsw button{flex:0 0 auto;font-family:inherit;font-size:13px;font-weight:800;border-radius:9px;padding:8px 16px;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--muted)}
+  .vsw button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .ghint{font-size:12px;color:var(--muted);margin:0 0 8px}
+  .gsheet{background:#fff;border:1px solid var(--line);border-radius:13px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:0 6px 18px -14px rgba(12,26,54,.4)}
+  .gg-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 18px 6px}
+  .gg-brand{font-size:12px;font-weight:800;color:var(--navy);letter-spacing:1px}
+  .gg-title{text-align:center;flex:1}
+  .gg-title .tt{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--gold)}
+  .gg-title .gn{font-family:var(--serif);font-size:26px;font-weight:800;color:var(--ink);margin-top:2px}
+  .gg-note{max-width:300px;background:#fffbe8;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#78350f;line-height:1.45}
+  .gg-note b{color:#b45309}
+  .ggrid{display:grid;grid-template-columns:64px repeat(7,1fr);min-width:900px;padding:0 10px 12px}
+  .gg-h{font-weight:800;font-size:13px;text-align:center;padding:9px 4px;border-bottom:2px solid #374151;background:#fdf6ec}
+  .gg-h.wk,.gg-h.sat{color:#2563eb}.gg-h.sun{color:#dc2626}
+  .gg-h.corner{background:transparent;border-bottom:2px solid #374151}
+  .gg-col{position:relative;border-left:1px solid #eef0f3}
+  .gg-col.last{border-right:1px solid #eef0f3}
+  .gg-timecol{position:relative}
+  .gg-tlabel{position:absolute;left:0;right:4px;text-align:right;font-size:10.5px;color:var(--muted);transform:translateY(-6px)}
+  .gg-line{position:absolute;left:0;right:0;border-top:1px solid #eef0f3}
+  .gblk{position:absolute;border-radius:8px;padding:5px 6px;font-size:11px;overflow:hidden;line-height:1.25;box-shadow:0 1px 2px rgba(0,0,0,.12);color:#111827}
+  .gblk .gsch{font-size:10px;font-weight:700;color:#374151}
+  .gblk .gteach{font-weight:800;color:#111827}
+  .gblk .gsub{font-weight:800;font-size:12px}
+  .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:middle}
+  .gblk .gtag.reg{background:#1d4ed8;color:#fff}
+  .gblk .gtag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
+  .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
+  .gblk .gdet{font-size:9.5px;color:#374151;margin-top:2px;line-height:1.3;border-top:1px dotted rgba(0,0,0,.18);padding-top:2px}
+  .gblk .gbadges{margin-top:2px;display:flex;gap:3px;flex-wrap:wrap}
+  .gunit{display:inline-block;font-size:10px;font-weight:800;color:#fff;border-radius:4px;padding:1px 6px}
+  .gsp{display:inline-block;font-size:9.5px;font-weight:800;color:#7f1d1d;background:#fee2e2;border:1px solid #fca5a5;border-radius:4px;padding:0 4px}
+  .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:2px 18px 14px;font-size:11.5px;color:var(--muted)}
+  .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
+  .gg-sw{width:16px;height:12px;border-radius:3px;display:inline-block}
+
   /* 과목 안내 */
   .subj{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 6px 18px -14px rgba(12,26,54,.4)}
   .subj-h{display:flex;align-items:center;gap:9px;margin-bottom:10px}
@@ -190,6 +229,112 @@ function coursesForGrade(key,all){
     return sch===null||sch===ws;
   });
 }
+/* ===== 주간 표(그리드)용 — 학원 내부 시간표와 동일 규칙 ===== */
+const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
+const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
+const MATH_UNITS=[
+  {re:/공통\s*수학\s*2|공수\s*2/, label:"공통수학2", color:"#6d28d9"},
+  {re:/공통\s*수학\s*1|공수\s*1/, label:"공통수학1", color:"#1d4ed8"},
+  {re:/확률과?\s*통계|확통/,      label:"확률과통계", color:"#047857"},
+  {re:/미적분/,                   label:"미적분",     color:"#b91c1c"},
+  {re:/기하/,                     label:"기하",       color:"#0e7490"},
+  {re:/대수/,                     label:"대수",       color:"#be185d"},
+  {re:/수능|수1|수2/,             label:"수능수학",   color:"#374151"}
+];
+function mathUnit(c){
+  if(c.subject!=="수학") return null;
+  const t=(c.course_name||"")+" "+(c.content||"");
+  for(const u of MATH_UNITS) if(u.re.test(t)) return u;
+  return null;
+}
+const isSpecial=c=>c.course_type==="특강"||/특강/.test(c.course_name||"")||/특강\s*회당/.test(c.tuition_note||"");
+function courseEnd(c){
+  if(c.end_date){ const d=new Date(c.end_date+"T23:59:59"); return isNaN(d)?null:d; }
+  const t=(c.schedule_text||"")+" "+(c.tuition_note||""), Y=new Date().getFullYear();
+  const r=t.match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*[~\-–]\s*(\d{1,2})\s*\/\s*(\d{1,2})/);
+  if(r){ const sm=+r[1],em=+r[3]; if(sm<1||sm>12||em<1||em>12) return null; return new Date(Y+(em<sm?1:0),em-1,+r[4],23,59,59); }
+  const all=[...t.matchAll(/(\d{1,2})\s*\/\s*(\d{1,2})(?!\d)/g)].filter(m=>+m[1]>=1&&+m[1]<=12&&+m[2]>=1&&+m[2]<=31);
+  if(all.length){ const F=all[0],L=all[all.length-1]; return new Date(Y+((+L[1])<(+F[1])?1:0),(+L[1])-1,+L[2],23,59,59); }
+  return null;
+}
+/* 강사가 입력한 "요일·시간대별 진행 내용" 파싱 */
+function notesFor(raw,day,start){
+  if(!String(raw||"").trim()) return "";
+  const hit=[],common=[];
+  String(raw).split(/\n|\//).forEach(line=>{
+    let s=line.trim(); if(!s) return;
+    const tm=s.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+    let t0=null,t1=null;
+    if(tm){ t0=(+tm[1])*60+(+tm[2]); t1=(+tm[3])*60+(+tm[4]); }
+    const head=s.split(/[::]/)[0];
+    const days=extractDays(head.length<=12?head:s.slice(0,12));
+    let body=s.replace(/\d{1,2}:\d{2}\s*[~\-–]\s*\d{1,2}:\d{2}\s*/,"")
+              .replace(/^\s*[^::\d]{0,12}[::]\s*/,"")
+              .replace(/^\s*[월화수목금토일]{1,7}(요일)?\s+/,"").trim();
+    if(!body) body=s.trim();
+    const dayOK=days.length?days.includes(day):null;
+    const timeOK=(t0!=null)?(start>=t0-1&&start<t1):null;
+    if(dayOK===false||timeOK===false) return;
+    if(dayOK===null&&timeOK===null) common.push(body); else hit.push(body);
+  });
+  return (hit.length?hit:common).join(" · ");
+}
+function layoutRoom(blks){
+  blks.sort((a,b)=>a.start-b.start||a.end-b.end);
+  const laneEnd=[];
+  blks.forEach(b=>{ let i=0; for(;i<laneEnd.length;i++){ if(laneEnd[i]<=b.start) break; } b.lane=i; laneEnd[i]=b.end; });
+  blks.forEach(b=>{ const grp=blks.filter(x=>x.start<b.end&&b.start<x.end); b.cols=Math.max(0,...grp.map(x=>x.lane))+1; });
+}
+/* 주간 표(그리드) HTML — admin 학년별 시간표와 동일 레이아웃 */
+function gridHtml(byDay,grade,notes){
+  const START=9*60,END=22*60,PX=.9,H=(END-START)*PX;
+  const noteHtml=notes.length?`<div class="gg-note"><b>[안내]</b><br>${notes.join("<br>")}</div>`:`<div style="width:220px"></div>`;
+  let html=`<div class="gg-top">
+    <div class="gg-brand">📘 다올105<br><span style="font-size:9px;color:#9ca3af">미사학원</span></div>
+    <div class="gg-title"><div class="tt">T I M E &nbsp; T A B L E</div><div class="gn">${esc(grade)}</div></div>
+    ${noteHtml}
+  </div>`;
+  html+=`<div class="ggrid"><div class="gg-h corner"></div>`+DAY_LIST.map(d=>`<div class="gg-h ${d==="토"?"sat":d==="일"?"sun":"wk"}">${d}</div>`).join("");
+  html+=`<div style="grid-column:1 / -1;display:grid;grid-template-columns:64px repeat(7,1fr);position:relative">`;
+  html+=`<div class="gg-timecol" style="height:${H}px">`;
+  for(let t=START;t<=END;t+=60) html+=`<div class="gg-tlabel" style="top:${(t-START)*PX}px">${fmt(t)}</div>`;
+  html+=`</div>`;
+  DAY_LIST.forEach((d,di)=>{
+    html+=`<div class="gg-col ${di===6?"last":""}" style="height:${H}px">`;
+    for(let t=START;t<=END;t+=60) html+=`<div class="gg-line" style="top:${(t-START)*PX}px"></div>`;
+    const blks=byDay[d].slice();
+    layoutRoom(blks);
+    blks.forEach(b=>{
+      const st=Math.max(b.start,START),en=Math.min(b.end,END),top=(st-START)*PX,h=Math.max((en-st)*PX,34);
+      const L=b.lane/b.cols*100,W=100/b.cols;
+      const col=SUBJ_COLOR[b.subj]||"#e5e7eb",bcol=SUBJ_BORDER[b.subj]||"#6b7280",clinic=b.kind!=="수업";
+      const box=clinic
+        ? `background:repeating-linear-gradient(135deg,${col} 0 7px,#ffffff 7px 14px);border:1.5px dashed ${bcol}`
+        : `background:${col};border:1px solid rgba(0,0,0,.12)`;
+      const unitBadge=b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:"";
+      const spBadge=b.special?`<span class="gsp">특강${b.endAt?` ~${b.endAt.getMonth()+1}/${b.endAt.getDate()}`:""}</span>`:"";
+      html+=`<div class="gblk ${clinic?"clinic":""}" style="top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}">
+        <div class="gsch">[${esc(grade)}]${b.teacher?` <span class="gteach">${esc(b.teacher)} T</span>`:""}</div>
+        <div class="gsub">${esc(b.subj||"")}<span class="gtag ${clinic?"cli":"reg"}">${clinic?"관리(클리닉)":"수업"}</span></div>
+        ${unitBadge||spBadge?`<div class="gbadges">${unitBadge}${spBadge}</div>`:""}
+        <div class="gtm">${d} ${fmt(b.start)}~${fmt(b.end)}</div>
+        ${b.detail?`<div class="gdet">${esc(b.detail)}</div>`:""}
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`</div></div>`;
+  const units=MATH_UNITS.filter(u=>DAY_LIST.some(d=>byDay[d].some(b=>b.unit&&b.unit.label===u.label)));
+  const subs=[...new Set(DAY_LIST.flatMap(d=>byDay[d].map(b=>b.subj)).filter(Boolean))];
+  html+=`<div class="gg-legend">
+    ${subs.map(s=>`<span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR[s]||"#e5e7eb"}"></span>${esc(s)}</span>`).join("")}
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR["영어"]}"></span>수업(단색)</span>
+    <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,${SUBJ_COLOR["영어"]} 0 4px,#fff 4px 8px);border:1.5px dashed ${SUBJ_BORDER["영어"]}"></span>관리·클리닉(빗금)</span>
+    ${units.length?`<span class="k">수학 단원: ${units.map(u=>`<span class="gunit" style="background:${u.color};margin-left:3px">${u.label}</span>`).join("")}</span>`:""}
+  </div>`;
+  return html;
+}
+
 const COPY=window.DAOL_COPY||[];
 const copyFor=(s,l)=>COPY.find(c=>c.subject===s&&c.level===l)||null;
 function profFor(t,name,level){
@@ -226,13 +371,24 @@ function render(courses,teachers){
     const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
     let kind = (s.type==="관리"||s.type==="클리닉") ? "관리(클리닉)" : "수업";
     if(midEng) kind = midEngKind(s.day);
-    byDay[s.day].push({...s,kind,subj:c.subject,teacher:c.teacher,name:c.course_name,
-      detail: midEng ? midEngDetail(s.day) : ""});
+    const detail = notesFor(c.session_notes,s.day,s.start) || (midEng ? midEngDetail(s.day) : "");
+    byDay[s.day].push({...s,kind,subj:c.subject,teacher:c.teacher,name:c.course_name,detail,
+      unit:mathUnit(c),special:isSpecial(c),endAt:courseEnd(c)});
   }));
+  const gnotes=[];
+  if(mine.some(c=>c.subject==="국어"&&/일/.test(c.schedule_text||"")&&/(관리|클리닉)/.test(c.schedule_text||"")))
+    gnotes.push("국어 클리닉은 <b>일요일 유동</b> 운영(학생별 조정).");
+  if(hasMidEng) gnotes.push("영어: <b>월·수(화·목)=수업</b>, <b>금(토)=관리 클리닉</b>. 관리일은 선택 가능(아래 ‘영어 수강 방식’ 참고).");
   h+=`<section class="paper"><div class="wrap">
     <div class="eyebrow">주간 시간표</div>
     <h2 class="sec">${esc(GRADE)} 시간표</h2>
     <p class="lead">아래 시간표는 <b>학원 시스템과 실시간으로 연결</b>되어 있어, 수업이 바뀌면 이 페이지도 함께 바뀝니다.</p>
+    <div class="vsw"><button data-v="grid" class="on">📅 주간 표로 보기</button><button data-v="card">📋 요일별로 보기</button></div>
+    <div id="vGrid">
+      <p class="ghint">※ 화면이 좁으면 표를 <b>좌우로 밀어서</b> 보실 수 있습니다. 글씨가 작으면 위의 <b>‘요일별로 보기’</b>를 눌러 주세요.</p>
+      <div class="gsheet">${gridHtml(byDay,GRADE,gnotes)}</div>
+    </div>
+    <div id="vCard" style="display:none">
     ${DAY_LIST.map(d=>{
       const l=byDay[d].slice().sort((a,b)=>a.start-b.start);
       return `<div class="day">
@@ -247,6 +403,7 @@ function render(courses,teachers){
           </div>`;}).join("") : `<div class="day-empty">이 요일에는 수업이 없습니다.</div>`}</div>
       </div>`;
     }).join("")}
+    </div>
   </div></section>`;
 
   /* 과목별 안내 */
@@ -382,6 +539,15 @@ function render(courses,teachers){
 
   document.getElementById("app").innerHTML=h;
   document.title=`다올105 ${GRADE} 시간표·수업 안내`;
+  // 보기 전환 (주간 표 ↔ 요일별 카드)
+  const sw=document.querySelector(".vsw");
+  if(sw) sw.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-v]"); if(!b) return;
+    sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    const grid=b.dataset.v==="grid";
+    document.getElementById("vGrid").style.display=grid?"":"none";
+    document.getElementById("vCard").style.display=grid?"none":"";
+  });
 }
 (async function(){
   const cfg=window.DAOL_CONFIG||{};
