@@ -4,133 +4,191 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>다올105 — 과목 안내</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
-    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa;
-    --brand:#f59e0b; --brand-ink:#b45309; --deep:#7c2d12;
-    --g-국어:#fbcfe8; --g-영어:#bfdbfe; --g-수학:#fed7aa; --g-과학:#ddd6fe;
+    --ink:#0c1a36; --navy:#15294f; --navy-soft:#213c6c;
+    --gold:#c6a04a; --gold-bright:#e7c56d; --gold-soft:#f1e4bf;
+    --cream:#faf6ee; --cream-2:#f4ecdb; --paper:#fff;
+    --text:#1b2440; --muted:#5a6480; --line:#e8dfc9;
+    --danger:#c0392b; --ok:#2f7d4f;
+    --shadow:0 18px 50px -22px rgba(12,26,54,.35);
+    --shadow-sm:0 8px 24px -14px rgba(12,26,54,.28);
+    --serif:"Nanum Myeongjo","Noto Serif KR",serif;
+    --sans:"Pretendard","Pretendard Variable",-apple-system,"Malgun Gothic",system-ui,sans-serif;
+    --c-국어:#d9799f; --c-영어:#4a72c6; --c-수학:#d08036; --c-과학:#7a5fc0;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.75;-webkit-text-size-adjust:100%}
-  .wrap{max-width:760px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.05)}
-  .pad{padding:26px 22px}
-  @media(max-width:520px){ .pad{padding:20px 16px} body{font-size:14.5px} }
+  body{margin:0;font-family:var(--sans);color:var(--text);background:var(--cream);line-height:1.72;-webkit-font-smoothing:antialiased;letter-spacing:-.01em;word-break:keep-all;overflow-x:hidden}
+  img{max-width:100%;display:block}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px}
+  section{padding:52px 0}
+  .paper{background:var(--paper)}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:14px}
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+  h2.sec{font-family:var(--serif);font-size:clamp(24px,5vw,38px);font-weight:800;line-height:1.36;color:var(--ink);letter-spacing:-.02em;margin:0 0 14px}
+  h3.sub{font-family:var(--serif);font-size:clamp(19px,3.4vw,26px);font-weight:800;line-height:1.4;color:var(--ink);margin:0 0 10px}
+  .lead{font-size:clamp(15.5px,2.3vw,17.5px);color:var(--muted);line-height:1.85;margin:0}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
 
   /* HERO */
-  .hero{background:linear-gradient(160deg,#7c2d12 0%,#b45309 60%,#f59e0b 100%);color:#fff;padding:34px 22px 30px}
-  .hero .brand{font-size:12px;font-weight:800;letter-spacing:3px;opacity:.85}
-  .hero h1{font-size:26px;line-height:1.4;margin:10px 0 12px;font-weight:800;word-break:keep-all}
-  .hero p{font-size:14.5px;opacity:.94;margin:0;word-break:keep-all}
-  .hero .who{display:inline-block;margin-top:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700}
+  .hero{position:relative;overflow:hidden;color:#eaf0fb;
+    background:radial-gradient(900px 460px at 78% -8%,rgba(231,197,109,.20),transparent 60%),
+               radial-gradient(700px 500px at 8% 110%,rgba(33,60,108,.55),transparent 55%),
+               linear-gradient(160deg,#0c1a36 0%,#15294f 58%,#1b3160 100%);padding:52px 0 44px}
+  .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.5;z-index:3}
+  .hero .wrap{position:relative;z-index:2}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:end}
+  .hero .brand{font-size:12px;font-weight:800;letter-spacing:.28em;color:var(--gold-bright);margin-bottom:16px}
+  .hero h1{font-family:var(--serif);font-size:clamp(26px,5.4vw,44px);font-weight:800;line-height:1.34;letter-spacing:-.025em;color:#fff;margin:0 0 18px}
+  .hero h1 .q{color:var(--gold-bright)}
+  .hero .sub{font-size:clamp(15px,2.4vw,17.5px);color:#c3cee2;line-height:1.8;max-width:600px;margin:0 0 16px}
+  .hero .sub b{color:#fff}
+  .hero .who{display:inline-block;background:rgba(231,197,109,.12);border:1px solid rgba(231,197,109,.42);border-radius:999px;padding:6px 16px;font-size:13.5px;font-weight:800;color:var(--gold-bright)}
+  .hero-duo{display:flex;align-items:flex-end;justify-content:center;gap:clamp(6px,3vw,22px)}
+  .hero-pic{position:relative;display:flex;justify-content:center;align-items:flex-end}
+  .hero-pic img{width:min(100%,190px);height:auto;border-radius:14px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.45));position:relative;z-index:2}
+  .hero-pic .cap{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);z-index:3;background:rgba(12,26,54,.9);border:1px solid rgba(231,197,109,.4);border-radius:10px;padding:5px 12px;white-space:nowrap;font-size:12px;font-weight:800;color:var(--gold-bright)}
 
-  /* 현재/제안 */
-  .status{display:flex;gap:10px;flex-wrap:wrap;padding:16px 22px;background:#fffbeb;border-bottom:1px solid #fde68a}
-  .status .box{flex:1;min-width:150px}
-  .status .lbl{font-size:11.5px;font-weight:800;color:var(--brand-ink)}
-  .chipline{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
-  .sub-chip{font-size:12.5px;font-weight:800;border-radius:6px;padding:3px 10px;background:#f3f4f6;color:#374151}
-  .sub-chip.on{color:#7c2d12}
+  /* 현재/제안 스트립 */
+  .strip{background:var(--ink);color:#fff;padding:18px 0}
+  .strip .row{display:flex;gap:16px;flex-wrap:wrap}
+  .strip .cell{flex:1;min-width:180px}
+  .strip .k{font-size:11.5px;font-weight:800;letter-spacing:.1em;color:var(--gold);margin-bottom:7px}
+  .pill{display:inline-block;font-size:13px;font-weight:800;border-radius:999px;padding:4px 13px;margin:0 5px 5px 0;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#e9eefa}
+  .pill.hot{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--ink);border-color:transparent}
 
-  h2.sec{font-size:20px;font-weight:800;margin:0 0 4px;color:var(--deep);word-break:keep-all;line-height:1.4}
-  .sec-sub{font-size:13px;color:var(--muted);margin:0 0 16px}
-  .divider{height:8px;background:#f3f4f6}
+  /* 과목 섹션 */
+  .subjbar{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+  .subjbar .dot{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;font-family:var(--serif)}
+  .subjbar .nm{font-family:var(--serif);font-size:24px;font-weight:800;color:var(--ink)}
+  .subjbar .tg{font-size:11.5px;font-weight:800;letter-spacing:.06em;background:var(--cream-2);color:var(--navy-soft);border-radius:6px;padding:3px 9px}
 
-  .subj-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-  .subj-dot{width:12px;height:12px;border-radius:4px}
-  .subj-name{font-size:17px;font-weight:800}
-  .subj-tag{font-size:11.5px;font-weight:800;background:#fef3c7;color:#92400e;border-radius:5px;padding:2px 8px}
+  .story{background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:24px 22px;box-shadow:var(--shadow-sm)}
+  .story p{margin:0;font-size:15.5px;line-height:1.9;color:var(--text)}
+  .pull{margin-top:16px;background:var(--paper);border-left:4px solid var(--gold);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow-sm)}
+  .pull b{display:block;font-family:var(--serif);font-size:17px;color:var(--navy);margin-bottom:7px}
+  .pull span{font-size:15px;line-height:1.88;color:var(--text)}
 
-  .qbox{background:#fffdf7;border:1px solid #fde68a;border-radius:12px;padding:14px 16px;margin-bottom:14px}
-  .qbox h3{margin:0 0 6px;font-size:15.5px;color:var(--deep);word-break:keep-all}
-  .qbox p{margin:0;font-size:14px;color:#374151;word-break:keep-all}
-  .analogy{background:#fff;border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;margin-top:11px}
-  .analogy b{display:block;color:var(--brand-ink);margin-bottom:4px;font-size:14px}
-  .analogy span{font-size:13.5px;color:#374151;word-break:keep-all}
+  /* 비교표 */
+  .vs{width:100%;border-collapse:separate;border-spacing:0;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm)}
+  .vs th,.vs td{padding:13px 14px;font-size:14px;vertical-align:top;border-bottom:1px solid var(--line)}
+  .vs thead th{background:var(--ink);color:#fff;font-size:12.5px;letter-spacing:.06em;font-weight:800;border-bottom:none}
+  .vs thead th.our{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--ink)}
+  .vs td.ax{background:var(--cream-2);font-weight:800;color:var(--navy);width:21%;font-size:13.5px}
+  .vs td.our{background:#fffdf6}
+  .vs tr:last-child td{border-bottom:none}
 
-  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
-  table.cmp th,table.cmp td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;word-break:keep-all}
-  table.cmp th{background:#fdf6ec;color:var(--deep);font-weight:800;font-size:12px}
-  table.cmp td.ax{background:#fafafa;font-weight:700;width:22%}
-  table.cmp td.our{background:#fffdf7}
-
-  .points{display:grid;gap:10px;margin:14px 0}
-  .pt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}
-  .pt b{display:block;font-size:14.5px;color:var(--deep);margin-bottom:4px;word-break:keep-all}
-  .pt span{font-size:13.5px;color:#374151;word-break:keep-all}
+  /* 해결 포인트 */
+  .pillars{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .pl{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 19px;box-shadow:var(--shadow-sm);position:relative}
+  .pl .n{font-family:var(--serif);font-size:13px;font-weight:800;color:var(--gold);letter-spacing:.1em}
+  .pl b{display:block;font-family:var(--serif);font-size:17px;color:var(--ink);margin:5px 0 7px;line-height:1.45}
+  .pl span{font-size:14px;line-height:1.82;color:var(--muted)}
 
   /* 강사 */
-  .tprof{display:flex;gap:13px;border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff;margin-bottom:11px}
-  .tprof img{width:78px;height:98px;object-fit:cover;border-radius:9px;background:#f3f4f6;flex:0 0 auto}
-  .tprof .nm{font-size:15.5px;font-weight:800}
-  .tprof .nm em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--muted);margin-left:5px}
-  .tprof .it{font-size:13.5px;color:var(--brand-ink);font-weight:700;margin:3px 0 6px;word-break:keep-all}
-  .tprof .bk{margin-top:5px}
-  .tprof .bk b{display:block;font-size:11.5px;color:var(--brand-ink)}
-  .tprof ul{margin:2px 0 0;padding-left:17px}
-  .tprof li{font-size:12.8px;line-height:1.6;color:#374151;word-break:keep-all}
+  .tprofile{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow-sm);margin-top:16px}
+  .tp-photo{width:168px;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);background:linear-gradient(160deg,#e2e7f1,#eef2f8)}
+  .tp-photo img{width:100%;height:auto;object-fit:cover}
+  .tp-name{font-family:var(--serif);font-size:22px;font-weight:800;color:var(--ink)}
+  .tp-name em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--muted);margin-left:8px}
+  .tp-quote{font-family:var(--serif);font-size:16px;color:var(--navy-soft);margin:7px 0 12px;line-height:1.6}
+  .tp-b{margin-top:9px}
+  .tp-b b{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--gold);border-bottom:1px solid var(--gold-soft);padding-bottom:2px;margin-bottom:5px}
+  .tp-b ul{margin:0;padding-left:18px}
+  .tp-b li{font-size:14px;line-height:1.75;color:var(--text)}
 
   /* 강좌 카드 */
-  .ccard{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fffdf9}
-  .ccard .cn{font-size:15px;font-weight:800;color:var(--deep);word-break:keep-all}
-  .ccard .ct{font-size:13px;color:#374151;margin:4px 0 7px}
-  .ccard .blk{margin-top:5px}
-  .ccard .blk b{display:block;font-size:11.5px;color:var(--brand-ink)}
-  .ccard ul{margin:2px 0 0;padding-left:17px}
-  .ccard li{font-size:13px;line-height:1.6;color:#374151;word-break:keep-all}
+  .ccard{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow-sm);margin-top:14px}
+  .cc-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:12px}
+  .cc-name{font-family:var(--serif);font-size:19px;font-weight:800;color:var(--ink)}
+  .cc-t{font-size:12.5px;font-weight:700;color:var(--muted)}
+  .cc-time{font-size:14px;color:var(--navy);font-weight:700;margin-bottom:10px}
+  .cc-time b{color:var(--gold);font-weight:800}
+  .cc-b{margin-top:9px}
+  .cc-b>b{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--gold);margin-bottom:4px}
+  .cc-b ul{margin:0;padding-left:18px}
+  .cc-b li{font-size:14px;line-height:1.75;color:var(--text)}
+  .flag{margin-top:11px;font-size:13.5px;font-weight:800;border-radius:9px;padding:9px 13px}
+  .flag.ok{background:#eef8f1;color:var(--ok);border:1px solid #cce7d6}
+  .flag.no{background:#fdf0ee;color:var(--danger);border:1px solid #f4d4cf}
 
   /* 시간표 */
-  .tt{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
-  .tt th,.tt td{border:1px solid var(--line);padding:7px 6px;text-align:center}
-  .tt th{background:#fdf6ec;color:var(--deep);font-weight:800;font-size:12px}
-  .tt td.d{background:#fafafa;font-weight:800;width:52px}
-  .tt .slot{display:inline-block;border-radius:5px;padding:2px 7px;margin:2px 2px;font-size:11.5px;font-weight:700}
-  .fit{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13.5px;color:#065f46;word-break:keep-all}
-  .fit b{color:#047857}
+  .ttbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);margin-top:16px}
+  .ttbl th,.ttbl td{padding:11px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+  .ttbl thead th{background:var(--ink);color:#fff;font-size:12px;letter-spacing:.06em;font-weight:800}
+  .ttbl td.day{background:var(--cream-2);font-weight:800;color:var(--navy);width:64px;text-align:center;font-family:var(--serif)}
+  .ttbl tr:last-child td{border-bottom:none}
+  .slot{display:inline-block;border-radius:8px;padding:4px 10px;margin:2px 4px 2px 0;font-size:12.5px;font-weight:800;color:#fff}
+  .slot.dim{opacity:.28}
+  .note{margin-top:16px;background:#eef8f1;border:1px solid #cce7d6;border-radius:12px;padding:15px 17px;font-size:14.5px;color:var(--ok);font-weight:700;line-height:1.75}
+  .note.warn{background:#fdf6ee;border-color:var(--gold-soft);color:var(--navy)}
 
   /* FAQ */
-  details{border-bottom:1px solid var(--line);padding:11px 0}
-  details summary{font-size:14.5px;font-weight:700;cursor:pointer;color:var(--deep);word-break:keep-all;list-style:none}
+  details{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:9px;box-shadow:var(--shadow-sm)}
+  details summary{font-family:var(--serif);font-size:16px;font-weight:800;cursor:pointer;color:var(--ink);list-style:none;position:relative;padding-right:24px}
   details summary::-webkit-details-marker{display:none}
-  details summary::before{content:"Q. ";color:var(--brand)}
-  details p{margin:8px 0 0;font-size:13.5px;color:#374151;word-break:keep-all}
+  details summary::after{content:"+";position:absolute;right:0;top:-2px;color:var(--gold);font-size:20px;font-weight:800}
+  details[open] summary::after{content:"−"}
+  details p{margin:11px 0 0;font-size:14.5px;color:var(--muted);line-height:1.85}
 
   /* CTA */
-  .cta{background:var(--deep);color:#fff;padding:26px 22px;text-align:center}
-  .cta h3{margin:0 0 8px;font-size:19px;word-break:keep-all}
-  .cta p{margin:0 0 16px;font-size:13.5px;opacity:.9;word-break:keep-all}
-  .cta a{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;font-weight:800;font-size:16px;border-radius:999px;padding:13px 34px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-  .foot{padding:16px 22px;text-align:center;font-size:11.5px;color:var(--muted);background:#fafafa}
-  .empty{padding:60px 20px;text-align:center;color:var(--muted)}
+  .cta{background:radial-gradient(700px 380px at 80% 0%,rgba(231,197,109,.18),transparent 60%),linear-gradient(160deg,#0c1a36,#15294f);color:#fff;text-align:center;padding:56px 0 60px}
+  .cta h2{font-family:var(--serif);font-size:clamp(23px,4.6vw,34px);font-weight:800;margin:0 0 12px;color:#fff}
+  .cta p{font-size:15.5px;color:#c3cee2;margin:0 auto 26px;max-width:520px;line-height:1.85}
+  .cta a.call{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--ink);text-decoration:none;font-weight:800;font-size:17px;border-radius:999px;padding:15px 38px;box-shadow:0 14px 34px -14px rgba(231,197,109,.8)}
+  .foot{background:var(--ink);color:#7e8db0;text-align:center;font-size:12px;padding:20px 0 84px;border-top:1px solid rgba(231,197,109,.16)}
+
+  /* sticky */
+  .sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:9px;padding:10px 12px;background:rgba(12,26,54,.96);backdrop-filter:blur(8px);border-top:1px solid rgba(231,197,109,.32)}
+  .sticky a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;padding:14px;border-radius:12px;font-size:15px;text-decoration:none}
+  .sticky .call{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--ink)}
+  .sticky .top{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(231,197,109,.4);flex:0 0 auto;padding:14px 17px}
+
+  @media(max-width:760px){
+    .hero-grid{grid-template-columns:1fr}
+    .hero-pic{margin-top:16px}
+    .hero-pic img{width:150px}
+    .pillars{grid-template-columns:1fr}
+    .tprofile{grid-template-columns:1fr;text-align:center}
+    .tp-photo{margin:0 auto;width:150px}
+    .tp-b{text-align:left}
+    section{padding:42px 0}
+    .vs td.ax{width:30%}
+  }
+  .empty{padding:80px 20px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="wrap" id="app"><div class="empty">불러오는 중…</div></div>
+<div id="app"><div class="empty">불러오는 중…</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="copy.js"></script>
 <script>
-/* ===== 설정 ===== */
 const P=new URLSearchParams(location.search);
-const GRADE = P.get("g") || "중1";                          // 중1~중3 / 미사고1 / 미사강변고1 / 하남고1 / 미사고2 / 미사강변고2 / 고3
-const NOW   = (P.get("now")||"").split(",").map(s=>s.trim()).filter(Boolean);   // 현재 수강 과목
-let   WANT  = (P.get("s")||"").split(",").map(s=>s.trim()).filter(Boolean);     // 제안 과목(비우면 자동)
-const NAME  = P.get("n")||"";
-const TEL   = "031-794-8105";
+const GRADE=P.get("g")||"중1";
+const NOW=(P.get("now")||"").split(",").map(s=>s.trim()).filter(Boolean);
+let WANT=(P.get("s")||"").split(",").map(s=>s.trim()).filter(Boolean);
+const NAME=P.get("n")||"";
+const TEL="031-794-8105";
 
 const DAY_LIST=["월","화","수","목","금","토","일"];
 const SUBJECT_ORDER=["국어","영어","수학","과학","사회","기타"];
-const GRADE_ORDER=["중1","중2","중3","중등공통","고1","고2","고3/수능"];
 const HIGH_SCHOOLS=["미사고","미사강변고","하남고","풍산고"];
-const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
+const SC={국어:"#d9799f",영어:"#4a72c6",수학:"#d08036",과학:"#7a5fc0",사회:"#3f9e6a",기타:"#8b93a7"};
 
-const esc = s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const escA= s=>esc(s).replace(/"/g,"&quot;");
-const fmt = m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
-const bullets = t=>String(t||"").split(/\n/).map(s=>s.replace(/^[-–—·•]\s*/,"").trim()).filter(Boolean);
-const ggf = g=>(/고3|수능/.test(g||"")) ? "고3" : g;
-const normSchool = s=>s==="미강고"?"미사강변고":s;
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const escA=s=>esc(s).replace(/"/g,"&quot;");
+const fmt=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const bullets=t=>String(t||"").split(/\n/).map(s=>s.replace(/^[-–—·•]\s*/,"").trim()).filter(Boolean);
+const ggf=g=>(/고3|수능/.test(g||""))?"고3":g;
+const normSchool=s=>s==="미강고"?"미사강변고":s;
 function courseSchool(c){
   const t=normSchool((c.target_school||"").trim());
   if(HIGH_SCHOOLS.includes(t)) return t;
@@ -141,15 +199,14 @@ function courseSchool(c){
   if(/풍산고/.test(n)) return "풍산고";
   return null;
 }
-/* 시간 파서 (운영자 화면과 동일 규칙) */
 function extractDays(seg){
   const set=new Set();
   (seg.match(/[월화수목금토일]요일/g)||[]).forEach(m=>set.add(m[0]));
-  (seg.match(/[월화수목금토일]{2,}/g)||[]).forEach(run=>{ for(const ch of run) set.add(ch); });
-  for(let i=0;i<seg.length;i++){ const ch=seg[i]; if("월화수목금토일".includes(ch)){ const nx=seg[i+1]||"",pv=seg[i-1]||""; if(!/[가-힣]/.test(nx)&&!/[가-힣]/.test(pv)) set.add(ch); } }
+  (seg.match(/[월화수목금토일]{2,}/g)||[]).forEach(r=>{for(const ch of r) set.add(ch);});
+  for(let i=0;i<seg.length;i++){const ch=seg[i];if("월화수목금토일".includes(ch)){const nx=seg[i+1]||"",pv=seg[i-1]||"";if(!/[가-힣]/.test(nx)&&!/[가-힣]/.test(pv)) set.add(ch);}}
   return [...set];
 }
-function korToMin(str){ const m=String(str).match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/); if(m){ let h=(+m[2])%12; if(m[1]==="오후") h+=12; return h*60+(m[3]?+m[3]:0);} return null; }
+function korToMin(s){const m=String(s).match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/);if(m){let h=(+m[2])%12;if(m[1]==="오후")h+=12;return h*60+(m[3]?+m[3]:0);}return null;}
 function parseDayTimes(text){
   const out=[];
   String(text||"").split(/\n|\//).forEach(seg=>{
@@ -158,12 +215,12 @@ function parseDayTimes(text){
     const type=/클리닉/.test(seg)?"클리닉":(/관리/.test(seg)?"관리":"정규");
     let s=null,e=null;
     let m=seg.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
-    if(m){ s=(+m[1])*60+(+m[2]); e=(+m[3])*60+(+m[4]); }
+    if(m){s=(+m[1])*60+(+m[2]);e=(+m[3])*60+(+m[4]);}
     else{
-      const parts=seg.split(/[~\-–]/);
-      if(parts.length>=2){ const a=korToMin(parts[0]),b=korToMin(parts[1]); if(a!=null&&b!=null){s=a;e=b;} }
-      if(s==null){ const m2=seg.match(/(\d{1,2}):(\d{2})/); if(m2) s=(+m2[1])*60+(+m2[2]); else { const a=korToMin(seg); if(a!=null) s=a; } if(s!=null) e=s+120; }
-      if(s==null){ const m3=seg.match(/(\d{1,2})\s*[-~]\s*(\d{1,2})\s*시/); if(m3){ let h1=+m3[1],h2=+m3[2]; if(h1<12)h1+=12; if(h2<12)h2+=12; s=h1*60; e=h2*60; } }
+      const p=seg.split(/[~\-–]/);
+      if(p.length>=2){const a=korToMin(p[0]),b=korToMin(p[1]);if(a!=null&&b!=null){s=a;e=b;}}
+      if(s==null){const m2=seg.match(/(\d{1,2}):(\d{2})/);if(m2)s=(+m2[1])*60+(+m2[2]);else{const a=korToMin(seg);if(a!=null)s=a;}if(s!=null)e=s+120;}
+      if(s==null){const m3=seg.match(/(\d{1,2})\s*[-~]\s*(\d{1,2})\s*시/);if(m3){let h1=+m3[1],h2=+m3[2];if(h1<12)h1+=12;if(h2<12)h2+=12;s=h1*60;e=h2*60;}}
     }
     if(s==null) return;
     if(e==null||e<=s) e=s+120;
@@ -171,187 +228,166 @@ function parseDayTimes(text){
   });
   return out;
 }
-function cGrade(c){ let g=ggf(c.grade); if(!g){ const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/); if(m) g=ggf(m[1]); } return g; }
+const cGrade=c=>{let g=ggf(c.grade);if(!g){const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/);if(m)g=ggf(m[1]);}return g;};
 function coursesForGrade(key,all){
   return all.filter(c=>{
     if(!(c.schedule_text||"").trim()) return false;
     if(/자습|써머스쿨|섬머스쿨|서머스쿨/.test(c.course_name||"")) return false;
-    const g=cGrade(c), sub=c.subject, sch=courseSchool(c);
+    const g=cGrade(c),sub=c.subject,sch=courseSchool(c);
     if(["중1","중2","중3"].includes(key)) return g===key||g==="중등공통";
     if(key==="고3") return g==="고3";
-    const wantG = key.endsWith("2") ? "고2":"고1";
+    const wantG=key.endsWith("2")?"고2":"고1";
     if(g!==wantG) return false;
     if(sub==="수학") return true;
-    if(key==="하남고1") return sub==="영어" ? (sch===null||sch==="미사고") : sch===null;
-    const ws = key.startsWith("미사강변고") ? "미사강변고":"미사고";
-    return sch===null || sch===ws;
+    if(key==="하남고1") return sub==="영어"?(sch===null||sch==="미사고"):sch===null;
+    const ws=key.startsWith("미사강변고")?"미사강변고":"미사고";
+    return sch===null||sch===ws;
   });
 }
 const COPY=window.DAOL_COPY||[];
-const copyFor=(sub,lv)=>COPY.find(c=>c.subject===sub&&c.level===lv)||null;
+const copyFor=(s,l)=>COPY.find(c=>c.subject===s&&c.level===l)||null;
 
-/* ===== 렌더 ===== */
-function render(courses, teachers){
-  const level = /^중/.test(GRADE) ? "중등":"고등";
-  const mine  = coursesForGrade(GRADE, courses);
-  const opened=[...new Set(mine.map(c=>c.subject).filter(Boolean))]
-    .filter(s=>s!=="기타").sort((a,b)=>SUBJECT_ORDER.indexOf(a)-SUBJECT_ORDER.indexOf(b));
-  if(!WANT.length) WANT = opened.filter(s=>!NOW.includes(s));
-  const targets = WANT.filter(s=>opened.includes(s));
+function render(courses,teachers){
+  const level=/^중/.test(GRADE)?"중등":"고등";
+  const mine=coursesForGrade(GRADE,courses);
+  const opened=[...new Set(mine.map(c=>c.subject).filter(Boolean))].filter(s=>s!=="기타")
+    .sort((a,b)=>SUBJECT_ORDER.indexOf(a)-SUBJECT_ORDER.indexOf(b));
+  if(!WANT.length) WANT=opened.filter(s=>!NOW.includes(s));
+  const targets=WANT.filter(s=>opened.includes(s));
 
-  // 현재 수강 과목의 시간대(충돌 확인용)
-  const busy=[];
-  mine.filter(c=>NOW.includes(c.subject)).forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>busy.push(s)));
-  const overlaps=(a,b)=>a.day===b.day && a.start<b.end && b.start<a.end;
+  const busy=[]; mine.filter(c=>NOW.includes(c.subject)).forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>busy.push(s)));
+  const ovl=(a,b)=>a.day===b.day&&a.start<b.end&&b.start<a.end;
+
+  // 대표 강사(히어로 사진)
+  const heroT=[...new Set(mine.filter(c=>targets.includes(c.subject)).map(c=>c.teacher))]
+    .map(n=>teachers[n]).filter(t=>t&&t.photo_url).slice(0,2);
+
+  const cp1=targets.length===1?copyFor(targets[0],level):null;
+  const headline=cp1?cp1.hero_headline:`${GRADE}, 한 과목만으로는 채워지지 않는 부분이 있습니다.`;
+  const subline=cp1?cp1.hero_sub:`지금 듣고 계신 과목 외에, 같은 시간표 안에서 충돌 없이 함께 갈 수 있는 과목을 정리했습니다. 각 과목이 <b>어떤 문제를 해결하는지</b> 먼저 보시고 판단해 주세요.`;
 
   let h="";
   /* HERO */
-  const headline = targets.length===1
-    ? (copyFor(targets[0],level)?.hero_headline || `${GRADE} ${targets[0]}, 지금 점검이 필요한 시점입니다.`)
-    : `${GRADE}, 한 과목만으로는 채워지지 않는 부분이 있습니다.`;
-  const sub = targets.length===1
-    ? (copyFor(targets[0],level)?.hero_sub || "")
-    : `지금 듣고 계신 과목 외에, 같은 시간대에 충돌 없이 함께 갈 수 있는 과목을 정리했습니다. 각 과목이 어떤 문제를 해결하는지 먼저 보시고 판단해 주세요.`;
-  h+=`<div class="hero">
-    <div class="brand">D A O L 1 0 5 &nbsp;·&nbsp; 미사학원</div>
-    <h1>${esc(headline)}</h1>
-    <p>${esc(sub)}</p>
-    ${NAME?`<div class="who">${esc(NAME)} 학생 · ${esc(GRADE)}</div>`:`<div class="who">${esc(GRADE)} 안내</div>`}
-  </div>`;
+  h+=`<header class="hero"><div class="wrap"><div class="hero-grid">
+    <div>
+      <div class="brand">D A O L 1 0 5 &nbsp;·&nbsp; 미사학원</div>
+      <h1>${esc(headline)}</h1>
+      <p class="sub">${subline===cp1?.hero_sub?esc(subline):subline}</p>
+      <div class="who">${NAME?esc(NAME)+" 학생 · ":""}${esc(GRADE)} 안내</div>
+    </div>
+    ${heroT.length?`<div class="hero-duo">${heroT.map(t=>`<div class="hero-pic"><img src="${escA(t.photo_url)}" alt="${esc(t.name)} 선생님"><span class="cap">${esc(t.name)} 선생님</span></div>`).join("")}</div>`:""}
+  </div></div></header>`;
 
-  /* 현재 / 제안 */
-  h+=`<div class="status">
-    <div class="box"><div class="lbl">현재 수강</div><div class="chipline">${
-      NOW.length? NOW.map(s=>`<span class="sub-chip on" style="background:${SUBJ_COLOR[s]||'#eee'}">${esc(s)}</span>`).join("")
-                : `<span class="sub-chip">미등록</span>`}</div></div>
-    <div class="box"><div class="lbl">함께 보시면 좋은 과목</div><div class="chipline">${
-      targets.length? targets.map(s=>`<span class="sub-chip on" style="background:${SUBJ_COLOR[s]||'#eee'}">${esc(s)}</span>`).join("")
-                    : `<span class="sub-chip">—</span>`}</div></div>
-  </div>`;
+  /* 현재/제안 */
+  h+=`<div class="strip"><div class="wrap"><div class="row">
+    <div class="cell"><div class="k">현재 수강</div>${NOW.length?NOW.map(s=>`<span class="pill">${esc(s)}</span>`).join(""):`<span class="pill">미등록</span>`}</div>
+    <div class="cell"><div class="k">함께 보시면 좋은 과목</div>${targets.length?targets.map(s=>`<span class="pill hot">${esc(s)}</span>`).join(""):`<span class="pill">—</span>`}</div>
+  </div></div></div>`;
 
-  if(!targets.length){
-    h+=`<div class="pad"><div class="empty">현재 이 학년에 안내할 추가 과목이 없습니다.</div></div>`;
-  }
+  if(!targets.length) h+=`<section class="paper"><div class="wrap"><div class="empty">현재 이 학년에 안내할 추가 과목이 없습니다.</div></div></section>`;
 
-  /* 과목별 설득 블록 */
-  targets.forEach((sub,idx)=>{
-    const cp=copyFor(sub,level);
-    const list=mine.filter(c=>c.subject===sub);
+  /* 과목별 */
+  targets.forEach((sub,i)=>{
+    const cp=copyFor(sub,level), list=mine.filter(c=>c.subject===sub);
     const names=[...new Set(list.map(c=>c.teacher).filter(Boolean))];
-    h+=`<div class="divider"></div><div class="pad">
-      <div class="subj-head">
-        <span class="subj-dot" style="background:${SUBJ_COLOR[sub]||'#eee'}"></span>
-        <span class="subj-name">${esc(sub)}</span>
-        <span class="subj-tag">${esc(GRADE)} 개설</span>
+    const bg = i%2===0 ? "paper" : "";
+    h+=`<section class="${bg}"><div class="wrap reveal">
+      <div class="subjbar">
+        <span class="dot" style="background:${SC[sub]||'#888'}">${esc(sub[0])}</span>
+        <span class="nm">${esc(sub)}</span><span class="tg">${esc(GRADE)} 개설</span>
       </div>`;
     if(cp){
-      h+=`<div class="qbox"><h3>${esc(cp.problem.title)}</h3><p>${esc(cp.problem.body)}</p>
-        <div class="analogy"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div></div>`;
-      h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">${esc(cp.myth.title)}</h2>
-        <p style="font-size:14px;color:#374151;margin:0 0 14px;word-break:keep-all">${esc(cp.myth.body)}</p>`;
-      h+=`<h2 class="sec" style="font-size:17px">${esc(cp.compare.title)}</h2>
-        <table class="cmp"><tr><th>구분</th><th>흔한 방식</th><th>다올105</th></tr>${
-        cp.compare.rows.map(r=>`<tr><td class="ax">${esc(r.axis)}</td><td>${esc(r.common)}</td><td class="our">${esc(r.ours)}</td></tr>`).join("")}</table>`;
-      h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">다올105는 이렇게 합니다</h2><div class="points">${
-        cp.solution_points.map(p=>`<div class="pt"><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div>`;
+      h+=`<div class="eyebrow">지금 이런 상황이라면</div>
+        <h2 class="sec">${esc(cp.problem.title)}</h2>
+        <div class="story"><p>${esc(cp.problem.body)}</p>
+          <div class="pull"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div>
+        </div>`;
+      h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">흔한 오해</div>
+        <h3 class="sub">${esc(cp.myth.title)}</h3><p class="lead">${esc(cp.myth.body)}</p></div>`;
+      h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">한눈에 비교</div>
+        <h3 class="sub">${esc(cp.compare.title)}</h3>
+        <table class="vs"><thead><tr><th>구분</th><th>흔한 방식</th><th class="our">다올105</th></tr></thead><tbody>${
+        cp.compare.rows.map(r=>`<tr><td class="ax">${esc(r.axis)}</td><td>${esc(r.common)}</td><td class="our">${esc(r.ours)}</td></tr>`).join("")}</tbody></table></div>`;
+      h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">다올105는 이렇게 합니다</div>
+        <div class="pillars">${cp.solution_points.map((p,idx)=>`<div class="pl"><div class="n">0${idx+1}</div><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div></div>`;
     }
-    /* 담당 강사 */
     const profs=names.map(n=>{
       const t=teachers[n]; if(!t) return "";
-      return `<div class="tprof">
-        ${t.photo_url?`<img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님">`:""}
-        <div>
-          <div class="nm">${esc(n)} 선생님${t.career?`<em>${esc(t.career)}</em>`:""}</div>
-          ${t.intro?`<div class="it">“${esc(t.intro)}”</div>`:""}
-          ${t.principle?`<div class="bk"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-          ${t.strategy?`<div class="bk"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      return `<div class="tprofile reveal">
+        ${t.photo_url?`<div class="tp-photo"><img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님"></div>`:""}
+        <div><div class="tp-name">${esc(n)} 선생님${t.career?`<em>${esc(t.career)}</em>`:""}</div>
+        ${t.intro?`<div class="tp-quote">“${esc(t.intro)}”</div>`:""}
+        ${t.principle?`<div class="tp-b"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${t.strategy?`<div class="tp-b"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         </div></div>`;
     }).join("");
-    if(profs) h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">담당 선생님</h2>${profs}`;
+    if(profs) h+=`<div style="margin-top:36px"><div class="eyebrow">담당 선생님</div>${profs}</div>`;
 
-    /* 개설 강좌 */
-    h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">${esc(GRADE)} 개설 강좌</h2>`;
+    h+=`<div style="margin-top:36px" class="reveal"><div class="eyebrow">개설 강좌</div><h3 class="sub">${esc(GRADE)} ${esc(sub)} 시간과 내용</h3>`;
     list.forEach(c=>{
-      const ss=parseDayTimes(c.schedule_text);
-      const grouped={};
-      ss.forEach(s=>{ const k=`${(s.type==="정규")?"수업":"관리(클리닉)"}|${fmt(s.start)}~${fmt(s.end)}`; (grouped[k]=grouped[k]||[]).push(s.day); });
-      const timeTxt=Object.entries(grouped).map(([k,ds])=>{ const [kind,t]=k.split("|"); return `${DAY_LIST.filter(d=>ds.includes(d)).join("")} ${t} <b>${kind}</b>`; }).join(" / ");
-      const conflict = ss.some(s=>busy.some(b=>overlaps(s,b)));
+      const ss=parseDayTimes(c.schedule_text), grp={};
+      ss.forEach(s=>{const k=`${s.type==="정규"?"수업":"관리(클리닉)"}|${fmt(s.start)}~${fmt(s.end)}`;(grp[k]=grp[k]||[]).push(s.day);});
+      const tt=Object.entries(grp).map(([k,ds])=>{const[kind,t]=k.split("|");return `${DAY_LIST.filter(d=>ds.includes(d)).join("")} ${t} <b>${kind}</b>`;}).join(" &nbsp;·&nbsp; ");
+      const conf=ss.some(s=>busy.some(b=>ovl(s,b)));
       h+=`<div class="ccard">
-        <div class="cn">${esc(c.course_name||"")}${c.teacher?` <span style="font-size:12px;color:#6b7280;font-weight:600">${esc(c.teacher)} 선생님</span>`:""}</div>
-        <div class="ct">🕘 ${timeTxt||esc(c.schedule_text||"")}</div>
-        ${bullets(c.audience).length?`<div class="blk"><b>이런 학생을 위한 강좌입니다</b><ul>${bullets(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-        ${bullets(c.content).length?`<div class="blk"><b>수업에서 실제로 하는 것</b><ul>${bullets(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-        ${bullets(c.textbook).length?`<div class="blk"><b>📖 사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-        ${NOW.length?`<div style="margin-top:7px;font-size:12.5px;font-weight:700;color:${conflict?'#b91c1c':'#047857'}">${conflict?'⚠ 현재 수강 과목과 시간이 겹칩니다 — 다른 반으로 조정 가능합니다':'✅ 현재 수강 중인 과목과 시간이 겹치지 않습니다'}</div>`:""}
+        <div class="cc-top"><span class="cc-name">${esc(c.course_name||"")}</span>${c.teacher?`<span class="cc-t">${esc(c.teacher)} 선생님</span>`:""}</div>
+        <div class="cc-time">🕘 ${tt||esc(c.schedule_text||"")}</div>
+        ${bullets(c.audience).length?`<div class="cc-b"><b>이런 학생을 위한 강좌입니다</b><ul>${bullets(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${bullets(c.content).length?`<div class="cc-b"><b>수업에서 실제로 하는 것</b><ul>${bullets(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${bullets(c.textbook).length?`<div class="cc-b"><b>사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${NOW.length?`<div class="flag ${conf?'no':'ok'}">${conf?'현재 수강 과목과 시간이 겹칩니다 — 같은 과목의 다른 요일 반으로 조정 가능합니다':'현재 수강 중인 과목과 시간이 겹치지 않습니다'}</div>`:""}
       </div>`;
     });
-    if(cp && cp.cross_sell) h+=`<div class="fit">${esc(cp.cross_sell)}</div>`;
     h+=`</div>`;
+    if(cp&&cp.cross_sell) h+=`<div class="note warn" style="margin-top:22px">${esc(cp.cross_sell)}</div>`;
+    h+=`</div></section>`;
   });
 
-  /* 주간 시간표 */
+  /* 시간표 */
   const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
-  mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{
-    if(!byDay[s.day]) return;
-    byDay[s.day].push({...s, subj:c.subject, name:c.course_name, mineNow:NOW.includes(c.subject), target:targets.includes(c.subject)});
-  }));
-  const anySlot=DAY_LIST.some(d=>byDay[d].length);
-  if(anySlot){
-    h+=`<div class="divider"></div><div class="pad">
-      <h2 class="sec">${esc(GRADE)} 주간 시간표</h2>
-      <p class="sec-sub">전체 개설 과목입니다. 색이 진한 칸이 안내드리는 과목입니다.</p>
-      <table class="tt"><tr><th>요일</th><th>일정</th></tr>${
+  mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{ if(byDay[s.day]) byDay[s.day].push({...s,subj:c.subject,on:NOW.includes(c.subject)||targets.includes(c.subject)}); }));
+  if(DAY_LIST.some(d=>byDay[d].length)){
+    const anyConf=targets.some(sub=>mine.filter(c=>c.subject===sub).some(c=>parseDayTimes(c.schedule_text).some(s=>busy.some(b=>ovl(s,b)))));
+    h+=`<section class="paper"><div class="wrap reveal">
+      <div class="eyebrow">주간 시간표</div>
+      <h2 class="sec">${esc(GRADE)} 전체 시간표</h2>
+      <p class="lead">색이 진한 칸이 지금 안내드리는 과목입니다.</p>
+      <table class="ttbl"><thead><tr><th style="width:64px">요일</th><th>일정</th></tr></thead><tbody>${
       DAY_LIST.map(d=>{
-        const list=byDay[d].slice().sort((a,b)=>a.start-b.start);
-        return `<tr><td class="d">${d}</td><td style="text-align:left">${
-          list.length? list.map(s=>{
-            const dim = !(s.mineNow||s.target);
-            return `<span class="slot" style="background:${SUBJ_COLOR[s.subj]||'#eee'};opacity:${dim?.42:1}">${esc(s.subj||"")} ${fmt(s.start)}~${fmt(s.end)}${s.type!=="정규"?" (관리)":""}</span>`;
-          }).join("") : `<span style="color:#9ca3af;font-size:12px">—</span>`}</td></tr>`;
-      }).join("")}</table>`;
-    if(NOW.length){
-      const conflictAll = targets.some(sub=>mine.filter(c=>c.subject===sub).some(c=>parseDayTimes(c.schedule_text).some(s=>busy.some(b=>overlaps(s,b)))));
-      h+=`<div class="fit">${conflictAll
-        ? `일부 과목이 현재 수강 시간과 겹칩니다. <b>같은 과목의 다른 요일 반으로 조정</b>이 가능하니 상담 때 말씀해 주세요.`
-        : `안내드린 과목은 <b>현재 수강 중인 시간과 겹치지 않습니다.</b> 지금 스케줄 그대로 추가하실 수 있습니다.`}</div>`;
-    }
-    h+=`</div>`;
+        const l=byDay[d].slice().sort((a,b)=>a.start-b.start);
+        return `<tr><td class="day">${d}</td><td>${l.length?l.map(s=>`<span class="slot ${s.on?'':'dim'}" style="background:${SC[s.subj]||'#888'}">${esc(s.subj||"")} ${fmt(s.start)}~${fmt(s.end)}${s.type!=="정규"?" 관리":""}</span>`).join(""):`<span style="color:#aab;font-size:13px">—</span>`}</td></tr>`;
+      }).join("")}</tbody></table>
+      ${NOW.length?`<div class="note ${anyConf?'warn':''}">${anyConf?'일부 과목이 현재 수강 시간과 겹칩니다. <b>같은 과목의 다른 요일 반으로 조정</b>이 가능하니 상담 때 말씀해 주세요.':'안내드린 과목은 <b>현재 수강 중인 시간과 겹치지 않습니다.</b> 지금 스케줄 그대로 추가하실 수 있습니다.'}</div>`:""}
+    </div></section>`;
   }
 
   /* FAQ */
-  const faqs=[];
-  targets.forEach(sub=>{ const cp=copyFor(sub,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push({...f,sub})); });
-  if(faqs.length){
-    h+=`<div class="divider"></div><div class="pad"><h2 class="sec">자주 묻는 질문</h2><div>${
-      faqs.map(f=>`<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></div>`;
-  }
+  const faqs=[]; targets.forEach(s=>{const cp=copyFor(s,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push(f));});
+  if(faqs.length) h+=`<section><div class="wrap reveal"><div class="eyebrow">FAQ</div><h2 class="sec">자주 묻는 질문</h2>
+    ${faqs.map(f=>`<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></section>`;
 
   /* CTA */
-  h+=`<div class="cta">
-    <h3>먼저 진단부터 해 드립니다</h3>
-    <p>등록을 권하기 전에 지금 상태를 확인해 드립니다. 아직 이르다고 판단되면 이르다고 말씀드립니다.</p>
-    <a href="tel:${TEL.replace(/-/g,"")}">📞 ${TEL} 상담 문의</a>
-  </div>
-  <div class="foot">다올105 미사학원 · 경기 하남시 미사<br>본 안내는 ${esc(GRADE)} 기준으로 자동 생성되었습니다.</div>`;
+  h+=`<section class="cta"><div class="wrap">
+    <h2>등록을 권하기 전에, 먼저 진단해 드립니다</h2>
+    <p>지금 상태를 먼저 확인해 드립니다. 아직 이르다고 판단되면 이르다고 말씀드립니다.</p>
+    <a class="call" href="tel:${TEL.replace(/-/g,"")}">📞 ${TEL}</a>
+  </div></section>
+  <div class="foot">다올105 미사학원 · 경기 하남시 미사<br>본 안내는 ${esc(GRADE)} 기준으로 자동 생성되었습니다.</div>
+  <div class="sticky"><a class="call" href="tel:${TEL.replace(/-/g,"")}">📞 상담 문의 ${TEL}</a><a class="top" href="#" onclick="scrollTo({top:0,behavior:'smooth'});return false">↑</a></div>`;
 
   document.getElementById("app").innerHTML=h;
-  document.title = `다올105 ${GRADE} 과목 안내`;
+  document.title=`다올105 ${GRADE} 과목 안내`;
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }),{threshold:.12});
+  document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 }
 
-/* ===== 로드 ===== */
 (async function(){
   const cfg=window.DAOL_CONFIG||{};
-  if(!(cfg.url&&cfg.anonKey&&window.supabase)){
-    document.getElementById("app").innerHTML=`<div class="empty">연결 설정이 필요합니다.</div>`; return;
-  }
+  if(!(cfg.url&&cfg.anonKey&&window.supabase)){ document.getElementById("app").innerHTML=`<div class="empty">연결 설정이 필요합니다.</div>`; return; }
   const sb=window.supabase.createClient(cfg.url,cfg.anonKey);
-  const [{data:courses},{data:tt}]=await Promise.all([
-    sb.from("courses").select("*"),
-    sb.from("teachers").select("*")
-  ]);
+  const [{data:courses},{data:tt}]=await Promise.all([sb.from("courses").select("*"),sb.from("teachers").select("*")]);
   const teachers={}; (tt||[]).forEach(t=>teachers[t.name]=t);
-  render(courses||[], teachers);
+  render(courses||[],teachers);
 })();
 </script>
 </body>
