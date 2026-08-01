@@ -93,12 +93,14 @@
   <a href="#a">0. 딱 3가지만 기억하세요</a>
   <a href="#b">1. 상담 오셨을 때</a>
   <a href="#c">2. 시간표 물어볼 때</a>
-  <a href="#d">3. 수강료 물어볼 때</a>
-  <a href="#e">4. 강좌가 바뀔 때</a>
-  <a href="#f">5. 등록 후 다른 과목 권할 때</a>
-  <a href="#g">6. 선생님 관련</a>
-  <a href="#h">7. 자주 하는 실수</a>
-  <a href="#i">8. 상황별 빠른 찾기</a>
+  <a href="#c2">3. 학부모께 링크로 보낼 때</a>
+  <a href="#d">4. 수강료 물어볼 때</a>
+  <a href="#e">5. 강좌가 바뀔 때</a>
+  <a href="#f">6. 등록 후 다른 과목 권할 때</a>
+  <a href="#g">7. 선생님 관련</a>
+  <a href="#h">8. 자주 하는 실수</a>
+  <a href="#i">9. 상황별 빠른 찾기</a>
+  <a href="#j">10. 변경 이력</a>
 </div>
 
 <h2 id="a">0. 딱 3가지만 기억하세요</h2>
@@ -142,11 +144,33 @@
 <div class="card">
   <table>
     <tr><th style="width:30%">질문</th><th>어디를 보나요</th></tr>
-    <tr><td class="k">“○학년 시간표 주세요”</td><td><span class="tab">🎓 학년별 시간표</span> → 학년 클릭 → <span class="btn">🖨️ PDF/인쇄</span> 또는 <span class="btn">🖼️ 이미지저장</span><br>
-      <span style="color:var(--muted);font-size:13px">문자로 보낼 거면 이미지저장이 편합니다.</span></td></tr>
+    <tr><td class="k">“○학년 시간표 주세요”</td><td><span class="tab">🎓 학년별 시간표</span> → 학년 클릭 → <span class="btn">🖨️ 전체 인쇄 / PDF (시간표+안내)</span> 또는 <span class="btn">🖼️ 전체 이미지저장</span><br>
+      <span style="color:var(--muted);font-size:13px">문자로 보낼 거면 <b>3번 항목의 링크</b>가 훨씬 잘 보입니다.</span></td></tr>
     <tr><td class="k">“수요일에 뭐 있어요?”<br>“그 시간 강의실 있어요?”</td><td><span class="tab">📅 요일별·강의실</span> → 요일 클릭. 어느 강의실에서 하는지까지 나옵니다.</td></tr>
     <tr><td class="k">“학교별로 뽑아주세요”</td><td><span class="tab">🎨 시간표 생성</span> → 학교·학년·과목 조건을 골라 출력</td></tr>
   </table>
+  <h3>인쇄·저장 버튼은 하나입니다 — 시간표와 안내가 같이 나옵니다</h3>
+  <table>
+    <tr><th style="width:34%">버튼</th><th>나오는 것</th></tr>
+    <tr><td><span class="btn">🖨️ 전체 인쇄 / PDF (시간표+안내)</span></td>
+        <td><b>2쪽</b>이 한 번에 인쇄됩니다. <b>1쪽 = 시간표(가로)</b>, <b>2쪽 = 수업 방식 안내(세로)</b>. 방향은 자동으로 잡힙니다.</td></tr>
+    <tr><td><span class="btn">🖼️ 전체 이미지저장</span></td>
+        <td>이미지 <b>2장</b>이 저장됩니다. <code>중1_1_시간표.png</code> · <code>중1_2_수업방식안내.png</code></td></tr>
+  </table>
+  <div class="note"><b>인쇄가 흐리게 나오면</b> — 인쇄창에서 <b>배율은 “기본”, 여백은 “없음” 또는 “최소”</b>로 두세요. 화면 아래에도 같은 안내가 뜹니다. 이 두 개만 맞추면 글씨가 또렷하게 나옵니다.</div>
+
+  <h3>「🎨 시간표 생성」의 빨간 박스 · 노란 박스</h3>
+  <table>
+    <tr><th style="width:30%">박스</th><th>뜻</th><th style="width:32%">해야 할 일</th></tr>
+    <tr><td><b style="color:var(--danger)">⚠️ 시간 충돌 N건</b><br><span style="color:var(--muted);font-size:12.5px">빨간 박스</span></td>
+        <td><b>같은 학년 학생이 동시에 들을 수 없는 수업</b>이 겹쳐 있습니다. 수업 ↔ 수업이 정면으로 부딪힌 경우만 여기 뜹니다.</td>
+        <td><b>원장님께 보고</b>하세요. 인포에서 임의로 시간을 옮기지 않습니다.</td></tr>
+    <tr><td><b style="color:#b45309">ℹ️ 참고 N건 — 충돌 아님</b><br><span style="color:var(--muted);font-size:12.5px">노란 박스</span></td>
+        <td>겹치긴 하지만 <b>운영상 문제가 없는</b> 경우입니다. 아래 줄에 사유가 적혀 나옵니다.</td>
+        <td><b>아무것도 하지 않으셔도 됩니다.</b> 물어보시면 사유를 그대로 읽어드리면 됩니다.</td></tr>
+  </table>
+  <div class="tip"><b>노란 박스로 빠지는 4가지</b> — ① 특강 ↔ 특강(택일 수강이라 동시 수강 자체가 없음) ② 클리닉 ↔ 클리닉(유동 운영) ③ <b>같은 선생님의 수업 ↔ 클리닉</b>(정규반 클리닉 시간이 곧 특강반 수업 시간이라 같은 공간에서 함께 돌아감) ④ 다른 선생님 수업 ↔ 클리닉(클리닉은 다른 요일로 대체 가능).</div>
+  <div class="note">학교공통 강좌(<b>대상 학교 = 공통</b>)는 미사고·미사강변고·하남고·풍산고에 <b>같이 들어가는 한 개의 수업</b>입니다. 그래서 겹침이 생겨도 <b>학교마다 따로 세지 않고 1건</b>으로 묶여 <code>[고1 전체 (학교공통)]</code>로 표시됩니다. 예전처럼 같은 내용이 4번 반복되면 잘못된 것이니 원장님께 알려주세요.</div>
   <h3>시간표 보는 법</h3>
   <ul>
     <li><b>진한 색 칸 = 수업</b>, <b>빗금 칸 = 관리(클리닉)</b> 입니다.</li>
@@ -156,7 +180,40 @@
   <div class="tip">시간표 아래 <b>「2페이지 — 수업 방식·안내」</b> 가 함께 있습니다. 시간만 궁금해하시면 1장, 어떻게 가르치는지 물으시면 2장 다 드리면 됩니다.</div>
 </div>
 
-<h2 id="d">3. 수강료를 물어볼 때</h2>
+<h2 id="c2">3. 학부모께 시간표·수업 안내를 <u>링크로</u> 보낼 때</h2>
+<div class="when">💬 <b>이런 상황</b> — “시간표 좀 보내주세요” / 학년 전체에 안내 문자를 돌릴 때 / 상담 후 “집에서 더 볼 자료 없나요?”</div>
+<div class="card">
+  <div class="note"><b>이미지보다 링크가 낫습니다.</b> 시간표 이미지는 휴대폰에서 글씨가 작아 잘 안 보입니다. 아래 링크는 <b>휴대폰에 맞춰 자동으로 커지고</b>, 수업 방식 안내까지 함께 들어 있습니다.</div>
+  <h3>학년별 안내 주소 — 그대로 복사해서 보내세요</h3>
+  <table class="tbl-link">
+    <tr><th style="width:88px">학년</th><th>보낼 주소</th></tr>
+    <tr><td class="k">중1</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=m1</code></td></tr>
+    <tr><td class="k">중2</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=m2</code></td></tr>
+    <tr><td class="k">중3</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=m3</code></td></tr>
+    <tr><td class="k">미사고1</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=h1</code></td></tr>
+    <tr><td class="k">미사강변고1</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=mg1</code></td></tr>
+    <tr><td class="k">하남고1</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=hn1</code></td></tr>
+    <tr><td class="k">미사고2</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=h2</code></td></tr>
+    <tr><td class="k">미사강변고2</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=mg2</code></td></tr>
+    <tr><td class="k">고3</td><td><code>https://jayu0422-blip.github.io/daol-timetable/notice.html?g=h3</code></td></tr>
+  </table>
+  <div class="warn"><b>주소 끝 두세 글자만 바뀝니다.</b> <code>m1</code>=중1, <code>m2</code>=중2, <code>m3</code>=중3, <code>h1</code>=미사고1 … <b>학년을 잘못 보내면 다른 학년 시간표가 열립니다.</b> 보내기 전에 끝 글자를 한 번만 더 보세요.</div>
+
+  <h3>이 링크에 들어 있는 것</h3>
+  <ul>
+    <li>그 학년의 <b>주간 시간표 전체</b> — 학원 시간표와 <b>똑같은 표</b>입니다(선생님 이름·수학 단원 배지·수업/관리 구분 그대로).</li>
+    <li>화면 위 <span class="btn">📅 주간 표로 보기</span> / <span class="btn">📋 요일별로 보기</span> 버튼으로 <b>학부모가 직접 전환</b>할 수 있습니다. 글씨가 작다고 하시면 “요일별로 보기를 눌러보세요”라고 안내하세요.</li>
+    <li>과목별 <b>수업 방식</b>, 선생님 사진·원칙, 강좌 내용·사용 교재</li>
+    <li>중등이면 <b>영어 선택 A / 선택 B</b> 전체 안내(요일별 진행, 단어 테스트 기준, 학원 70% · 학생 30%)</li>
+    <li>맨 아래 <b>전화 버튼</b> — 누르면 바로 학원으로 연결됩니다</li>
+  </ul>
+  <div class="tip"><b>한 번 보낸 링크는 계속 살아 있습니다.</b> 나중에 수업이 바뀌어도 학부모가 그 링크를 다시 열면 <b>바뀐 내용이 보입니다.</b> 새로 만들어 보내지 않으셔도 됩니다.</div>
+  <div class="note"><b>3번(이 링크)과 6번(과목 안내 페이지)의 차이</b><br>
+    · <b>3번 notice</b> = <b>이미 다니는 학생</b>에게 “우리 학년 시간표와 수업 방식” 안내<br>
+    · <b>6번 landing</b> = <b>안 듣는 과목을 권할 때</b> 쓰는 홍보용 페이지</div>
+</div>
+
+<h2 id="d">4. 수강료를 물어볼 때</h2>
 <div class="when">💬 <b>이런 상황</b> — “한 달에 얼마예요?” / “교재비 따로 있어요?” / “컨설팅은 얼마예요?”</div>
 <div class="card">
   <ol class="steps">
@@ -175,7 +232,7 @@
   <div class="note">정확한 결제일·환불 규정은 <b>「학원 사용 설명서」</b>(상담용 자료 ⑦번)에 다 있습니다. 애매하면 그 문서를 드리세요. 결제는 <b>매달 27일 자동</b>, 비대면 카드가 원칙입니다.</div>
 </div>
 
-<h2 id="e">4. 강좌가 새로 생기거나·바뀌거나·없어질 때</h2>
+<h2 id="e">5. 강좌가 새로 생기거나·바뀌거나·없어질 때</h2>
 <div class="when">💬 <b>이런 상황</b> — 선생님이 “시간 바뀌었어요” / “반 하나 더 열어요” / “그 반 폐강이에요”</div>
 <div class="card">
   <div class="note"><b>수정·추가·삭제는 모두 한 탭에서 합니다</b> — <span class="tab">✏️ 강좌 수정·추가·삭제</span></div>
@@ -228,7 +285,7 @@
     잘못 지웠으면 <b>즉시 원장님께</b> 말씀하세요.</div>
 </div>
 
-<h2 id="f">5. 등록한 학생에게 다른 과목을 권할 때</h2>
+<h2 id="f">6. 등록한 학생에게 다른 과목을 권할 때</h2>
 <div class="when">💬 <b>이런 상황</b> — 영어만 다니는 중1 학생에게 국어·수학도 안내하고 싶을 때 / 상담 후 자료를 문자로 보내고 싶을 때</div>
 <div class="card">
   <ol class="steps">
@@ -249,7 +306,7 @@
   <div class="tip"><b>링크는 다시 만들 필요 없습니다.</b> 나중에 강좌가 바뀌면 <b>이미 보낸 링크에도 자동으로 반영</b>됩니다.</div>
 </div>
 
-<h2 id="g">6. 선생님 관련</h2>
+<h2 id="g">7. 선생님 관련</h2>
 <div class="card">
   <h3>선생님이 직접 입력하는 것</h3>
   <p>선생님마다 <b>본인 전용 링크</b>가 있습니다. 그 링크로 들어가면 <b>자기 강좌만</b> 보이고, 다른 선생님 것은 보이지 않습니다.</p>
@@ -289,12 +346,14 @@
   <table class="tbl-link">
     <tr><th style="width:150px">용도</th><th>주소</th></tr>
     <tr><td class="k">운영자 전체 화면<br><span style="font-weight:400;color:var(--muted)">(인포데스크 기본)</span></td><td><code>https://jayu0422-blip.github.io/daol-timetable/admin.html</code></td></tr>
+    <tr><td class="k">전체 관리<br><span style="font-weight:400;color:var(--muted)">(강좌 표만 크게)</span></td><td><code>https://jayu0422-blip.github.io/daol-timetable/control.html</code></td></tr>
     <tr><td class="k">이 설명서</td><td><code>https://jayu0422-blip.github.io/daol-timetable/guide-desk.html</code></td></tr>
   </table>
+  <div class="note"><b>「🛠️ 전체 관리」는 무엇인가요</b> — 운영자 화면 <b>오른쪽 위</b>에 있는 버튼입니다. <span class="tab">✏️ 강좌 수정·추가·삭제</span> 탭에 들어 있는 <b>바로 그 화면</b>을 창 하나에 크게 띄운 것입니다. 내용도 기능도 같으니 <b>편한 쪽</b>을 쓰시면 됩니다. 강좌 표만 오래 붙잡고 고칠 때는 이쪽이 넓어서 편합니다.</div>
   <div class="warn"><b>운영자 주소는 학부모·학생에게 보내지 마세요.</b> 전 강좌 수강료와 모든 선생님 정보가 보입니다. 학부모께는 <b>「🔗 과목 안내 페이지」에서 만든 링크</b>만 보내주세요.</div>
 </div>
 
-<h2 id="h">7. 자주 하는 실수 — 이것만 조심하세요</h2>
+<h2 id="h">8. 자주 하는 실수 — 이것만 조심하세요</h2>
 <div class="card">
   <div class="warn"><b>1. 학년을 안 바꾸고 인쇄</b><br>앞사람 상담 때 골라둔 학년이 그대로 남아 있습니다. 인쇄 전에 학년을 꼭 확인하세요.</div>
   <div class="warn"><b>2. 수강료를 인원수로 곱해서 말함</b><br>화면 금액은 <b>1명 기준</b>입니다. 화면 아래 “합계”는 내부 확인용이라 학부모께 말하지 마세요.</div>
@@ -302,7 +361,9 @@
   <div class="warn"><b>4. 시간을 대충 적음</b><br><code>주3회</code>, <code>저녁</code> 처럼 적으면 시간표에 <b>아예 안 나옵니다.</b> 반드시 <code>월수금 18:30~20:00</code> 형식으로.</div>
   <div class="warn"><b>5. 저장 버튼을 찾음</b><br>저장 버튼은 없습니다. 자동 저장입니다. <span class="btn">저장됨 ✓</span> 만 확인하세요.</div>
   <div class="warn"><b>6. 화면이 안 바뀔 때</b><br>다른 사람이 동시에 고치면 잠깐 안 맞을 수 있습니다. <span class="btn">↻ 새로고침</span> 을 누르거나 <kbd>F5</kbd>.</div>
-  <div class="warn"><b>7. 선생님께 다른 반 정보를 말하지 않기</b> — 특히 조심해 주세요<br>
+  <div class="warn"><b>7. 안내 링크 학년을 잘못 보냄</b><br>주소 끝 <code>m1</code>·<code>m2</code>·<code>m3</code> 만 다릅니다. 중2 학부모께 <code>m1</code>을 보내면 <b>중1 시간표</b>가 열립니다. 보내기 전 끝 글자 확인.</div>
+  <div class="warn"><b>8. 노란 “참고” 박스를 충돌로 보고함</b><br>노란 박스는 <b>충돌이 아닙니다.</b> 조치할 것이 없습니다. 빨간 박스만 원장님께 보고하세요.</div>
+  <div class="warn"><b>9. 선생님께 다른 반 정보를 말하지 않기</b> — 특히 조심해 주세요<br>
     선생님께는 <b>본인 담당 강좌 이야기만</b> 합니다. 아래는 절대 공개하지 않습니다.<br>
     · 다른 학년·다른 학교 반의 <b>수강생 수</b><br>
     · 다른 선생님 반의 <b>인원·수강료·정산 금액</b><br>
@@ -311,11 +372,14 @@
     운영자 화면에는 전 강좌 정보가 다 보이기 때문에, <b>선생님 앞에서 운영자 화면을 열어두지 마세요.</b></div>
 </div>
 
-<h2 id="i">8. 상황별 빠른 찾기</h2>
+<h2 id="i">9. 상황별 빠른 찾기</h2>
 <table>
   <tr><th style="width:44%">학부모·선생님이 이렇게 말하면</th><th>이렇게 하세요</th></tr>
   <tr><td>“상담 왔어요”</td><td><span class="tab">🖨️ 상담용 자료</span> → 학년 선택 → 전체 인쇄</td></tr>
-  <tr><td>“시간표 좀 보내주세요”</td><td><span class="tab">🎓 학년별 시간표</span> → 학년 → 이미지저장 → 문자 전송</td></tr>
+  <tr><td>“시간표 좀 보내주세요”</td><td><b>3번의 학년별 링크</b>를 문자로 보내기 (권장) — 인쇄물이 필요하면 <span class="tab">🎓 학년별 시간표</span> → 학년 → <b>전체 인쇄</b></td></tr>
+  <tr><td>“링크 글씨가 작아요”</td><td>페이지 위 <span class="btn">📋 요일별로 보기</span> 를 눌러보시라고 안내</td></tr>
+  <tr><td>충돌 <b>노란 박스</b>가 떴어요</td><td>충돌이 아닙니다. <b>그냥 두세요</b> (사유가 함께 적혀 있음)</td></tr>
+  <tr><td>충돌 <b>빨간 박스</b>가 떴어요</td><td><b>원장님께 보고.</b> 인포에서 시간을 옮기지 않습니다</td></tr>
   <tr><td>“얼마예요?”</td><td><span class="tab">💰 수강료</span> → 달 선택 → 해당 강좌 줄 (1명 기준)</td></tr>
   <tr><td>“교재비도 있어요?”</td><td>있습니다. 학원 배부 교재 <b>1만~5만원</b> 별도 청구</td></tr>
   <tr><td>“컨설팅은요?”</td><td><span class="tab">💰 수강료</span> 맨 아래 고정 표 (고등만)</td></tr>
@@ -327,6 +391,24 @@
   <tr><td>“오늘 무슨 수업 있어요?”</td><td><span class="tab">📅 요일별·강의실</span> → 요일 클릭</td></tr>
   <tr><td>“어느 강의실이에요?”</td><td><span class="tab">📅 요일별·강의실</span> 에 강의실까지 표시됨</td></tr>
 </table>
+
+<h2 id="j">10. 변경 이력 — 화면이 바뀌면 여기에 적힙니다</h2>
+<div class="card">
+  <p style="font-size:14px;color:var(--muted);margin-bottom:12px">시스템이 바뀔 때마다 <b>이 설명서도 같이 고칩니다.</b> 아래 표에서 <b>맨 윗줄</b>만 보시면 최근에 뭐가 달라졌는지 알 수 있습니다. 화면이 설명서와 다르면 이 표를 먼저 확인하고, 그래도 다르면 원장님께 알려주세요.</p>
+  <table>
+    <tr><th style="width:96px">날짜</th><th style="width:30%">바뀐 것</th><th>인포에서 달라지는 점</th></tr>
+    <tr><td class="k">2026-08-01</td><td>시간 충돌 판정 정리</td>
+      <td>「🎨 시간표 생성」의 충돌이 <b>빨간(진짜 충돌) / 노란(참고, 조치 불필요)</b> 두 박스로 나뉩니다. 학교공통 강좌는 학교마다 중복해서 세지 않고 <b>1건</b>으로 묶입니다. → <b>2번</b> 항목</td></tr>
+    <tr><td class="k">2026-08-01</td><td>학부모 안내 링크 신설</td>
+      <td>학년별 <b>시간표+수업 방식 안내 링크</b>(<code>notice.html?g=m1</code> 등)가 생겼습니다. 문자로 보낼 때 이미지 대신 이 링크를 씁니다. → <b>3번</b> 항목</td></tr>
+    <tr><td class="k">2026-08-01</td><td>인쇄·저장 버튼 통합</td>
+      <td>「🎓 학년별 시간표」에서 시간표와 수업 방식 안내가 <b>한 번에</b> 출력됩니다(인쇄 2쪽 / 이미지 2장). → <b>2번</b> 항목</td></tr>
+    <tr><td class="k">2026-07-31</td><td>강좌 관리 탭 통합</td>
+      <td>수정·추가·<b>삭제</b>가 「✏️ 강좌 수정·추가·삭제」 한 탭으로 합쳐졌습니다. 삭제는 <b>확인 2번</b>. → <b>5번</b> 항목</td></tr>
+    <tr><td class="k">2026-07-31</td><td>상세 버튼 색 표시</td>
+      <td>빠진 항목이 있으면 <b>⚠ 노랑</b>, 시간이 없으면 <b>⚠ 빨강</b>으로 뜹니다. → <b>5번</b> 항목</td></tr>
+  </table>
+</div>
 
 <div class="card" style="margin-top:24px;background:#fffbeb;border-color:#fde68a">
   <b style="color:var(--brand-ink)">막히면</b><br>
