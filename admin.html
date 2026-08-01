@@ -211,6 +211,28 @@
   .gu-split-bar .s30{flex:0 0 30%;background:#fdba74;color:#7c2d12;display:flex;align-items:center;justify-content:center}
   .gu-split-cap{font-size:11.5px;color:#7c2d12;margin-top:5px;line-height:1.55}
 
+  /* ===== 입시 컨설팅 ===== */
+  .cs-why{background:#f5f8fd;border:1px solid #cfdcf0;border-radius:11px;padding:14px 16px}
+  .cs-h{font-size:14.5px;font-weight:800;color:#1e3a68;margin-bottom:6px}
+  .cs-why p{margin:0;font-size:12.8px;line-height:1.8;color:#374151}
+  .cs-pts{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:11px}
+  .cs-pt{background:#fff;border:1px solid #dbe5f3;border-radius:9px;padding:9px 11px}
+  .cs-pt b{display:block;font-size:12.5px;color:#1e3a68;margin-bottom:3px}
+  .cs-pt span{font-size:11.5px;line-height:1.6;color:#4b5563}
+  .cs-tip{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 13px;font-size:12.5px;color:#78350f;margin-top:10px}
+  .cs-tbl{width:100%;border-collapse:collapse;margin-top:11px;font-size:12.2px}
+  .cs-tbl th,.cs-tbl td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+  .cs-tbl thead th{background:#1e3a68;color:#fff;font-size:11.5px;font-weight:800}
+  .cs-tbl td.nm{background:#f7f9fd}
+  .cs-tbl td.nm b{display:block;color:#1e3a68;font-size:12.8px}
+  .cs-tbl td.nm span{font-size:10.5px;color:var(--muted)}
+  .cs-tbl td.doc{font-size:11.5px;color:#4b5563}
+  .cs-tbl td.pr{text-align:right;font-weight:800;color:#1e3a68;white-space:nowrap}
+  .cs-tbl td.pr span{display:block;font-size:10.5px;font-weight:700;color:#059669}
+  .cs-cau{margin-top:4px;font-size:11px;color:#b91c1c}
+  .cs-note{margin-top:9px;font-size:11.8px;color:var(--muted)}
+  @media(max-width:900px){ .cs-pts{grid-template-columns:1fr} }
+
   /* ===== 전체 성적 우수자 (A4 1장) ===== */
   .as{background:linear-gradient(160deg,#1c1508,#2e2412 55%,#3d2f16);color:#f5ead2;border-radius:10px;padding:20px 22px 18px}
   .as-top{text-align:center;border-bottom:1px solid rgba(212,175,90,.35);padding-bottom:12px;margin-bottom:14px}
@@ -530,6 +552,7 @@
 <script src="config.js?v=75abf301"></script>
 <script src="copy.js?v=79cc0e2c"></script>
 <script src="scholars.js?v=017b9187"></script>
+<script src="consulting.js?v=e095804b"></script>
 <script src="scholars_all.js?v=32243876"></script>
 <script src="manual.js?v=9fea3143"></script>
 <script>
@@ -1426,6 +1449,9 @@ function renderGuide(){
     <li><b>관리(클리닉)</b> — 복습·재테스트·질문 및 1:1 첨삭 중심</li></ul></div>`;
   if(coursesForGrade(selGrade).some(c=>c.subject==="국어" && /일/.test(c.schedule_text||"") && /(관리|클리닉)/.test(c.schedule_text||"")))
     html+=`<div class="gu-sec"><h3>국어 클리닉</h3><p>국어 클리닉은 <b>일요일에 유동적으로</b> 운영되며, 학생별 일정에 맞춰 조정됩니다.</p></div>`;
+  // 입시 컨설팅 — 고등 학년에만, 시간표가 아닌 안내로
+  const csH = consultHtml(selGrade,false);
+  if(csH) html+=`<div class="gu-sec"><h3>입시 컨설팅 <span style="font-size:11.5px;font-weight:600;color:var(--muted)">— 예약제, 정해진 요일·시간 없음</span></h3>${csH}</div>`;
 
   if(hasMidEng){
     html+=`<div class="gu-divider">중등 영어 — 상세 안내</div>`;
@@ -1548,6 +1574,7 @@ const PACK_ITEMS=[
   {k:"guide",  t:"수업 방식 안내",  d:"과목별 강좌·강사 원칙"},
   {k:"prof",   t:"강사 프로필·실적", d:"해당 학년 담당 강사 + 주요 성적 우수자"},
   {k:"all",    t:"전체 성적 우수자", d:"학원 전체 명단 A4 1장"},
+  {k:"consult",t:"입시 컨설팅",     d:"프로그램·비용 안내(고등)"},
   {k:"manual", t:"학원 사용 설명서",d:"수강료·환불·보강 규정"}
 ];
 let packGrade="중1";
@@ -1562,6 +1589,33 @@ document.getElementById("packRefresh").addEventListener("click",renderPack);
 document.getElementById("packPrint").addEventListener("click",()=>window.print());
 
 function packDoc(title,note,inner){ return `<div class="pk-doc"><div class="pk-h">${esc(title)}<span>${esc(note||"")}</span></div><div class="pk-b">${inner}</div></div>`; }
+/* 입시 컨설팅 — 시간표엔 넣지 않고 안내·상담자료에만 노출 */
+const won2 = n => Number(n).toLocaleString("ko-KR");
+function consultHtml(grade, full){
+  const C=window.DAOL_CONSULT; if(!C) return "";
+  const G = /고3|수능/.test(grade||"") ? "고3" : (/고2/.test(grade||"") ? "고2" : (/고1/.test(grade||"") ? "고1" : null));
+  if(!G && !full) return "";
+  const g = C.byGrade[G] || null;
+  const list = g ? g.list.map(id=>C.programs.find(p=>p.id===id)).filter(Boolean) : C.programs;
+  return `<div class="cs">
+    <div class="cs-why">
+      <div class="cs-h">${esc(C.why.title)}</div>
+      <p>${C.why.body.split("\n").map(x=>esc(x)).join("<br>")}</p>
+      <div class="cs-pts">${C.why.points.map(p=>`<div class="cs-pt"><b>${esc(p.t)}</b><span>${esc(p.d)}</span></div>`).join("")}</div>
+    </div>
+    ${g?`<div class="cs-tip">${g.tip}</div>`:""}
+    <table class="cs-tbl">
+      <thead><tr><th style="width:27%">프로그램</th><th>내용</th><th style="width:15%">필요 서류</th><th style="width:14%">비용</th></tr></thead>
+      <tbody>${list.map(p=>`<tr>
+        <td class="nm"><b>${esc(p.name)}</b><span>${esc(p.times)}</span></td>
+        <td>${esc(p.desc)}${p.caution?`<div class="cs-cau">※ ${esc(p.caution)}</div>`:""}</td>
+        <td class="doc">${esc(p.docs)}</td>
+        <td class="pr">${won2(p.price)}원<span>재원생 ${won2(Math.round(p.price*(1-p.disc)))}원</span></td>
+      </tr>`).join("")}</tbody>
+    </table>
+    <div class="cs-note">${C.note}</div>
+  </div>`;
+}
 /* 전체 성적 우수자 — A4 1장 */
 function allScholarsHtml(){
   const A=window.DAOL_ALL_SCHOLARS;
@@ -1613,7 +1667,8 @@ function renderPack(){
   if(packOn.has("top")) h+=packDoc("⑤ 성적 우수자","2025년 중·고등부",
     `<img src="img/docs/성적우수자1.jpg" alt="성적우수자" style="margin-bottom:10px"><img src="img/docs/성적우수자2.jpg" alt="성적우수자">`);
   if(packOn.has("all")) h+=packDoc("⑤ 전체 성적 우수자","다올105 전체 명단", allScholarsHtml());
-  if(packOn.has("manual")) h+=packDoc("⑥ 학원 사용 설명서","신입생 학부모 필독 · A4 4쪽", window.DAOL_MANUAL || `<img src="img/docs/사용설명서.jpg" alt="학원 사용 설명서">`);
+  if(packOn.has("consult")) h+=packDoc("⑥ 입시 컨설팅",`${packGrade} · 예약제`, consultHtml(packGrade, !/^고/.test(packGrade)));
+  if(packOn.has("manual")) h+=packDoc("⑦ 학원 사용 설명서","신입생 학부모 필독 · A4 4쪽", window.DAOL_MANUAL || `<img src="img/docs/사용설명서.jpg" alt="학원 사용 설명서">`);
   document.getElementById("packView").innerHTML = h || `<div class="panel"><div class="empty">포함할 항목을 선택하세요.</div></div>`;
   document.getElementById("packStat").textContent=`${packGrade} · 문서 ${packOn.size}종`;
 }
