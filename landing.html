@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 — 과목 안내</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa;
+    --brand:#f59e0b; --brand-ink:#b45309; --deep:#7c2d12;
+    --g-국어:#fbcfe8; --g-영어:#bfdbfe; --g-수학:#fed7aa; --g-과학:#ddd6fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.05)}
+  .pad{padding:26px 22px}
+  @media(max-width:520px){ .pad{padding:20px 16px} body{font-size:14.5px} }
+
+  /* HERO */
+  .hero{background:linear-gradient(160deg,#7c2d12 0%,#b45309 60%,#f59e0b 100%);color:#fff;padding:34px 22px 30px}
+  .hero .brand{font-size:12px;font-weight:800;letter-spacing:3px;opacity:.85}
+  .hero h1{font-size:26px;line-height:1.4;margin:10px 0 12px;font-weight:800;word-break:keep-all}
+  .hero p{font-size:14.5px;opacity:.94;margin:0;word-break:keep-all}
+  .hero .who{display:inline-block;margin-top:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700}
+
+  /* 현재/제안 */
+  .status{display:flex;gap:10px;flex-wrap:wrap;padding:16px 22px;background:#fffbeb;border-bottom:1px solid #fde68a}
+  .status .box{flex:1;min-width:150px}
+  .status .lbl{font-size:11.5px;font-weight:800;color:var(--brand-ink)}
+  .chipline{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+  .sub-chip{font-size:12.5px;font-weight:800;border-radius:6px;padding:3px 10px;background:#f3f4f6;color:#374151}
+  .sub-chip.on{color:#7c2d12}
+
+  h2.sec{font-size:20px;font-weight:800;margin:0 0 4px;color:var(--deep);word-break:keep-all;line-height:1.4}
+  .sec-sub{font-size:13px;color:var(--muted);margin:0 0 16px}
+  .divider{height:8px;background:#f3f4f6}
+
+  .subj-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .subj-dot{width:12px;height:12px;border-radius:4px}
+  .subj-name{font-size:17px;font-weight:800}
+  .subj-tag{font-size:11.5px;font-weight:800;background:#fef3c7;color:#92400e;border-radius:5px;padding:2px 8px}
+
+  .qbox{background:#fffdf7;border:1px solid #fde68a;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .qbox h3{margin:0 0 6px;font-size:15.5px;color:var(--deep);word-break:keep-all}
+  .qbox p{margin:0;font-size:14px;color:#374151;word-break:keep-all}
+  .analogy{background:#fff;border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;margin-top:11px}
+  .analogy b{display:block;color:var(--brand-ink);margin-bottom:4px;font-size:14px}
+  .analogy span{font-size:13.5px;color:#374151;word-break:keep-all}
+
+  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+  table.cmp th,table.cmp td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;word-break:keep-all}
+  table.cmp th{background:#fdf6ec;color:var(--deep);font-weight:800;font-size:12px}
+  table.cmp td.ax{background:#fafafa;font-weight:700;width:22%}
+  table.cmp td.our{background:#fffdf7}
+
+  .points{display:grid;gap:10px;margin:14px 0}
+  .pt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}
+  .pt b{display:block;font-size:14.5px;color:var(--deep);margin-bottom:4px;word-break:keep-all}
+  .pt span{font-size:13.5px;color:#374151;word-break:keep-all}
+
+  /* 강사 */
+  .tprof{display:flex;gap:13px;border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff;margin-bottom:11px}
+  .tprof img{width:78px;height:98px;object-fit:cover;border-radius:9px;background:#f3f4f6;flex:0 0 auto}
+  .tprof .nm{font-size:15.5px;font-weight:800}
+  .tprof .nm em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--muted);margin-left:5px}
+  .tprof .it{font-size:13.5px;color:var(--brand-ink);font-weight:700;margin:3px 0 6px;word-break:keep-all}
+  .tprof .bk{margin-top:5px}
+  .tprof .bk b{display:block;font-size:11.5px;color:var(--brand-ink)}
+  .tprof ul{margin:2px 0 0;padding-left:17px}
+  .tprof li{font-size:12.8px;line-height:1.6;color:#374151;word-break:keep-all}
+
+  /* 강좌 카드 */
+  .ccard{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fffdf9}
+  .ccard .cn{font-size:15px;font-weight:800;color:var(--deep);word-break:keep-all}
+  .ccard .ct{font-size:13px;color:#374151;margin:4px 0 7px}
+  .ccard .blk{margin-top:5px}
+  .ccard .blk b{display:block;font-size:11.5px;color:var(--brand-ink)}
+  .ccard ul{margin:2px 0 0;padding-left:17px}
+  .ccard li{font-size:13px;line-height:1.6;color:#374151;word-break:keep-all}
+
+  /* 시간표 */
+  .tt{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+  .tt th,.tt td{border:1px solid var(--line);padding:7px 6px;text-align:center}
+  .tt th{background:#fdf6ec;color:var(--deep);font-weight:800;font-size:12px}
+  .tt td.d{background:#fafafa;font-weight:800;width:52px}
+  .tt .slot{display:inline-block;border-radius:5px;padding:2px 7px;margin:2px 2px;font-size:11.5px;font-weight:700}
+  .fit{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13.5px;color:#065f46;word-break:keep-all}
+  .fit b{color:#047857}
+
+  /* FAQ */
+  details{border-bottom:1px solid var(--line);padding:11px 0}
+  details summary{font-size:14.5px;font-weight:700;cursor:pointer;color:var(--deep);word-break:keep-all;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"Q. ";color:var(--brand)}
+  details p{margin:8px 0 0;font-size:13.5px;color:#374151;word-break:keep-all}
+
+  /* CTA */
+  .cta{background:var(--deep);color:#fff;padding:26px 22px;text-align:center}
+  .cta h3{margin:0 0 8px;font-size:19px;word-break:keep-all}
+  .cta p{margin:0 0 16px;font-size:13.5px;opacity:.9;word-break:keep-all}
+  .cta a{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;font-weight:800;font-size:16px;border-radius:999px;padding:13px 34px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  .foot{padding:16px 22px;text-align:center;font-size:11.5px;color:var(--muted);background:#fafafa}
+  .empty{padding:60px 20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty">불러오는 중…</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="copy.js"></script>
+<script>
+/* ===== 설정 ===== */
+const P=new URLSearchParams(location.search);
+const GRADE = P.get("g") || "중1";                          // 중1~중3 / 미사고1 / 미사강변고1 / 하남고1 / 미사고2 / 미사강변고2 / 고3
+const NOW   = (P.get("now")||"").split(",").map(s=>s.trim()).filter(Boolean);   // 현재 수강 과목
+let   WANT  = (P.get("s")||"").split(",").map(s=>s.trim()).filter(Boolean);     // 제안 과목(비우면 자동)
+const NAME  = P.get("n")||"";
+const TEL   = "031-794-8105";
+
+const DAY_LIST=["월","화","수","목","금","토","일"];
+const SUBJECT_ORDER=["국어","영어","수학","과학","사회","기타"];
+const GRADE_ORDER=["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+const HIGH_SCHOOLS=["미사고","미사강변고","하남고","풍산고"];
+const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
+
+const esc = s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const escA= s=>esc(s).replace(/"/g,"&quot;");
+const fmt = m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const bullets = t=>String(t||"").split(/\n/).map(s=>s.replace(/^[-–—·•]\s*/,"").trim()).filter(Boolean);
+const ggf = g=>(/고3|수능/.test(g||"")) ? "고3" : g;
+const normSchool = s=>s==="미강고"?"미사강변고":s;
+function courseSchool(c){
+  const t=normSchool((c.target_school||"").trim());
+  if(HIGH_SCHOOLS.includes(t)) return t;
+  const n=c.course_name||"";
+  if(/미사강변고|미강고/.test(n)) return "미사강변고";
+  if(/미사고/.test(n)) return "미사고";
+  if(/하남고/.test(n)) return "하남고";
+  if(/풍산고/.test(n)) return "풍산고";
+  return null;
+}
+/* 시간 파서 (운영자 화면과 동일 규칙) */
+function extractDays(seg){
+  const set=new Set();
+  (seg.match(/[월화수목금토일]요일/g)||[]).forEach(m=>set.add(m[0]));
+  (seg.match(/[월화수목금토일]{2,}/g)||[]).forEach(run=>{ for(const ch of run) set.add(ch); });
+  for(let i=0;i<seg.length;i++){ const ch=seg[i]; if("월화수목금토일".includes(ch)){ const nx=seg[i+1]||"",pv=seg[i-1]||""; if(!/[가-힣]/.test(nx)&&!/[가-힣]/.test(pv)) set.add(ch); } }
+  return [...set];
+}
+function korToMin(str){ const m=String(str).match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/); if(m){ let h=(+m[2])%12; if(m[1]==="오후") h+=12; return h*60+(m[3]?+m[3]:0);} return null; }
+function parseDayTimes(text){
+  const out=[];
+  String(text||"").split(/\n|\//).forEach(seg=>{
+    seg=seg.trim(); if(!seg) return;
+    const days=extractDays(seg); if(!days.length) return;
+    const type=/클리닉/.test(seg)?"클리닉":(/관리/.test(seg)?"관리":"정규");
+    let s=null,e=null;
+    let m=seg.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+    if(m){ s=(+m[1])*60+(+m[2]); e=(+m[3])*60+(+m[4]); }
+    else{
+      const parts=seg.split(/[~\-–]/);
+      if(parts.length>=2){ const a=korToMin(parts[0]),b=korToMin(parts[1]); if(a!=null&&b!=null){s=a;e=b;} }
+      if(s==null){ const m2=seg.match(/(\d{1,2}):(\d{2})/); if(m2) s=(+m2[1])*60+(+m2[2]); else { const a=korToMin(seg); if(a!=null) s=a; } if(s!=null) e=s+120; }
+      if(s==null){ const m3=seg.match(/(\d{1,2})\s*[-~]\s*(\d{1,2})\s*시/); if(m3){ let h1=+m3[1],h2=+m3[2]; if(h1<12)h1+=12; if(h2<12)h2+=12; s=h1*60; e=h2*60; } }
+    }
+    if(s==null) return;
+    if(e==null||e<=s) e=s+120;
+    days.forEach(d=>out.push({day:d,start:s,end:e,type}));
+  });
+  return out;
+}
+function cGrade(c){ let g=ggf(c.grade); if(!g){ const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/); if(m) g=ggf(m[1]); } return g; }
+function coursesForGrade(key,all){
+  return all.filter(c=>{
+    if(!(c.schedule_text||"").trim()) return false;
+    if(/자습|써머스쿨|섬머스쿨|서머스쿨/.test(c.course_name||"")) return false;
+    const g=cGrade(c), sub=c.subject, sch=courseSchool(c);
+    if(["중1","중2","중3"].includes(key)) return g===key||g==="중등공통";
+    if(key==="고3") return g==="고3";
+    const wantG = key.endsWith("2") ? "고2":"고1";
+    if(g!==wantG) return false;
+    if(sub==="수학") return true;
+    if(key==="하남고1") return sub==="영어" ? (sch===null||sch==="미사고") : sch===null;
+    const ws = key.startsWith("미사강변고") ? "미사강변고":"미사고";
+    return sch===null || sch===ws;
+  });
+}
+const COPY=window.DAOL_COPY||[];
+const copyFor=(sub,lv)=>COPY.find(c=>c.subject===sub&&c.level===lv)||null;
+
+/* ===== 렌더 ===== */
+function render(courses, teachers){
+  const level = /^중/.test(GRADE) ? "중등":"고등";
+  const mine  = coursesForGrade(GRADE, courses);
+  const opened=[...new Set(mine.map(c=>c.subject).filter(Boolean))]
+    .filter(s=>s!=="기타").sort((a,b)=>SUBJECT_ORDER.indexOf(a)-SUBJECT_ORDER.indexOf(b));
+  if(!WANT.length) WANT = opened.filter(s=>!NOW.includes(s));
+  const targets = WANT.filter(s=>opened.includes(s));
+
+  // 현재 수강 과목의 시간대(충돌 확인용)
+  const busy=[];
+  mine.filter(c=>NOW.includes(c.subject)).forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>busy.push(s)));
+  const overlaps=(a,b)=>a.day===b.day && a.start<b.end && b.start<a.end;
+
+  let h="";
+  /* HERO */
+  const headline = targets.length===1
+    ? (copyFor(targets[0],level)?.hero_headline || `${GRADE} ${targets[0]}, 지금 점검이 필요한 시점입니다.`)
+    : `${GRADE}, 한 과목만으로는 채워지지 않는 부분이 있습니다.`;
+  const sub = targets.length===1
+    ? (copyFor(targets[0],level)?.hero_sub || "")
+    : `지금 듣고 계신 과목 외에, 같은 시간대에 충돌 없이 함께 갈 수 있는 과목을 정리했습니다. 각 과목이 어떤 문제를 해결하는지 먼저 보시고 판단해 주세요.`;
+  h+=`<div class="hero">
+    <div class="brand">D A O L 1 0 5 &nbsp;·&nbsp; 미사학원</div>
+    <h1>${esc(headline)}</h1>
+    <p>${esc(sub)}</p>
+    ${NAME?`<div class="who">${esc(NAME)} 학생 · ${esc(GRADE)}</div>`:`<div class="who">${esc(GRADE)} 안내</div>`}
+  </div>`;
+
+  /* 현재 / 제안 */
+  h+=`<div class="status">
+    <div class="box"><div class="lbl">현재 수강</div><div class="chipline">${
+      NOW.length? NOW.map(s=>`<span class="sub-chip on" style="background:${SUBJ_COLOR[s]||'#eee'}">${esc(s)}</span>`).join("")
+                : `<span class="sub-chip">미등록</span>`}</div></div>
+    <div class="box"><div class="lbl">함께 보시면 좋은 과목</div><div class="chipline">${
+      targets.length? targets.map(s=>`<span class="sub-chip on" style="background:${SUBJ_COLOR[s]||'#eee'}">${esc(s)}</span>`).join("")
+                    : `<span class="sub-chip">—</span>`}</div></div>
+  </div>`;
+
+  if(!targets.length){
+    h+=`<div class="pad"><div class="empty">현재 이 학년에 안내할 추가 과목이 없습니다.</div></div>`;
+  }
+
+  /* 과목별 설득 블록 */
+  targets.forEach((sub,idx)=>{
+    const cp=copyFor(sub,level);
+    const list=mine.filter(c=>c.subject===sub);
+    const names=[...new Set(list.map(c=>c.teacher).filter(Boolean))];
+    h+=`<div class="divider"></div><div class="pad">
+      <div class="subj-head">
+        <span class="subj-dot" style="background:${SUBJ_COLOR[sub]||'#eee'}"></span>
+        <span class="subj-name">${esc(sub)}</span>
+        <span class="subj-tag">${esc(GRADE)} 개설</span>
+      </div>`;
+    if(cp){
+      h+=`<div class="qbox"><h3>${esc(cp.problem.title)}</h3><p>${esc(cp.problem.body)}</p>
+        <div class="analogy"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div></div>`;
+      h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">${esc(cp.myth.title)}</h2>
+        <p style="font-size:14px;color:#374151;margin:0 0 14px;word-break:keep-all">${esc(cp.myth.body)}</p>`;
+      h+=`<h2 class="sec" style="font-size:17px">${esc(cp.compare.title)}</h2>
+        <table class="cmp"><tr><th>구분</th><th>흔한 방식</th><th>다올105</th></tr>${
+        cp.compare.rows.map(r=>`<tr><td class="ax">${esc(r.axis)}</td><td>${esc(r.common)}</td><td class="our">${esc(r.ours)}</td></tr>`).join("")}</table>`;
+      h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">다올105는 이렇게 합니다</h2><div class="points">${
+        cp.solution_points.map(p=>`<div class="pt"><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div>`;
+    }
+    /* 담당 강사 */
+    const profs=names.map(n=>{
+      const t=teachers[n]; if(!t) return "";
+      return `<div class="tprof">
+        ${t.photo_url?`<img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님">`:""}
+        <div>
+          <div class="nm">${esc(n)} 선생님${t.career?`<em>${esc(t.career)}</em>`:""}</div>
+          ${t.intro?`<div class="it">“${esc(t.intro)}”</div>`:""}
+          ${t.principle?`<div class="bk"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+          ${t.strategy?`<div class="bk"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        </div></div>`;
+    }).join("");
+    if(profs) h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">담당 선생님</h2>${profs}`;
+
+    /* 개설 강좌 */
+    h+=`<h2 class="sec" style="font-size:17px;margin-top:18px">${esc(GRADE)} 개설 강좌</h2>`;
+    list.forEach(c=>{
+      const ss=parseDayTimes(c.schedule_text);
+      const grouped={};
+      ss.forEach(s=>{ const k=`${(s.type==="정규")?"수업":"관리(클리닉)"}|${fmt(s.start)}~${fmt(s.end)}`; (grouped[k]=grouped[k]||[]).push(s.day); });
+      const timeTxt=Object.entries(grouped).map(([k,ds])=>{ const [kind,t]=k.split("|"); return `${DAY_LIST.filter(d=>ds.includes(d)).join("")} ${t} <b>${kind}</b>`; }).join(" / ");
+      const conflict = ss.some(s=>busy.some(b=>overlaps(s,b)));
+      h+=`<div class="ccard">
+        <div class="cn">${esc(c.course_name||"")}${c.teacher?` <span style="font-size:12px;color:#6b7280;font-weight:600">${esc(c.teacher)} 선생님</span>`:""}</div>
+        <div class="ct">🕘 ${timeTxt||esc(c.schedule_text||"")}</div>
+        ${bullets(c.audience).length?`<div class="blk"><b>이런 학생을 위한 강좌입니다</b><ul>${bullets(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${bullets(c.content).length?`<div class="blk"><b>수업에서 실제로 하는 것</b><ul>${bullets(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${bullets(c.textbook).length?`<div class="blk"><b>📖 사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${NOW.length?`<div style="margin-top:7px;font-size:12.5px;font-weight:700;color:${conflict?'#b91c1c':'#047857'}">${conflict?'⚠ 현재 수강 과목과 시간이 겹칩니다 — 다른 반으로 조정 가능합니다':'✅ 현재 수강 중인 과목과 시간이 겹치지 않습니다'}</div>`:""}
+      </div>`;
+    });
+    if(cp && cp.cross_sell) h+=`<div class="fit">${esc(cp.cross_sell)}</div>`;
+    h+=`</div>`;
+  });
+
+  /* 주간 시간표 */
+  const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
+  mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{
+    if(!byDay[s.day]) return;
+    byDay[s.day].push({...s, subj:c.subject, name:c.course_name, mineNow:NOW.includes(c.subject), target:targets.includes(c.subject)});
+  }));
+  const anySlot=DAY_LIST.some(d=>byDay[d].length);
+  if(anySlot){
+    h+=`<div class="divider"></div><div class="pad">
+      <h2 class="sec">${esc(GRADE)} 주간 시간표</h2>
+      <p class="sec-sub">전체 개설 과목입니다. 색이 진한 칸이 안내드리는 과목입니다.</p>
+      <table class="tt"><tr><th>요일</th><th>일정</th></tr>${
+      DAY_LIST.map(d=>{
+        const list=byDay[d].slice().sort((a,b)=>a.start-b.start);
+        return `<tr><td class="d">${d}</td><td style="text-align:left">${
+          list.length? list.map(s=>{
+            const dim = !(s.mineNow||s.target);
+            return `<span class="slot" style="background:${SUBJ_COLOR[s.subj]||'#eee'};opacity:${dim?.42:1}">${esc(s.subj||"")} ${fmt(s.start)}~${fmt(s.end)}${s.type!=="정규"?" (관리)":""}</span>`;
+          }).join("") : `<span style="color:#9ca3af;font-size:12px">—</span>`}</td></tr>`;
+      }).join("")}</table>`;
+    if(NOW.length){
+      const conflictAll = targets.some(sub=>mine.filter(c=>c.subject===sub).some(c=>parseDayTimes(c.schedule_text).some(s=>busy.some(b=>overlaps(s,b)))));
+      h+=`<div class="fit">${conflictAll
+        ? `일부 과목이 현재 수강 시간과 겹칩니다. <b>같은 과목의 다른 요일 반으로 조정</b>이 가능하니 상담 때 말씀해 주세요.`
+        : `안내드린 과목은 <b>현재 수강 중인 시간과 겹치지 않습니다.</b> 지금 스케줄 그대로 추가하실 수 있습니다.`}</div>`;
+    }
+    h+=`</div>`;
+  }
+
+  /* FAQ */
+  const faqs=[];
+  targets.forEach(sub=>{ const cp=copyFor(sub,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push({...f,sub})); });
+  if(faqs.length){
+    h+=`<div class="divider"></div><div class="pad"><h2 class="sec">자주 묻는 질문</h2><div>${
+      faqs.map(f=>`<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></div>`;
+  }
+
+  /* CTA */
+  h+=`<div class="cta">
+    <h3>먼저 진단부터 해 드립니다</h3>
+    <p>등록을 권하기 전에 지금 상태를 확인해 드립니다. 아직 이르다고 판단되면 이르다고 말씀드립니다.</p>
+    <a href="tel:${TEL.replace(/-/g,"")}">📞 ${TEL} 상담 문의</a>
+  </div>
+  <div class="foot">다올105 미사학원 · 경기 하남시 미사<br>본 안내는 ${esc(GRADE)} 기준으로 자동 생성되었습니다.</div>`;
+
+  document.getElementById("app").innerHTML=h;
+  document.title = `다올105 ${GRADE} 과목 안내`;
+}
+
+/* ===== 로드 ===== */
+(async function(){
+  const cfg=window.DAOL_CONFIG||{};
+  if(!(cfg.url&&cfg.anonKey&&window.supabase)){
+    document.getElementById("app").innerHTML=`<div class="empty">연결 설정이 필요합니다.</div>`; return;
+  }
+  const sb=window.supabase.createClient(cfg.url,cfg.anonKey);
+  const [{data:courses},{data:tt}]=await Promise.all([
+    sb.from("courses").select("*"),
+    sb.from("teachers").select("*")
+  ]);
+  const teachers={}; (tt||[]).forEach(t=>teachers[t.name]=t);
+  render(courses||[], teachers);
+})();
+</script>
+</body>
+</html>
