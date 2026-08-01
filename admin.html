@@ -129,6 +129,9 @@
   .gblk .gtag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
   .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
   .gblk .gdet{font-size:9.5px;color:#374151;margin-top:2px;line-height:1.3;border-top:1px dotted rgba(0,0,0,.18);padding-top:2px}
+  .gblk .gbadges{margin-top:2px;display:flex;gap:3px;flex-wrap:wrap}
+  .gunit{display:inline-block;font-size:9.5px;font-weight:800;color:#fff;border-radius:4px;padding:1px 5px;letter-spacing:-.2px}
+  .gsp{display:inline-block;font-size:9.5px;font-weight:800;color:#7f1d1d;background:#fee2e2;border:1px solid #fca5a5;border-radius:4px;padding:0 4px}
   .gblk.clinic{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(0,0,0,.12)}
   .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:2px 18px 14px;font-size:11.5px;color:var(--muted)}
   .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
@@ -232,7 +235,7 @@
   <!-- ===== 학년별 주간 시간표 ===== -->
   <section id="tab-grade" class="hide">
     <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <div class="chips" id="gradeChips"></div>
+      <div class="chips" id="gChips"></div>
       <span style="flex:1"></span>
       <button class="btn sm" id="gradePrint">🖨️ PDF/인쇄</button>
       <button class="btn sm" id="gradePng">🖼️ 이미지저장</button>
@@ -776,7 +779,8 @@ function fitCheck(list, rooms, occ, day){
 }
 function assignDay(day){
   const items=[], unparsed=[];
-  DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c);
+  DATA.forEach(c=>{ if(!(c.course_name||"").trim()) return; if(!isActiveCourse(c)) return;   // 종료된 특강 제외
+    const p=parseDayTimes(c.schedule_text); if(p.failed) unparsed.push(c);
     p.sessions.filter(s=>s.day===day).forEach(s=>{
       const sp=SESSION_SPLITS.find(x=>x.days.includes(day)&&x.match(c)&&s.start<x.at&&s.end>x.at);
       if(sp){ items.push({c,s:{...s,end:sp.at},forced:sp.roomBefore}); items.push({c,s:{...s,start:sp.at},forced:sp.roomAfter}); }
@@ -915,8 +919,47 @@ function renderDay(){
 const GRADE_BUTTONS=["중1","중2","중3","미사고1","미사강변고1","미사고2","미사강변고2","고3"];
 const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
 let selGrade="미사고1";
-function buildGradeChips(){ document.getElementById("gradeChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
-document.getElementById("gradeChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); });
+function buildGradeChips(){ document.getElementById("gChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
+document.getElementById("gChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); });
+/* ===== 수학 단원 인식 (시간표에 배지로 시각화) ===== */
+const MATH_UNITS=[
+  {re:/공통\s*수학\s*2|공수\s*2/,        label:"공통수학2", color:"#c2410c"},
+  {re:/공통\s*수학\s*1|공수\s*1/,        label:"공통수학1", color:"#ea580c"},
+  {re:/확률과?\s*통계|확통/,             label:"확률과통계", color:"#7c2d12"},
+  {re:/미적분/,                          label:"미적분",     color:"#b45309"},
+  {re:/기하/,                            label:"기하",       color:"#92400e"},
+  {re:/대수/,                            label:"대수",       color:"#d97706"},
+  {re:/수능|수1|수2/,                    label:"수능수학",   color:"#78350f"}
+];
+function mathUnit(c){
+  if(c.subject!=="수학") return null;
+  const t=(c.course_name||"")+" "+(c.content||"");
+  for(const u of MATH_UNITS) if(u.re.test(t)) return u;
+  return null;
+}
+/* ===== 특강 종료일 — end_date 우선, 없으면 기간 텍스트에서 추출 ===== */
+function courseEnd(c){
+  if(c.end_date){ const d=new Date(c.end_date+"T23:59:59"); return isNaN(d)?null:d; }
+  const t=(c.schedule_text||"")+" "+(c.tuition_note||"");
+  const Y=new Date().getFullYear();
+  const range=t.match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*[~\-–]\s*(\d{1,2})\s*\/\s*(\d{1,2})/);   // 7/28~8/13
+  if(range) return new Date(Y,(+range[3])-1,+range[4],23,59,59);
+  const all=[...t.matchAll(/(\d{1,2})\s*\/\s*(\d{1,2})(?!\d)/g)]                              // 7/22·7/29·8/5·8/12
+    .filter(m=>+m[1]>=1&&+m[1]<=12&&+m[2]>=1&&+m[2]<=31);
+  if(all.length){ const L=all[all.length-1]; return new Date(Y,(+L[1])-1,+L[2],23,59,59); }
+  return null;
+}
+// 오늘 기준 유효한 강좌인가 (종료된 특강은 시간표에서 자동 제외)
+function isActiveCourse(c){
+  if(!isSpecial(c)) return true;
+  const e=courseEnd(c);
+  return !e || e >= new Date();
+}
+// 실제 특강 여부: DB 유형이 특강이거나 강좌명·비고에 특강 표기가 있으면 특강
+function isSpecial(c){
+  return c.course_type==="특강" || /특강/.test(c.course_name||"") || /특강\s*회당/.test(c.tuition_note||"");
+}
+
 /* 강사가 입력한 "요일·시간대별 진행 내용" 파싱
    지원 형식(줄 단위):
    · "월: 단어테스트 + 어법"        → 해당 요일 블록에만
@@ -958,6 +1001,7 @@ function cGrade(c){ let g=ggf(c.grade); if(!g){ const m=(c.course_name||"").matc
 function coursesForGrade(key){
   return DATA.filter(c=>{
     if(!(c.schedule_text||"").trim()) return false;
+    if(!isActiveCourse(c)) return false;                     // 기간 끝난 특강 자동 제외
     const g=cGrade(c), sub=c.subject, sch=courseSchool(c);   // sch: 미사고/미사강변고/하남고/풍산고 또는 null(공통)
     if(key==="중1"||key==="중2"||key==="중3") return g===key || g==="중등공통";
     if(key==="고3") return g==="고3";
@@ -984,7 +1028,8 @@ function renderGrade(){
       if(midEng) type = (s.day==="금"||s.day==="토") ? "클리닉" : "수업";
       // 강사가 입력한 요일·시간대별 진행내용 우선, 없으면 중등영어 기본 문구
       const detail = notesFor(c.session_notes, s.day, s.start) || (midEng ? midEngDetail(s.day) : "");
-      byDay[s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,grade:cGrade(c),school:courseSchool(c),name:c.course_name,detail});
+      byDay[s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,grade:cGrade(c),school:courseSchool(c),name:c.course_name,detail,
+        unit:mathUnit(c), special:isSpecial(c), endAt:courseEnd(c)});
     });
   });
   // 특이사항 메모
@@ -1028,9 +1073,12 @@ function renderGrade(){
       const schoolTag=b.school?`[${b.school}]`:`[${selGrade}]`;
       const teamTag=(b.subj==="수학"&&b.grade==="고1")?` ${esc(b.teacher)}반`:"";
       const detail=b.detail?`<div class="gdet">${esc(b.detail)}</div>`:"";
+      const unitBadge=b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:"";
+      const spBadge=b.special?`<span class="gsp">특강${b.endAt?` ~${b.endAt.getMonth()+1}/${b.endAt.getDate()}`:""}</span>`:"";
       html+=`<div class="gblk ${clinic?'clinic':''}" style="${style}">
         <div class="gsch">${esc(schoolTag)}${teamTag}</div>
         <div class="gsub">${esc(b.subj)}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'관리(클리닉)':'수업'}</span></div>
+        ${unitBadge||spBadge?`<div class="gbadges">${unitBadge}${spBadge}</div>`:""}
         <div class="gtm">${d} ${fmt(b.start)}~${fmt(b.end)}</div>
         ${detail}
       </div>`;
@@ -1046,10 +1094,14 @@ function renderGrade(){
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>수업(단색)</span>
     <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,${SUBJ_COLOR['영어']} 0 4px,#fff 4px 8px);border:1.5px dashed ${SUBJ_BORDER['영어']}"></span>관리·클리닉(빗금)</span>
     <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,#f3f4f6 0 4px,#e9ebee 4px 8px);border:1px solid #d1d5db"></span>자습</span>
+    <span class="k">수학 단원: ${MATH_UNITS.map(u=>`<span class="gunit" style="background:${u.color};margin-left:3px">${u.label}</span>`).join("")}</span>
+    <span class="k"><span class="gsp">특강</span> 기간 종료 시 자동 제외</span>
   </div>`;
   document.getElementById("gradeSheet").innerHTML=html;
   document.getElementById("gradeUnparsed").innerHTML = unparsed.length ? `<div class="unparsed"><b>⚠️ 시간 표기 확인 필요 ${unparsed.length}건</b> — 강사 입력을 "요일 HH:MM~HH:MM" 형식으로 정리하면 자동 배치됩니다.<br>`+unparsed.map(c=>`· [${esc(c.teacher)}] ${esc(c.course_name)} — "${esc((c.schedule_text||"").replace(/\n/g," / "))}"`).join("<br>")+`</div>` : "";
-  document.getElementById("gradeStat").textContent=`${cs.length}강좌 · 블록 ${DAY_LIST.reduce((a,d)=>a+byDay[d].length,0)}개`;
+  const endedSp=DATA.filter(c=>(c.schedule_text||"").trim() && isSpecial(c) && !isActiveCourse(c));
+  document.getElementById("gradeStat").textContent=
+    `${cs.length}강좌 · 블록 ${DAY_LIST.reduce((a,d)=>a+byDay[d].length,0)}개` + (endedSp.length?` · 종료 특강 ${endedSp.length}건 자동 제외`:"");
   renderGuide();
 }
 /* ===== 2페이지: 수업 방식·안내 ===== */
