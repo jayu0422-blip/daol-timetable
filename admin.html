@@ -160,6 +160,15 @@
   .gu-card.b .tagline{background:#c2410c;color:#fff}
   .gu-warn{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 13px;font-size:12px;color:#7f1d1d;line-height:1.6}
   .gu-key{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#78350f;line-height:1.6;font-weight:600}
+  .gu-course{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:9px;padding:9px 12px;margin-bottom:9px;background:#fffdf9}
+  .gu-cname{font-size:13.5px;font-weight:800;color:#7c2d12;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .gu-teacher{font-size:11.5px;font-weight:700;color:#6b7280;margin-left:auto}
+  .gu-time{font-size:12px;color:#374151;margin:4px 0 6px}
+  .gu-block{font-size:12px;margin-top:4px}
+  .gu-block>b{display:block;font-size:11px;color:var(--brand-ink);margin-bottom:2px}
+  .gu-block ul{margin:0;padding-left:17px}
+  .gu-block li{font-size:12px;line-height:1.5;color:#374151}
+  .gu-divider{margin:18px 0 10px;padding:7px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;font-weight:800;color:#1e40af}
   @media print{ #guideSheet{box-shadow:none;border:none} }
 </style>
 </head>
@@ -1101,12 +1110,71 @@ function renderGrade(){
   document.getElementById("gradeStat").textContent=`${cs.length}강좌 · 블록 ${DAY_LIST.reduce((a,d)=>a+byDay[d].length,0)}개`;
   renderGuide();
 }
-/* ===== 2페이지: 수업 방식·안내 ===== */
+/* ===== 2페이지: 수업 방식·안내 (과목별) ===== */
+// 여러 줄 텍스트 → 항목 리스트 (·, -, • 등 불릿 정리)
+function bullets(t){
+  return String(t||"").split(/\n|(?:^|\s)[·•]\s*/).map(s=>s.replace(/^[-–—]\s*/,"").trim()).filter(Boolean);
+}
+// 시간 요약: "월수금 18:00~20:00 수업 / 금 20:00~21:00 관리"
+function scheduleSummary(c){
+  const p=parseDayTimes(c.schedule_text);
+  if(!p.sessions.length) return (c.schedule_text||"").replace(/\n/g," / ");
+  const midEng=c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+  const groups={};
+  p.sessions.forEach(s=>{
+    let kind=(s.type==="관리"||s.type==="클리닉")?"관리(클리닉)":"수업";
+    if(midEng) kind=(s.day==="금"||s.day==="토")?"관리(클리닉)":"수업";
+    const k=`${kind}|${fmt(s.start)}~${fmt(s.end)}`;
+    (groups[k]=groups[k]||[]).push(s.day);
+  });
+  return Object.entries(groups).map(([k,days])=>{
+    const [kind,time]=k.split("|");
+    const ordered=DAY_LIST.filter(d=>days.includes(d)).join("");
+    return `${ordered} ${time} <b>${kind}</b>`;
+  }).join(" &nbsp;/&nbsp; ");
+}
+function subjectCardsHtml(){
+  const cs=coursesForGrade(selGrade);
+  const bySubj={};
+  cs.forEach(c=>{ (bySubj[c.subject||"기타"]=bySubj[c.subject||"기타"]||[]).push(c); });
+  const order=SUBJECT_ORDER.filter(s=>bySubj[s]).concat(Object.keys(bySubj).filter(s=>!SUBJECT_ORDER.includes(s)));
+  if(!order.length) return `<p class="muted">등록된 강좌가 없습니다.</p>`;
+  return order.map(sub=>{
+    const list=bySubj[sub].slice().sort((a,b)=>(isSpecial(a)?1:0)-(isSpecial(b)?1:0));
+    const body=list.map(c=>{
+      const aud=bullets(c.audience), cont=bullets(c.content);
+      const unit=mathUnit(c);
+      return `<div class="gu-course">
+        <div class="gu-cname">${esc(c.course_name||"(강좌명 미입력)")}
+          ${isSpecial(c)?`<span class="gsp">특강</span>`:""}
+          ${unit?`<span class="gunit" style="background:${unit.color}">${unit.label}</span>`:""}
+          <span class="gu-teacher">${esc(c.teacher)} 선생님</span></div>
+        <div class="gu-time">🕘 ${scheduleSummary(c)}</div>
+        ${aud.length?`<div class="gu-block"><b>대상</b><ul>${aud.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${cont.length?`<div class="gu-block"><b>수업 내용·특징·목표</b><ul>${cont.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      </div>`;
+    }).join("");
+    return `<div class="gu-sec"><h3>${esc(sub)}</h3>${body}</div>`;
+  }).join("");
+}
 function renderGuide(){
-  const isMid=/^중[123]$/.test(selGrade);
+  const hasMidEng=coursesForGrade(selGrade).some(c=>c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")));
   let html=`<div class="gu-head"><div class="t1">D A O L 1 0 5 &nbsp; G U I D E</div><div class="t2">${esc(selGrade)} 수업 방식 안내</div></div>`;
 
-  if(isMid){
+  // ① 과목별 강좌 안내 (강사가 입력한 대상·내용·목표 기반)
+  html+=`<div class="gu-sec"><h3>과목별 강좌 안내</h3></div>`+subjectCardsHtml();
+
+  // ② 수업/관리 구분 공통 안내
+  html+=`<div class="gu-sec"><h3>수업 · 관리(클리닉) 구분</h3>
+    <p>시간표에서 <b>단색 블록은 수업</b>, <b>빗금 블록은 관리(클리닉)</b>입니다.</p>
+    <ul><li><b>수업</b> — 개념 강의·문제 풀이 등 정규 진행</li>
+    <li><b>관리(클리닉)</b> — 복습·재테스트·질문 및 1:1 첨삭 중심</li></ul></div>`;
+  if(selGrade.indexOf("고1")>-1) html+=`<div class="gu-sec"><h3>고1 수학 합반 안내</h3><p>고1 수학은 <b>미사고·하남고·미사강변고 합반</b>으로 운영되며, <b>임결 선생님 반</b>과 <b>유용권 선생님 반</b>으로 구분됩니다. 하남고1은 영어·수학이 미사고1과 동일하게 진행됩니다.</p></div>`;
+  if(coursesForGrade(selGrade).some(c=>c.subject==="국어" && /일/.test(c.schedule_text||"") && /(관리|클리닉)/.test(c.schedule_text||"")))
+    html+=`<div class="gu-sec"><h3>국어 클리닉</h3><p>국어 클리닉은 <b>일요일에 유동적으로</b> 운영되며, 학생별 일정에 맞춰 조정됩니다.</p></div>`;
+
+  if(hasMidEng){
+    html+=`<div class="gu-divider">중등 영어 — 상세 안내</div>`;
     html+=`<div class="gu-sec"><h3>1. 요일별 진행 방식</h3>
       <table class="gu-table">
         <tr><th style="width:110px">월·수 (또는 화·목)</th><td><b>수업일</b> — 단어 테스트(2단원) + 어법·서술형 / 독해<br>
@@ -1156,15 +1224,6 @@ function renderGuide(){
       <div class="gu-key">성적은 <b>복습과 숙제를 집에서 실제로 해내는 학생</b>에게서만 오릅니다. 주도성이 매우 강한 학생이 아니라면, 수업은 들었지만 <b>점수는 오르지 않는</b> 경우가 대부분입니다. 이 점을 충분히 고려하여 선택해 주시기 바랍니다.</div></div>`;
 
     html+=`<div class="gu-sec"><h3>6. 참고</h3><p>요일·시간·수강료 등 <b>수업 조건과 수강료는 선택 A/B에 관계없이 동일</b>합니다.</p></div>`;
-  } else {
-    html+=`<div class="gu-sec"><h3>1. 수업 · 관리(클리닉) 구분</h3>
-      <p>시간표에서 <b>진한 색 블록은 수업</b>, <b>옅은 그라데이션 블록은 관리(클리닉)</b>입니다.</p>
-      <ul>
-        <li><b>수업</b> — 개념 강의·문제 풀이 등 정규 진행</li>
-        <li><b>관리(클리닉)</b> — 복습·재테스트·질문 및 1:1 첨삭 중심</li>
-      </ul></div>`;
-    if(selGrade.indexOf("고1")>-1) html+=`<div class="gu-sec"><h3>2. 고1 수학 합반 안내</h3><p>고1 수학은 <b>미사고·하남고·미사강변고 합반</b>으로 운영되며, <b>임결 선생님 반</b>과 <b>유용권 선생님 반</b>으로 구분됩니다. 하남고1은 영어·수학이 미사고1과 동일하게 진행됩니다.</p></div>`;
-    html+=`<div class="gu-sec"><h3>${selGrade.indexOf("고1")>-1?"3":"2"}. 국어 클리닉</h3><p>국어 클리닉은 <b>일요일에 유동적으로</b> 운영되며, 학생별 일정에 맞춰 조정됩니다.</p></div>`;
   }
   document.getElementById("guideSheet").innerHTML=html;
 }
