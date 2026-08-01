@@ -123,6 +123,7 @@
   .gg-line{position:absolute;left:0;right:0;border-top:1px solid #eef0f3}
   .gblk{position:absolute;border-radius:8px;padding:5px 6px;font-size:11px;overflow:hidden;line-height:1.25;box-shadow:0 1px 2px rgba(0,0,0,.12)}
   .gblk .gsch{font-size:10px;font-weight:700;color:#374151}
+  .gblk .gteach{font-weight:800;color:#111827}
   .gblk .gsub{font-weight:800;font-size:12px}
   .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:middle}
   .gblk .gtag.reg{background:#1d4ed8;color:#fff}
@@ -1082,7 +1083,7 @@ function renderGrade(){
           : `background:${col};border:1px solid rgba(0,0,0,.12);z-index:1`;
       const style=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}`;
       const schoolTag=`[${selGrade}]`;   // 학부모용 — 선택한 학년·학교로 표기(합반 등 내부 사정 비노출)
-      const teamTag=(b.subj==="수학"&&b.grade==="고1")?` ${esc(b.teacher)}반`:"";
+      const teamTag=b.teacher?` <span class="gteach">${esc(b.teacher)} T</span>`:"";   // 전 과목 담당 강사 표기
       const detail=b.detail?`<div class="gdet">${esc(b.detail)}</div>`:"";
       const unitBadge=b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:"";
       const spBadge=b.special?`<span class="gsp">특강${b.endAt?` ~${b.endAt.getMonth()+1}/${b.endAt.getDate()}`:""}</span>`:"";
