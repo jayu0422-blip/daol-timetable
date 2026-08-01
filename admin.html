@@ -28,6 +28,7 @@
   .btn:hover{background:#f8fafc}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand-ink)}
   .btn.sm{padding:5px 10px;font-size:12px}
+  .btn.danger{color:var(--danger);border-color:#fecaca}.btn.danger:hover{background:#fef2f2}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
   .muted{color:var(--muted);font-size:12.5px}
 
@@ -170,6 +171,17 @@
   .gu-block ul{margin:0;padding-left:17px}
   .gu-block li{font-size:12px;line-height:1.5;color:#374151}
   .gu-divider{margin:18px 0 10px;padding:7px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;font-weight:800;color:#1e40af}
+
+  /* ===== 강좌 추가·삭제 ===== */
+  .mg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .mg-grid .f{display:flex;flex-direction:column;gap:4px}
+  .mg-grid label{font-size:11.5px;font-weight:700;color:var(--muted)}
+  .mg-grid input,.mg-grid select,.mg-grid textarea{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+  #mgTable td{font-size:13px}
+  .mg-gtag{display:inline-block;font-size:11px;font-weight:800;border-radius:5px;padding:2px 7px;background:#f1f5f9;color:#334155}
+  .mg-sched{font-size:11.5px;color:var(--muted);white-space:pre-line;line-height:1.35}
+  .mg-grouphead td{background:#fff7ed;font-weight:800;color:var(--brand-ink);font-size:12.5px}
+  @media(max-width:900px){ .mg-grid{grid-template-columns:repeat(2,1fr)} }
   @media print{ #guideSheet{box-shadow:none;border:none} }
 </style>
 </head>
@@ -190,6 +202,7 @@
     <button class="tab" data-tab="fee">💰 수강료</button>
     <button class="tab" data-tab="day">📅 요일별·강의실</button>
     <button class="tab" data-tab="edit">✏️ 시간표·수강료 수정</button>
+    <button class="tab" data-tab="manage">🗂️ 강좌 추가·삭제</button>
   </div>
 
   <!-- ===== 대시보드 ===== -->
@@ -318,6 +331,43 @@
     </div>
     <iframe id="editFrame" title="전체 관리(시간표·수강료 수정)" style="width:100%;height:78vh;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>
   </section>
+
+  <!-- ===== 강좌 추가·삭제 ===== -->
+  <section id="tab-manage" class="hide">
+    <div class="panel" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b>🗂️ 강좌 추가·삭제</b>
+      <span class="muted">학년(중1→고3) 순으로 전체 강좌를 나열합니다. 삭제하면 시간표·수강료·강사 페이지에서 <b>즉시 함께 사라집니다</b>(폐강 처리).</span>
+      <span style="flex:1"></span>
+      <input class="search" id="mgSearch" placeholder="🔍 강좌명·강사 검색" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 11px;min-width:170px">
+      <button class="btn primary" id="mgAddBtn">＋ 강의 추가</button>
+      <span class="muted" id="mgStat"></span>
+    </div>
+
+    <div class="panel hide" id="mgForm">
+      <div style="font-weight:800;margin-bottom:10px">＋ 새 강좌 추가 <span class="muted" style="font-weight:400">— 강사 페이지 입력 없이 여기서 바로 등록됩니다</span></div>
+      <div class="mg-grid">
+        <div class="f"><label>학년</label><select id="mgGrade"></select></div>
+        <div class="f"><label>과목</label><select id="mgSubject"></select></div>
+        <div class="f"><label>담당 강사</label><select id="mgTeacher"></select></div>
+        <div class="f"><label>유형</label><select id="mgType"><option>정규</option><option>특강</option></select></div>
+        <div class="f"><label>대상학교</label><select id="mgSchool"></select></div>
+        <div class="f" style="grid-column:1 / -1"><label>강좌명</label><input id="mgName" placeholder="예: 중2 영어정규반 (월수금)"></div>
+        <div class="f" style="grid-column:1 / -1"><label>시간 (여러 줄 가능 · 예: 월수금 18:30~20:00 / 금 20:00~21:00 관리)</label><textarea id="mgSched" style="min-height:56px" placeholder="월수금 18:30 ~ 20:00"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn primary" id="mgSave">저장</button>
+        <button class="btn" id="mgCancel">취소</button>
+        <span class="muted" id="mgFormMsg"></span>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:0;overflow:auto">
+      <table class="dash" id="mgTable">
+        <thead><tr><th style="width:78px">학년</th><th style="width:66px">과목</th><th>강좌명</th><th style="width:86px">강사</th><th style="width:210px">시간</th><th style="width:64px">유형</th><th style="width:96px">삭제</th></tr></thead>
+        <tbody id="mgBody"></tbody>
+      </table>
+    </div>
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -407,7 +457,8 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","grade","fee","day","edit"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","grade","fee","day","edit","manage"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  if(t.dataset.tab==="manage") renderManage();
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
   if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
@@ -1259,6 +1310,86 @@ document.getElementById("gradePrint").addEventListener("click", async ()=>{
     w.document.write(`<!doctype html><html><head><title>${selGrade} 시간표</title><style>@page{size:A4 ${landscape?"landscape":"portrait"};margin:6mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:${landscape?"192mm":"280mm"}}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
     w.document.close(); document.getElementById("gradeStat").textContent="";
   }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
+});
+
+/* ===== 강좌 추가·삭제 ===== */
+const MG_SCHOOLS=["공통","미사고","미사강변고","하남고","풍산고","미사중","미사강변중","은가람중","윤슬중"];
+const uid=()=> (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
+  : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
+let mgSearch="";
+function mgFillSelects(){
+  const g=document.getElementById("mgGrade"), s=document.getElementById("mgSubject"),
+        t=document.getElementById("mgTeacher"), sc=document.getElementById("mgSchool");
+  g.innerHTML=GRADE_ORDER.map(x=>`<option>${x}</option>`).join("");
+  s.innerHTML=SUBJECT_ORDER.map(x=>`<option>${x}</option>`).join("");
+  t.innerHTML=ROSTER.map(x=>`<option>${esc(x.name)}</option>`).join("");
+  sc.innerHTML=MG_SCHOOLS.map(x=>`<option>${x}</option>`).join("");
+}
+function renderManage(){
+  mgFillSelects();
+  let rows=DATA.slice();
+  if(mgSearch){ const q=mgSearch.toLowerCase();
+    rows=rows.filter(c=>[c.course_name,c.teacher,c.grade,c.subject].some(v=>String(v||"").toLowerCase().includes(q))); }
+  rows.sort((a,b)=>(GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade))
+    || (SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))
+    || String(a.course_name||"").localeCompare(String(b.course_name||""),"ko"));
+  let html="", lastG=null;
+  rows.forEach(c=>{
+    const g=c.grade||"(학년 미지정)";
+    if(g!==lastG){ lastG=g; html+=`<tr class="mg-grouphead"><td colspan="7">${esc(g)}</td></tr>`; }
+    html+=`<tr data-id="${c.id}">
+      <td>${esc(c.grade||"—")}</td>
+      <td>${esc(c.subject||"—")}</td>
+      <td><b>${esc(c.course_name||"(강좌명 없음)")}</b></td>
+      <td>${esc(c.teacher||"—")}</td>
+      <td class="mg-sched">${esc((c.schedule_text||"—").replace(/\n/g,"\n"))}</td>
+      <td><span class="mg-gtag">${esc(c.course_type||"정규")}</span></td>
+      <td><button class="btn sm danger" data-del="${c.id}">🗑 삭제</button></td>
+    </tr>`;
+  });
+  document.getElementById("mgBody").innerHTML = html || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">표시할 강좌가 없습니다.</td></tr>`;
+  document.getElementById("mgStat").textContent=`총 ${rows.length}강좌`;
+}
+document.getElementById("mgSearch").addEventListener("input",e=>{ mgSearch=e.target.value.trim(); renderManage(); });
+document.getElementById("mgAddBtn").addEventListener("click",()=>{
+  const f=document.getElementById("mgForm"); f.classList.toggle("hide");
+  if(!f.classList.contains("hide")){ document.getElementById("mgFormMsg").textContent=""; document.getElementById("mgName").focus(); }
+});
+document.getElementById("mgCancel").addEventListener("click",()=>document.getElementById("mgForm").classList.add("hide"));
+document.getElementById("mgSave").addEventListener("click", async ()=>{
+  const name=document.getElementById("mgName").value.trim();
+  const msg=document.getElementById("mgFormMsg");
+  if(!name){ msg.textContent="강좌명을 입력하세요."; msg.style.color="var(--danger)"; return; }
+  const grade=document.getElementById("mgGrade").value;
+  const row={ id:uid(), teacher:document.getElementById("mgTeacher").value, grade,
+    division:(grade||"").startsWith("중")?"중등":"고등",
+    subject:document.getElementById("mgSubject").value, course_name:name,
+    schedule_text:document.getElementById("mgSched").value.trim(),
+    target_school:document.getElementById("mgSchool").value,
+    course_type:document.getElementById("mgType").value,
+    audience:"", content:"", sort_order:(DATA.reduce((m,x)=>Math.max(m,x.sort_order||0),0)+1) };
+  msg.textContent="저장 중…"; msg.style.color="var(--muted)";
+  if(useSupa){
+    const {error}=await sb.from("courses").insert(row);
+    if(error){ msg.textContent="저장 오류: "+error.message; msg.style.color="var(--danger)"; return; }
+  }
+  DATA.push(row);
+  document.getElementById("mgName").value=""; document.getElementById("mgSched").value="";
+  msg.textContent="추가됨 ✓ — 시간표·수강료에 바로 반영됩니다."; msg.style.color="var(--ok)";
+  await loadData(); renderManage();
+});
+document.getElementById("mgBody").addEventListener("click", async e=>{
+  const btn=e.target.closest("[data-del]"); if(!btn) return;
+  const id=btn.dataset.del, c=DATA.find(x=>x.id===id); if(!c) return;
+  if(!confirm(`"${c.course_name||"(강좌명 없음)"}" 강좌를 삭제할까요?\n\n· 담당: ${c.teacher||"-"} / ${c.grade||"-"} ${c.subject||""}\n· 시간표·수강료·강사 페이지에서 모두 사라집니다.\n· 되돌릴 수 없습니다.`)) return;
+  document.getElementById("mgStat").textContent="삭제 중…";
+  if(useSupa){
+    const {error}=await sb.from("courses").delete().eq("id",id);
+    if(error){ document.getElementById("mgStat").textContent="삭제 오류: "+error.message; return; }
+  }
+  DATA=DATA.filter(x=>x.id!==id);
+  await loadData(); renderManage();
+  document.getElementById("mgStat").textContent="삭제됨 ✓";
 });
 
 buildSchoolFilter();
