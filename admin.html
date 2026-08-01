@@ -877,6 +877,9 @@ function assignDay(day){
     const otherRooms=CLASS_ROOMS.map(r=>r.key).filter(k=>!primaryRooms.includes(k));
     list.forEach(it=>{
       if(it.forced){ it.room=it.forced; occ[it.forced]&&occ[it.forced].push(it.s); return; }  // 세션 분할 강제 강의실
+      // 무학년 통합반(같은 강사·과목·시간) → 이미 배정된 같은 방을 공유. 충돌 아님
+      const twin=list.find(x=>x!==it && x.room && x.c.subject===it.c.subject && x.s.start===it.s.start && x.s.end===it.s.end);
+      if(twin){ it.room=twin.room; it.merged=true; return; }
       const ov=(it.c.room_overrides||{})[day];                // (A) 수동 지정 우선
       let chosen=null;
       if(ov && occ[ov]){ chosen=ov; if(occ[ov].some(x=>ovl(x,it.s))) it.conflict=true; }
