@@ -162,6 +162,21 @@
   .gu-card.b .tagline{background:#c2410c;color:#fff}
   .gu-warn{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 13px;font-size:12px;color:#7f1d1d;line-height:1.6}
   .gu-key{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#78350f;line-height:1.6;font-weight:600}
+  .gu-intro{background:#fffdf7;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;margin-bottom:10px}
+  .gu-intro-h{font-size:13.5px;font-weight:800;color:#7c2d12;margin-bottom:5px}
+  .gu-intro p{font-size:12.5px;line-height:1.7;color:#374151;margin:0 0 7px}
+  .gu-intro-a{font-size:12.5px;line-height:1.7;color:#374151;background:#fff;border-left:3px solid var(--brand);border-radius:6px;padding:8px 11px}
+  .gu-intro-a b{display:block;color:#b45309;margin-bottom:3px}
+  .gu-prof{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:9px;background:#fff}
+  .gu-prof img{width:64px;height:80px;object-fit:cover;border-radius:8px;flex:0 0 auto;background:#f3f4f6}
+  .gu-prof-b{flex:1}
+  .gu-prof-n{font-size:13.5px;font-weight:800;color:#1f2430}
+  .gu-prof-n span{font-size:11px;font-weight:600;color:var(--muted)}
+  .gu-prof-i{font-size:12.5px;color:#b45309;font-weight:700;margin:3px 0 5px}
+  .gu-prof-s{margin-top:5px}
+  .gu-prof-s>b{display:block;font-size:11px;color:var(--brand-ink);margin-bottom:2px}
+  .gu-prof-s ul{margin:0;padding-left:17px}
+  .gu-prof-s li{font-size:12px;line-height:1.55;color:#374151}
   .gu-course{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:9px;padding:9px 12px;margin-bottom:9px;background:#fffdf9}
   .gu-cname{font-size:13.5px;font-weight:800;color:#7c2d12;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
   .gu-teacher{font-size:11.5px;font-weight:700;color:#6b7280;margin-left:auto}
@@ -388,6 +403,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="copy.js"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -417,6 +433,9 @@ if(useSupa) document.getElementById("modeTag").textContent = "실시간 (Supabas
 
 let DATA = [];   // 전체 강좌
 let META = {};   // teacher -> {submitted_at, last}
+let TEACHERS = {};  // 강사명 -> 프로필(photo_url, principle, strategy, intro, career)
+const COPY = window.DAOL_COPY || [];
+const copyFor = (subject, level) => COPY.find(c=>c.subject===subject && c.level===level) || null;
 
 /* ===== 데이터 로드 ===== */
 async function loadData(){
@@ -424,6 +443,7 @@ async function loadData(){
     const {data} = await sb.from("courses").select("*");
     DATA = (data||[]);
     const {data:tt} = await sb.from("teachers").select("*");
+    TEACHERS = {}; (tt||[]).forEach(t=>TEACHERS[t.name]=t);   // 프로필(사진·수업원칙·전략) 보관
     ROSTER = (tt||[]).map(t=>({name:t.name,subject:t.subject,token:t.token}))
       .sort((a,b)=>(SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))||a.name.localeCompare(b.name,"ko"));
     META = {}; (tt||[]).forEach(t=>META[t.name]={submitted_at:t.submitted_at});
@@ -1227,11 +1247,32 @@ function subjectCardsHtml(){
           ${unit?`<span class="gunit" style="background:${unit.color}">${unit.label}</span>`:""}
           <span class="gu-teacher">${esc(c.teacher)} 선생님</span></div>
         <div class="gu-time">🕘 ${scheduleSummary(c)}</div>
-        ${aud.length?`<div class="gu-block"><b>대상</b><ul>${aud.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-        ${cont.length?`<div class="gu-block"><b>수업 내용·특징·목표</b><ul>${cont.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${aud.length?`<div class="gu-block"><b>이런 학생을 위한 강좌입니다</b><ul>${aud.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${cont.length?`<div class="gu-block"><b>수업에서 실제로 하는 것</b><ul>${cont.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${bullets(c.textbook).length?`<div class="gu-block"><b>📖 사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
       </div>`;
     }).join("");
-    return `<div class="gu-sec"><h3>${esc(sub)}</h3>${body}</div>`;
+    // 과목 서사 + 담당 강사의 수업 원칙·전략으로 감싸 설득력을 높인다
+    const level = /^중/.test(selGrade) ? "중등" : "고등";
+    const cp = copyFor(sub, level);
+    const intro = cp ? `<div class="gu-intro">
+        <div class="gu-intro-h">${esc(cp.problem.title)}</div>
+        <p>${esc(cp.problem.body)}</p>
+        <div class="gu-intro-a"><b>${esc(cp.analogy.title)}</b> ${esc(cp.analogy.body)}</div>
+      </div>` : "";
+    const names=[...new Set(list.map(c=>c.teacher).filter(Boolean))];
+    const profs = names.map(n=>{
+      const t=TEACHERS[n]; if(!t || !(t.principle||t.strategy||t.intro)) return "";
+      return `<div class="gu-prof">
+        ${t.photo_url?`<img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님">`:""}
+        <div class="gu-prof-b">
+          <div class="gu-prof-n">${esc(n)} 선생님${t.career?` <span>${esc(t.career)}</span>`:""}</div>
+          ${t.intro?`<div class="gu-prof-i">“${esc(t.intro)}”</div>`:""}
+          ${t.principle?`<div class="gu-prof-s"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+          ${t.strategy?`<div class="gu-prof-s"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        </div></div>`;
+    }).join("");
+    return `<div class="gu-sec"><h3>${esc(sub)}</h3>${intro}${profs}${body}</div>`;
   }).join("");
 }
 function renderGuide(){

@@ -222,7 +222,8 @@ function rowHtml(c){
       <div class="f"><label>시간 (여러 줄 가능)</label><textarea data-k="schedule_text" placeholder="예: 월수금 18:30~20:00">${esc(c.schedule_text)}</textarea></div>
       <div class="f"><label>강좌 대상</label><textarea data-k="audience" placeholder="어떤 학생이 듣는지">${esc(c.audience)}</textarea></div>
       <div class="f" style="grid-column:2 / span 3"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="수업 내용">${esc(c.content)}</textarea></div>
-      <div class="f" style="grid-column:2 / span 3"><label>⏱️ 요일·시간대별 진행 내용 (학년별 시간표에 표시)</label><textarea data-k="session_notes" placeholder="예) 월: 단어테스트 2단원 + 어법·서술형 / 수: 단어테스트 2단원 + 독해 / 금: 단어 재테스트·듣기·워크북 복습·1:1 첨삭">${esc(c.session_notes)}</textarea></div>
+      <div class="f" style="grid-column:2 / span 3"><label>⏱️ 요일·시간대별 진행 내용 (학년별 시간표에 표시)</label><textarea data-k="session_notes" placeholder="예) 월: 18:00~18:30 단어테스트 / 18:30~20:00 어법·서술형">${esc(c.session_notes)}</textarea></div>
+      <div class="f" style="grid-column:2 / span 3"><label>📖 사용 교재 (수업 방식 안내에 표시)</label><textarea data-k="textbook" placeholder="예) 해커스 중학영문법 2학년 / 자이스토리 문학">${esc(c.textbook)}</textarea></div>
     </div>
   </td></tr>`;
 }
@@ -251,7 +252,7 @@ function fullPayload(c){
     audience:c.audience||"", content:c.content||"", course_type:c.course_type||"정규",
     sessions:(c.sessions??null), tuition:(c.tuition??null),
     tuition_note:c.tuition_note||"", material_fee:(c.material_fee??null),
-    session_notes:c.session_notes||"",
+    session_notes:c.session_notes||"", textbook:c.textbook||"",
     sort_order:(c.sort_order??0)
   };
 }
