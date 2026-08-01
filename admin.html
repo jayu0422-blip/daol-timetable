@@ -168,7 +168,7 @@
   .gu-intro-a{font-size:12.5px;line-height:1.7;color:#374151;background:#fff;border-left:3px solid var(--brand);border-radius:6px;padding:8px 11px}
   .gu-intro-a b{display:block;color:#b45309;margin-bottom:3px}
   .gu-prof{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:9px;background:#fff}
-  .gu-prof img{width:64px;height:80px;object-fit:cover;border-radius:8px;flex:0 0 auto;background:#f3f4f6}
+  .gu-prof img{width:58px;height:74px;object-fit:contain;object-position:bottom;flex:0 0 auto;background:transparent}
   .gu-prof-b{flex:1}
   .gu-prof-n{font-size:13.5px;font-weight:800;color:#1f2430}
   .gu-prof-n span{font-size:11px;font-weight:600;color:var(--muted)}
@@ -216,11 +216,11 @@
   .pk-h{background:#fdf6ec;border-bottom:1px solid var(--line);padding:9px 14px;font-size:12.5px;font-weight:800;color:var(--brand-ink);display:flex;align-items:center;gap:8px}
   .pk-h span{font-weight:400;color:var(--muted)}
   .pk-b{padding:14px}
-  .pk-b img{width:100%;height:auto;display:block;border-radius:8px}
+  .pk-b > img{width:100%;height:auto;display:block;border-radius:8px}   /* 문서 스캔본만 전체폭 (강사 사진에 적용되면 안 됨) */
   .pk-sheet{background:#fff;overflow-x:auto}
   .pk-prof{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   .pk-card{display:flex;gap:12px;border:1px solid var(--line);border-radius:11px;padding:12px;background:#fffdf9}
-  .pk-card img{width:74px;height:94px;object-fit:cover;border-radius:9px;flex:0 0 auto}
+  .pk-card img{width:56px;height:70px;object-fit:contain;object-position:bottom;flex:0 0 auto;background:transparent}
   .pk-card .n{font-size:14.5px;font-weight:800}
   .pk-card .n em{font-style:normal;font-size:11px;color:var(--muted);font-weight:600;margin-left:5px}
   .pk-card .q{font-size:12.5px;color:var(--brand-ink);font-weight:700;margin:3px 0 5px}
@@ -1483,8 +1483,7 @@ const PACK_ITEMS=[
   {k:"flyer",  t:"학원 리플렛",     d:"다올105 × 대치더올 소개"},
   {k:"tt",     t:"학년별 시간표",   d:"선택 학년 주간 시간표"},
   {k:"guide",  t:"수업 방식 안내",  d:"과목별 강좌·강사 원칙"},
-  {k:"prof",   t:"강사 프로필",     d:"해당 학년 담당 강사"},
-  {k:"top",    t:"성적 우수자",     d:"강사별 실적 2장"},
+  {k:"prof",   t:"강사 프로필·실적", d:"해당 학년 담당 강사 + 성적 우수자"},
   {k:"manual", t:"학원 사용 설명서",d:"수강료·환불·보강 규정"}
 ];
 let packGrade="중1";
