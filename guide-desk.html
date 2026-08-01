@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 인포데스크 사용 설명서</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#059669; --danger:#dc2626; --info:#2563eb;
+    --font:"Pretendard","Malgun Gothic",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.75;font-size:15px;word-break:keep-all}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px}
+  .cover{background:linear-gradient(150deg,#7c2d12,#b45309 60%,#f59e0b);color:#fff;padding:34px 26px;border-radius:0 0 18px 18px;margin-bottom:22px}
+  .cover .b{font-size:12px;font-weight:800;letter-spacing:.25em;opacity:.9}
+  .cover h1{font-size:29px;font-weight:800;margin:8px 0 6px}
+  .cover p{margin:0;font-size:14.5px;opacity:.95}
+
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:24px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .toc b{display:block;font-size:13px;color:var(--brand-ink);margin-bottom:8px}
+  .toc a{display:inline-block;font-size:13.5px;color:var(--ink);text-decoration:none;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:5px 12px;margin:0 5px 6px 0}
+  .toc a:hover{background:#fff7ed;border-color:var(--brand)}
+
+  h2{font-size:21px;font-weight:800;margin:34px 0 12px;padding-left:12px;border-left:5px solid var(--brand);scroll-margin-top:14px}
+  h3{font-size:16.5px;font-weight:800;margin:20px 0 8px;color:var(--brand-ink)}
+  p{margin:0 0 10px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 19px;margin-bottom:13px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+  .when{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:11px;font-size:14px;color:#1e3a68}
+  .when b{color:#1d4ed8}
+
+  ol.steps{counter-reset:s;list-style:none;margin:0;padding:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:9px 0 9px 40px;border-bottom:1px dashed var(--line)}
+  ol.steps>li:last-child{border-bottom:none}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  ol.steps b{color:var(--brand-ink)}
+
+  .tip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:9px 13px;font-size:13.5px;color:#065f46;margin:9px 0}
+  .warn{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:9px 13px;font-size:13.5px;color:#991b1b;margin:9px 0}
+  .warn b{color:#dc2626}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 13px;font-size:13.5px;color:#78350f;margin:9px 0}
+
+  table{width:100%;border-collapse:collapse;margin:11px 0;font-size:14px;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#fdf6ec;color:var(--brand-ink);font-weight:800;font-size:13px}
+  td.k{background:#fafafa;font-weight:700;white-space:nowrap;width:24%}
+
+  .tab{display:inline-block;background:var(--brand);color:#fff;border-radius:7px;padding:1px 9px;font-size:13px;font-weight:800;white-space:nowrap}
+  .btn{display:inline-block;background:#f1f5f9;border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-size:13px;font-weight:700;white-space:nowrap}
+  kbd{background:#111827;color:#fff;border-radius:5px;padding:1px 7px;font-size:12.5px;font-weight:700}
+
+  .qa{border-left:3px solid var(--brand);padding-left:13px;margin-bottom:14px}
+  .qa .q{font-weight:800;color:var(--ink);margin-bottom:3px}
+  .qa .a{font-size:14px;color:#374151}
+
+  .link{background:#111827;color:#fff;border-radius:11px;padding:14px 18px;margin:14px 0;font-size:14px;line-height:1.9}
+  .link b{color:#fbbf24}
+  .link code{background:rgba(255,255,255,.12);border-radius:5px;padding:1px 7px;font-size:13px;word-break:break-all}
+
+  @media print{
+    body{background:#fff}
+    .toc{display:none}
+    h2{page-break-after:avoid} .card{page-break-inside:avoid}
+    @page{size:A4;margin:12mm}
+  }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="wrap" style="padding-bottom:0">
+    <div class="b">D A O L 1 0 5 &nbsp;·&nbsp; 인포데스크</div>
+    <h1>시간표 · 상담 자료 시스템 사용 설명서</h1>
+    <p>처음 보는 분도 이 순서대로만 하면 됩니다. 화면에 있는 그대로 적었습니다.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="toc">
+  <b>이 문서에서 찾는 법</b>
+  <a href="#a">0. 딱 3가지만 기억하세요</a>
+  <a href="#b">1. 상담 오셨을 때</a>
+  <a href="#c">2. 시간표 물어볼 때</a>
+  <a href="#d">3. 수강료 물어볼 때</a>
+  <a href="#e">4. 강좌가 바뀔 때</a>
+  <a href="#f">5. 등록 후 다른 과목 권할 때</a>
+  <a href="#g">6. 선생님 관련</a>
+  <a href="#h">7. 자주 하는 실수</a>
+  <a href="#i">8. 상황별 빠른 찾기</a>
+</div>
+
+<h2 id="a">0. 딱 3가지만 기억하세요</h2>
+<div class="card">
+  <ol class="steps">
+    <li><b>주소는 하나입니다.</b> 즐겨찾기에 넣어두세요.<br>
+      <code style="font-size:13.5px">jayu0422-blip.github.io/daol-timetable/admin.html</code></li>
+    <li><b>저장 버튼이 없습니다.</b> 입력하면 자동으로 저장됩니다. 화면 아래 <span class="btn">저장됨 ✓</span> 이 뜨면 끝난 겁니다.</li>
+    <li><b>한 곳만 고치면 전부 바뀝니다.</b> 강좌를 고치면 시간표·수강료·상담자료·학부모께 보낸 링크까지 <b>전부 자동으로</b> 바뀝니다. 여러 군데 고칠 필요 없습니다.</li>
+  </ol>
+</div>
+<div class="tip">화면 위쪽에 탭이 9개 있습니다. <b>왼쪽 4개는 “보는 곳”, 오른쪽은 “고치는 곳과 출력하는 곳”</b> 이라고 생각하시면 쉽습니다.</div>
+
+<h2 id="b">1. 상담하러 학생·학부모가 오셨을 때</h2>
+<div class="when">💬 <b>이런 상황</b> — “중2인데 상담 좀 받으러 왔어요.” / 전화로 “자료 좀 받아볼 수 있을까요?”</div>
+<div class="card">
+  <h3>인쇄해서 드리는 순서</h3>
+  <ol class="steps">
+    <li><span class="tab">🖨️ 상담용 자료</span> 탭을 누릅니다.</li>
+    <li><b>학년을 고릅니다.</b> 중등은 <b>중1·중2·중3</b>, 고등은 <b>학교까지</b> 골라야 합니다(미사고1 / 미사강변고1 / 하남고1 / 미사고2 / 미사강변고2 / 고3).</li>
+    <li>포함할 항목이 <b>전부 체크되어 있는지</b> 확인합니다. 필요 없는 것만 눌러서 끕니다.</li>
+    <li><span class="btn">🖨️ 전체 인쇄 / PDF 저장</span> 을 누르면 인쇄창이 뜹니다. 그대로 인쇄하시면 됩니다.</li>
+  </ol>
+  <h3>무엇이 인쇄되나요</h3>
+  <table>
+    <tr><th style="width:26%">문서</th><th>이런 내용입니다</th></tr>
+    <tr><td class="k">① 학원 리플렛</td><td>다올105 × 대치더올 소개. 학원이 어떤 곳인지 한눈에 보여드리는 자료</td></tr>
+    <tr><td class="k">② 학년별 시간표</td><td>고른 학년의 주간 시간표. 지금 실제로 열려 있는 수업 그대로</td></tr>
+    <tr><td class="k">③ 수업 방식 안내</td><td>과목별로 <b>왜 이렇게 가르치는지</b>, 선생님 원칙, 강좌 내용, 사용 교재</td></tr>
+    <tr><td class="k">④ 강사 프로필·실적</td><td>그 학년 담당 선생님 사진·이력·주요 성적 우수자</td></tr>
+    <tr><td class="k">⑤ 전체 성적 우수자</td><td>학원 전체 명단 (1등급·만점·대학 합격)</td></tr>
+    <tr><td class="k">⑥ 입시 컨설팅</td><td><b>고등 학년을 골랐을 때만</b> 나옵니다. 프로그램·비용·필요 서류</td></tr>
+    <tr><td class="k">⑦ 학원 사용 설명서</td><td>수강료·환불·결제·보강·퇴원 규정. <b>신입생 학부모 필독</b></td></tr>
+  </table>
+  <div class="note">중등을 골랐을 때 <b>입시 컨설팅이 안 나오는 것은 정상</b>입니다. 고등 학년에서만 나오도록 되어 있습니다.</div>
+  <div class="warn"><b>주의</b> — 학년을 잘못 고르면 다른 학년 시간표가 인쇄됩니다. 인쇄 전에 화면 맨 위 학년이 맞는지 한 번만 더 봐 주세요.</div>
+</div>
+
+<h2 id="c">2. 시간표를 물어볼 때</h2>
+<div class="when">💬 <b>이런 상황</b> — “중1 영어는 몇 시에 해요?” / “토요일에 무슨 수업 있어요?” / “이 시간에 강의실 비어요?”</div>
+<div class="card">
+  <table>
+    <tr><th style="width:30%">질문</th><th>어디를 보나요</th></tr>
+    <tr><td class="k">“○학년 시간표 주세요”</td><td><span class="tab">🎓 학년별 시간표</span> → 학년 클릭 → <span class="btn">🖨️ PDF/인쇄</span> 또는 <span class="btn">🖼️ 이미지저장</span><br>
+      <span style="color:var(--muted);font-size:13px">문자로 보낼 거면 이미지저장이 편합니다.</span></td></tr>
+    <tr><td class="k">“수요일에 뭐 있어요?”<br>“그 시간 강의실 있어요?”</td><td><span class="tab">📅 요일별·강의실</span> → 요일 클릭. 어느 강의실에서 하는지까지 나옵니다.</td></tr>
+    <tr><td class="k">“학교별로 뽑아주세요”</td><td><span class="tab">🎨 시간표 생성</span> → 학교·학년·과목 조건을 골라 출력</td></tr>
+  </table>
+  <h3>시간표 보는 법</h3>
+  <ul>
+    <li><b>진한 색 칸 = 수업</b>, <b>빗금 칸 = 관리(클리닉)</b> 입니다.</li>
+    <li>수학 블록의 색 배지는 <b>단원</b>입니다 — 공통수학1(파랑)·공통수학2(보라)·대수(자홍)·미적분(빨강)·확률과통계(초록)·기하(청록).</li>
+    <li>빨간 <b>특강</b> 배지가 붙은 것은 정규가 아니라 특강입니다.</li>
+  </ul>
+  <div class="tip">시간표 아래 <b>「2페이지 — 수업 방식·안내」</b> 가 함께 있습니다. 시간만 궁금해하시면 1장, 어떻게 가르치는지 물으시면 2장 다 드리면 됩니다.</div>
+</div>
+
+<h2 id="d">3. 수강료를 물어볼 때</h2>
+<div class="when">💬 <b>이런 상황</b> — “한 달에 얼마예요?” / “교재비 따로 있어요?” / “컨설팅은 얼마예요?”</div>
+<div class="card">
+  <ol class="steps">
+    <li><span class="tab">💰 수강료</span> 탭을 누릅니다.</li>
+    <li>위쪽에서 <b>청구할 달</b>을 고릅니다. 그 달의 회차로 자동 계산됩니다.</li>
+    <li>선생님별로 보려면 선생님 이름을 누릅니다.</li>
+  </ol>
+  <table>
+    <tr><th style="width:26%">항목</th><th>안내 방법</th></tr>
+    <tr><td class="k">중등</td><td><b>월 수강료</b>입니다. 그 달에 수업이 몇 번이든 금액이 같습니다.</td></tr>
+    <tr><td class="k">고등</td><td><b>회차로 계산</b>됩니다. 화면의 “○월 청구액”이 그 달 금액입니다.</td></tr>
+    <tr><td class="k">교재비</td><td>수강료와 <b>별도</b>입니다. 학원에서 배부하는 교재는 <b>1만원~5만원</b>이 추가로 청구되고, 외부 교재는 직접 구매하십니다.</td></tr>
+    <tr><td class="k">입시 컨설팅</td><td>수강료 탭 <b>맨 아래 고정 표</b>에 항상 있습니다. 예약제라 월별로 변하지 않습니다.</td></tr>
+  </table>
+  <div class="warn"><b>꼭 기억</b> — 화면의 금액은 <b>학생 1명 기준</b>입니다. “총 합계”는 인원수를 곱한 금액이 아닙니다. 학부모께는 그 학생 줄의 금액만 말씀하세요.</div>
+  <div class="note">정확한 결제일·환불 규정은 <b>「학원 사용 설명서」</b>(상담용 자료 ⑦번)에 다 있습니다. 애매하면 그 문서를 드리세요. 결제는 <b>매달 27일 자동</b>, 비대면 카드가 원칙입니다.</div>
+</div>
+
+<h2 id="e">4. 강좌가 새로 생기거나·바뀌거나·없어질 때</h2>
+<div class="when">💬 <b>이런 상황</b> — 선생님이 “시간 바뀌었어요” / “반 하나 더 열어요” / “그 반 폐강이에요”</div>
+<div class="card">
+  <table>
+    <tr><th style="width:28%">할 일</th><th>어디서</th></tr>
+    <tr><td class="k">시간·수강료·교재비<br>내용 고치기</td><td><span class="tab">✏️ 시간표·수강료 강좌 수정 및 추가</span></td></tr>
+    <tr><td class="k">새 강좌 만들기</td><td>같은 탭 → <span class="btn">＋ 새 강좌 추가</span></td></tr>
+    <tr><td class="k">폐강 (지우기)</td><td><span class="tab">🗑️ 강좌 삭제</span></td></tr>
+  </table>
+  <h3>새 강좌 추가</h3>
+  <ol class="steps">
+    <li><span class="tab">✏️ 시간표·수강료 강좌 수정 및 추가</span> → <span class="btn">＋ 새 강좌 추가</span></li>
+    <li>맨 위에 빈 줄이 생깁니다. <b>강사 · 학년 · 과목 · 강좌명</b>을 채웁니다.</li>
+    <li><span class="btn">⋯ 상세</span> 를 눌러 <b>시간</b>을 넣습니다. 이게 제일 중요합니다.</li>
+    <li>수강료·교재비를 넣으면 끝입니다. 따로 저장하지 않아도 됩니다.</li>
+  </ol>
+  <h3>시간 적는 법 — 이 형식을 지켜주세요</h3>
+  <table>
+    <tr><th style="width:38%">이렇게 적으면 ✅</th><th>이러면 시간표에 안 나옵니다 ❌</th></tr>
+    <tr><td><code>월수금 18:30~20:00</code></td><td><code>주3회</code> (요일이 없음)</td></tr>
+    <tr><td><code>화목토 16:30~18:00</code></td><td><code>저녁 6시쯤</code> (시간이 애매함)</td></tr>
+    <tr><td>줄을 바꿔서<br><code>월수 18:00~20:00</code><br><code>금 18:00~19:00 관리</code></td><td><code>월수는 수업 금은 관리</code> (시간이 없음)</td></tr>
+  </table>
+  <div class="tip"><b>관리·클리닉 수업</b>은 뒤에 “관리” 또는 “클리닉”이라고 적어주세요. 그래야 시간표에 빗금으로 구분되어 나옵니다.</div>
+  <h3>폐강 처리</h3>
+  <ol class="steps">
+    <li><span class="tab">🗑️ 강좌 삭제</span> → 학년 순으로 전체 강좌가 나옵니다.</li>
+    <li>지울 강좌 오른쪽 <span class="btn">🗑 삭제</span> 를 누르고 확인창에서 확인합니다.</li>
+  </ol>
+  <div class="warn"><b>삭제는 되돌릴 수 없습니다.</b> 확인창에 뜨는 <b>선생님 이름과 강좌명</b>을 반드시 읽고 누르세요. 잘못 지웠으면 원장님께 바로 말씀하세요.<br>
+    <b>지우지 말아야 할 때</b> — 시간만 바뀐 경우, 잠깐 쉬는 경우는 <b>삭제하지 말고 수정</b>하세요.</div>
+</div>
+
+<h2 id="f">5. 등록한 학생에게 다른 과목을 권할 때</h2>
+<div class="when">💬 <b>이런 상황</b> — 영어만 다니는 중1 학생에게 국어·수학도 안내하고 싶을 때 / 상담 후 자료를 문자로 보내고 싶을 때</div>
+<div class="card">
+  <ol class="steps">
+    <li><span class="tab">🔗 과목 안내 페이지</span> 탭을 누릅니다.</li>
+    <li><b>학년</b>을 고릅니다.</li>
+    <li><b>지금 듣고 있는 과목</b>을 체크합니다. → 나머지 과목이 자동으로 안내 대상이 됩니다.</li>
+    <li>(선택) 학생 이름을 넣으면 페이지에 이름이 들어갑니다.</li>
+    <li><span class="btn">📋 링크 복사</span> → 문자·카톡에 붙여넣어 보냅니다.</li>
+  </ol>
+  <h3>이 링크에 뭐가 들어있나요</h3>
+  <ul>
+    <li>그 과목이 <b>왜 필요한지</b> (학부모가 읽는 설명)</li>
+    <li>담당 선생님 사진·이력·수업 원칙·성적 우수자</li>
+    <li>강좌 시간·내용·교재</li>
+    <li><b>지금 듣는 수업과 시간이 겹치는지</b> 자동으로 표시 (겹치면 빨간 글씨)</li>
+    <li>주간 시간표 · 자주 묻는 질문 · 전화 버튼</li>
+  </ul>
+  <div class="tip"><b>링크는 다시 만들 필요 없습니다.</b> 나중에 강좌가 바뀌면 <b>이미 보낸 링크에도 자동으로 반영</b>됩니다.</div>
+</div>
+
+<h2 id="g">6. 선생님 관련</h2>
+<div class="card">
+  <h3>선생님이 직접 입력하는 것</h3>
+  <p>선생님마다 <b>본인 전용 링크</b>가 있습니다. 그 링크로 들어가면 <b>자기 강좌만</b> 보이고, 다른 선생님 것은 보이지 않습니다.</p>
+  <table>
+    <tr><th style="width:30%">선생님이 넣는 것</th><th>어디에 쓰이나요</th></tr>
+    <tr><td class="k">강좌 시간·내용·대상</td><td>시간표, 수업 방식 안내</td></tr>
+    <tr><td class="k">사용 교재 / 교재비</td><td>수강료, 안내문</td></tr>
+    <tr><td class="k">요일·시간대별 진행 내용</td><td>시간표 블록 안에 표시</td></tr>
+    <tr><td class="k">수업 원칙 / 점수를 올리는 방식</td><td>안내문, 상담 인쇄물, 과목 안내 페이지</td></tr>
+  </table>
+  <div class="tip">선생님 화면에 <b>「👁 내 소개 미리보기」</b> 버튼이 있어서, 학부모에게 어떻게 나가는지 본인이 직접 확인하고 고칠 수 있습니다.</div>
+  <div class="note"><b>인포에서 대신 고쳐도 됩니다.</b> <span class="tab">✏️ 시간표·수강료 강좌 수정 및 추가</span> 에서 모든 선생님 강좌를 고칠 수 있습니다.</div>
+  <div class="link">
+    <b>강사별 입력 링크</b> — 앞부분은 모두 같고 <code>?t=</code> 뒤 숫자만 다릅니다.<br>
+    <code>jayu0422-blip.github.io/daol-timetable/input.html?t=</code><br>
+    황웅 <b>a5e2a628</b> &nbsp; 민귀홍 <b>464af7f0</b> &nbsp; 윤재영 <b>47276347</b><br>
+    김영하 <b>aff9ae35</b> &nbsp; 이정관 <b>65b0e3ad</b><br>
+    임결 <b>c211bc44</b> &nbsp; 유용권 <b>f712867b</b>
+    <div style="margin-top:8px;font-size:13px;opacity:.85">※ 이 링크는 <b>본인에게만</b> 보내세요. 다른 선생님께 잘못 보내면 남의 강좌가 보이지는 않지만, 그 선생님 이름으로 입력하게 됩니다.</div>
+  </div>
+</div>
+
+<h2 id="h">7. 자주 하는 실수 — 이것만 조심하세요</h2>
+<div class="card">
+  <div class="warn"><b>1. 학년을 안 바꾸고 인쇄</b><br>앞사람 상담 때 골라둔 학년이 그대로 남아 있습니다. 인쇄 전에 학년을 꼭 확인하세요.</div>
+  <div class="warn"><b>2. 수강료를 인원수로 곱해서 말함</b><br>화면 금액은 <b>1명 기준</b>입니다. 화면 아래 “합계”는 내부 확인용이라 학부모께 말하지 마세요.</div>
+  <div class="warn"><b>3. 삭제와 수정을 헷갈림</b><br>시간이 바뀐 것뿐인데 지우면 안 됩니다. <b>지우기 = 폐강</b>일 때만 씁니다.</div>
+  <div class="warn"><b>4. 시간을 대충 적음</b><br><code>주3회</code>, <code>저녁</code> 처럼 적으면 시간표에 <b>아예 안 나옵니다.</b> 반드시 <code>월수금 18:30~20:00</code> 형식으로.</div>
+  <div class="warn"><b>5. 저장 버튼을 찾음</b><br>저장 버튼은 없습니다. 자동 저장입니다. <span class="btn">저장됨 ✓</span> 만 확인하세요.</div>
+  <div class="warn"><b>6. 화면이 안 바뀔 때</b><br>다른 사람이 동시에 고치면 잠깐 안 맞을 수 있습니다. <span class="btn">↻ 새로고침</span> 을 누르거나 <kbd>F5</kbd>.</div>
+</div>
+
+<h2 id="i">8. 상황별 빠른 찾기</h2>
+<table>
+  <tr><th style="width:44%">학부모·선생님이 이렇게 말하면</th><th>이렇게 하세요</th></tr>
+  <tr><td>“상담 왔어요”</td><td><span class="tab">🖨️ 상담용 자료</span> → 학년 선택 → 전체 인쇄</td></tr>
+  <tr><td>“시간표 좀 보내주세요”</td><td><span class="tab">🎓 학년별 시간표</span> → 학년 → 이미지저장 → 문자 전송</td></tr>
+  <tr><td>“얼마예요?”</td><td><span class="tab">💰 수강료</span> → 달 선택 → 해당 강좌 줄 (1명 기준)</td></tr>
+  <tr><td>“교재비도 있어요?”</td><td>있습니다. 학원 배부 교재 <b>1만~5만원</b> 별도 청구</td></tr>
+  <tr><td>“컨설팅은요?”</td><td><span class="tab">💰 수강료</span> 맨 아래 고정 표 (고등만)</td></tr>
+  <tr><td>“환불 되나요?” “보강 되나요?”</td><td><b>학원 사용 설명서</b> 인쇄해서 드리기 (상담용 자료 ⑦)</td></tr>
+  <tr><td>“다른 과목도 궁금해요”</td><td><span class="tab">🔗 과목 안내 페이지</span> → 링크 복사 → 문자 전송</td></tr>
+  <tr><td>선생님 “시간 바뀌었어요”</td><td><span class="tab">✏️ 시간표·수강료 강좌 수정 및 추가</span> 에서 시간 수정</td></tr>
+  <tr><td>선생님 “반 하나 더 열어요”</td><td>같은 탭 → <span class="btn">＋ 새 강좌 추가</span></td></tr>
+  <tr><td>선생님 “그 반 폐강이에요”</td><td><span class="tab">🗑️ 강좌 삭제</span> (되돌릴 수 없음, 확인 필수)</td></tr>
+  <tr><td>“오늘 무슨 수업 있어요?”</td><td><span class="tab">📅 요일별·강의실</span> → 요일 클릭</td></tr>
+  <tr><td>“어느 강의실이에요?”</td><td><span class="tab">📅 요일별·강의실</span> 에 강의실까지 표시됨</td></tr>
+</table>
+
+<div class="card" style="margin-top:24px;background:#fffbeb;border-color:#fde68a">
+  <b style="color:var(--brand-ink)">막히면</b><br>
+  이 문서에서 답을 못 찾으면 <b>임의로 처리하지 마시고</b> 원장님께 물어봐 주세요.
+  특히 <b>강좌 삭제 · 수강료 변경 · 환불 안내</b>는 잘못되면 되돌리기 어렵습니다.
+</div>
+
+</div>
+</body>
+</html>

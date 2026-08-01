@@ -1639,7 +1639,10 @@ function renderLp(){
 document.getElementById("lpGrade").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return;
   lpGrade=c.dataset.g; lpNow.clear(); lpWant.clear(); buildLpChips(); renderLp(); });
 document.getElementById("lpNow").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c||!c.dataset.s) return;
-  const s=c.dataset.s; lpNow.has(s)?lpNow.delete(s):lpNow.add(s); lpWant.delete(s); buildLpChips(); renderLp(); });
+  const s=c.dataset.s; lpNow.has(s)?lpNow.delete(s):lpNow.add(s);
+  // 지금 듣는 과목을 고르면 나머지 과목이 자동으로 '안내할 과목'에 체크된다
+  lpWant=new Set(lpSubjects().filter(x=>!lpNow.has(x)));
+  buildLpChips(); renderLp(); });
 document.getElementById("lpWant").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c||!c.dataset.s) return;
   const s=c.dataset.s; lpWant.has(s)?lpWant.delete(s):lpWant.add(s); lpNow.delete(s); buildLpChips(); renderLp(); });
 document.getElementById("lpName").addEventListener("input",()=>renderLp());
