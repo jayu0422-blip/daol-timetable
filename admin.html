@@ -212,6 +212,12 @@
   .gu-split-bar .s30{flex:0 0 30%;background:#fdba74;color:#7c2d12;display:flex;align-items:center;justify-content:center}
   .gu-split-cap{font-size:11.5px;color:#7c2d12;margin-top:5px;line-height:1.55}
 
+  /* ===== 과목 안내 페이지 링크 생성기 ===== */
+  .lp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .lp-lb{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px}
+  .lp-url{margin-top:10px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:12px;color:#334155;word-break:break-all;font-family:ui-monospace,Menlo,monospace}
+  .lp-live{margin-top:10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:9px;padding:9px 13px;font-size:12.5px;color:#065f46;line-height:1.6}
+
   /* ===== 입시 컨설팅 ===== */
   .cs-why{background:#f5f8fd;border:1px solid #cfdcf0;border-radius:11px;padding:14px 16px}
   .cs-h{font-size:14.5px;font-weight:800;color:#1e3a68;margin-bottom:6px}
@@ -361,6 +367,7 @@
     <button class="tab" data-tab="edit">✏️ 시간표·수강료 강좌 수정 및 추가</button>
     <button class="tab" data-tab="manage">🗑️ 강좌 삭제</button>
     <button class="tab" data-tab="pack">🖨️ 상담용 자료</button>
+    <button class="tab" data-tab="lp">🔗 과목 안내 페이지</button>
   </div>
 
   <!-- ===== 대시보드 ===== -->
@@ -497,6 +504,34 @@
       <a class="btn sm" href="control.html" target="_blank" style="text-decoration:none">↗ 새 창으로 크게</a>
     </div>
     <iframe id="editFrame" title="전체 관리(시간표·수강료 수정)" style="width:100%;height:78vh;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>
+  </section>
+
+  <!-- ===== 과목 안내 페이지(랜딩) 링크 생성기 ===== -->
+  <section id="tab-lp" class="hide">
+    <div class="panel noprint" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b>🔗 과목 안내 페이지</b>
+      <span class="muted">학생에게 <b>링크로 보내는 과목 소개 페이지</b>를 만듭니다. 지금 듣는 과목 외에 어떤 과목이 왜 필요한지 설득하는 페이지입니다.</span>
+    </div>
+    <div class="panel noprint">
+      <div class="lp-grid">
+        <div><div class="lp-lb">학년·학교</div><div class="chips" id="lpGrade"></div></div>
+        <div><div class="lp-lb">지금 듣고 있는 과목</div><div class="chips" id="lpNow"></div></div>
+        <div><div class="lp-lb">안내할 과목 <span class="muted">(비우면 나머지 전부 자동)</span></div><div class="chips" id="lpWant"></div></div>
+        <div style="max-width:220px"><div class="lp-lb">학생 이름 <span class="muted">(선택)</span></div>
+          <input id="lpName" class="search" placeholder="예: 홍길동" style="width:100%"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn primary" id="lpOpen">↗ 새 창으로 열기</button>
+        <button class="btn" id="lpCopy">📋 링크 복사</button>
+        <button class="btn sm" id="lpReload">↻ 미리보기 새로고침</button>
+        <span class="muted" id="lpStat"></span>
+      </div>
+      <div class="lp-url" id="lpUrl"></div>
+      <div class="lp-live">🔄 <b>이 페이지는 항상 최신입니다.</b> 강사나 학원에서 강좌를 추가·수정·삭제하면 <b>이미 보낸 링크에도 자동으로 반영</b>됩니다. 링크를 다시 만들 필요가 없습니다.</div>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <iframe id="lpFrame" title="과목 안내 페이지 미리보기" style="width:100%;height:80vh;border:0;background:#fff"></iframe>
+    </div>
   </section>
 
   <!-- ===== 상담용 자료 ===== -->
@@ -636,9 +671,10 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","grade","fee","day","edit","manage","pack"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","grade","fee","day","edit","manage","pack","lp"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="manage") renderManage();
   if(t.dataset.tab==="pack"){ buildPackChips(); renderPack(); }
+  if(t.dataset.tab==="lp"){ buildLpChips(); renderLp(); }
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
   if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
@@ -1559,6 +1595,60 @@ document.getElementById("gradePrint").addEventListener("click", async ()=>{
     w.document.write(`<!doctype html><html><head><title>${selGrade} 시간표</title><style>@page{size:A4 ${landscape?"landscape":"portrait"};margin:6mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:${landscape?"192mm":"280mm"}}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
     w.document.close(); document.getElementById("gradeStat").textContent="";
   }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
+});
+
+/* ===== 과목 안내 페이지(랜딩) 링크 생성기 =====
+   landing.html 은 열릴 때마다 Supabase 에서 직접 읽으므로,
+   강좌를 추가·수정·삭제하면 이미 보낸 링크에도 자동 반영된다. */
+let lpGrade="중1", lpNow=new Set(), lpWant=new Set();
+function lpSubjects(){
+  return [...new Set(coursesForGrade(lpGrade).map(c=>c.subject).filter(Boolean))]
+    .filter(s=>s!=="기타").sort((a,b)=>SUBJECT_ORDER.indexOf(a)-SUBJECT_ORDER.indexOf(b));
+}
+function buildLpChips(){
+  document.getElementById("lpGrade").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===lpGrade?"on":""}" data-g="${g}">${g}</span>`).join("");
+  const subs=lpSubjects();
+  [...lpNow].forEach(s=>{ if(!subs.includes(s)) lpNow.delete(s); });
+  [...lpWant].forEach(s=>{ if(!subs.includes(s)) lpWant.delete(s); });
+  document.getElementById("lpNow").innerHTML = subs.length
+    ? subs.map(s=>`<span class="chip ${lpNow.has(s)?"on":""}" data-s="${s}">${lpNow.has(s)?"☑":"☐"} ${s}</span>`).join("")
+    : `<span class="muted">개설 과목이 없습니다.</span>`;
+  document.getElementById("lpWant").innerHTML = subs.length
+    ? subs.map(s=>`<span class="chip ${lpWant.has(s)?"on":""}" data-s="${s}">${lpWant.has(s)?"☑":"☐"} ${s}</span>`).join("")
+    : `<span class="muted">—</span>`;
+}
+function lpLink(){
+  const base=location.href.replace(/admin\.html.*$/,"landing.html");
+  const p=new URLSearchParams(); p.set("g",lpGrade);
+  if(lpNow.size)  p.set("now",[...lpNow].join(","));
+  if(lpWant.size) p.set("s",[...lpWant].join(","));
+  const nm=(document.getElementById("lpName").value||"").trim();
+  if(nm) p.set("n",nm);
+  return base+"?"+p.toString();
+}
+function renderLp(){
+  const url=lpLink();
+  document.getElementById("lpUrl").textContent=url;
+  const f=document.getElementById("lpFrame");
+  if(f.getAttribute("src")!==url) f.src=url;
+  const subs=lpSubjects();
+  const auto=subs.filter(s=>!lpNow.has(s));
+  document.getElementById("lpStat").textContent =
+    lpWant.size ? `안내 과목 ${[...lpWant].join("·")}` : (auto.length?`안내 과목 자동: ${auto.join("·")}`:"안내할 과목이 없습니다");
+}
+document.getElementById("lpGrade").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return;
+  lpGrade=c.dataset.g; lpNow.clear(); lpWant.clear(); buildLpChips(); renderLp(); });
+document.getElementById("lpNow").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c||!c.dataset.s) return;
+  const s=c.dataset.s; lpNow.has(s)?lpNow.delete(s):lpNow.add(s); lpWant.delete(s); buildLpChips(); renderLp(); });
+document.getElementById("lpWant").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c||!c.dataset.s) return;
+  const s=c.dataset.s; lpWant.has(s)?lpWant.delete(s):lpWant.add(s); lpNow.delete(s); buildLpChips(); renderLp(); });
+document.getElementById("lpName").addEventListener("input",()=>renderLp());
+document.getElementById("lpReload").addEventListener("click",()=>{ const f=document.getElementById("lpFrame"); f.src=lpLink()+"&_="+Date.now(); });
+document.getElementById("lpOpen").addEventListener("click",()=>window.open(lpLink(),"_blank"));
+document.getElementById("lpCopy").addEventListener("click",async()=>{
+  const st=document.getElementById("lpStat");
+  try{ await navigator.clipboard.writeText(lpLink()); st.textContent="링크 복사됨 ✓ — 문자·카톡으로 그대로 보내세요."; }
+  catch(e){ st.textContent="복사 실패 — 아래 주소를 직접 선택해 복사하세요."; }
 });
 
 /* ===== 상담용 자료 ===== */
