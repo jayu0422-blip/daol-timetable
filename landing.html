@@ -127,7 +127,31 @@
   .flag.ok{background:#eef8f1;color:var(--ok);border:1px solid #cce7d6}
   .flag.no{background:#fdf0ee;color:var(--danger);border:1px solid #f4d4cf}
 
-  /* 시간표 */
+  /* 주간 시간표 그리드 — 학년별 시간표와 동일 구조 */
+  .ggwrap{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-sm);overflow-x:auto;margin-top:18px}
+  .ggrid{display:grid;grid-template-columns:56px repeat(7,1fr);min-width:860px;padding:0 10px 12px}
+  .gg-h{font-family:var(--serif);font-weight:800;font-size:13.5px;text-align:center;padding:10px 4px;border-bottom:2px solid var(--ink);background:var(--cream-2);color:var(--navy)}
+  .gg-h.sun{color:var(--danger)}
+  .gg-h.corner{background:transparent;border-bottom:2px solid var(--ink)}
+  .gg-col{position:relative;border-left:1px solid var(--line)}
+  .gg-col.last{border-right:1px solid var(--line)}
+  .gg-timecol{position:relative}
+  .gg-tlabel{position:absolute;left:0;right:5px;text-align:right;font-size:10.5px;color:var(--muted);transform:translateY(-6px)}
+  .gg-line{position:absolute;left:0;right:0;border-top:1px solid #f1ece0}
+  .gblk{position:absolute;border-radius:8px;padding:5px 7px;font-size:11px;overflow:hidden;line-height:1.3;box-shadow:0 1px 3px rgba(12,26,54,.16)}
+  .gblk.dim{opacity:.32}
+  .gblk .gsch{font-size:9.5px;font-weight:700;color:#3b4459}
+  .gblk .gteach{font-weight:800;color:#12182a}
+  .gblk .gsub{font-weight:800;font-size:12.5px;color:#12182a}
+  .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:3px;vertical-align:middle}
+  .gblk .gtag.reg{background:var(--ink);color:#fff}
+  .gblk .gtag.cli{background:#fff;color:var(--gold);border:1px solid var(--gold)}
+  .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
+  .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px 4px;font-size:11.5px;color:var(--muted)}
+  .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
+  .gg-sw{width:16px;height:12px;border-radius:3px;display:inline-block}
+
+  /* 시간표(구버전 표) */
   .ttbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);margin-top:16px}
   .ttbl th,.ttbl td{padding:11px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
   .ttbl thead th{background:var(--ink);color:#fff;font-size:12px;letter-spacing:.06em;font-weight:800}
@@ -142,6 +166,7 @@
   details{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:9px;box-shadow:var(--shadow-sm)}
   details summary{font-family:var(--serif);font-size:16px;font-weight:800;cursor:pointer;color:var(--ink);list-style:none;position:relative;padding-right:24px}
   details summary::-webkit-details-marker{display:none}
+  details summary .q-sub{display:inline-block;font-size:11px;font-weight:800;color:#fff;border-radius:5px;padding:1px 8px;margin-right:8px;vertical-align:1px;letter-spacing:-.02em}
   details summary::after{content:"+";position:absolute;right:0;top:-2px;color:var(--gold);font-size:20px;font-weight:800}
   details[open] summary::after{content:"−"}
   details p{margin:11px 0 0;font-size:14.5px;color:var(--muted);line-height:1.85}
@@ -324,7 +349,7 @@ function render(courses,teachers){
   /* 현재/제안 */
   h+=`<div class="strip"><div class="wrap"><div class="row">
     <div class="cell"><div class="k">현재 수강</div>${NOW.length?NOW.map(s=>`<span class="pill">${esc(s)}</span>`).join(""):`<span class="pill">미등록</span>`}</div>
-    <div class="cell"><div class="k">함께 보시면 좋은 과목</div>${targets.length?targets.map(s=>`<span class="pill hot">${esc(s)}</span>`).join(""):`<span class="pill">—</span>`}</div>
+    <div class="cell"><div class="k">이번에 안내드리는 과목</div>${targets.length?targets.map(s=>`<span class="pill hot">${esc(s)}</span>`).join(""):`<span class="pill">—</span>`}</div>
   </div></div></div>`;
 
   if(!targets.length) h+=`<section class="paper"><div class="wrap"><div class="empty">현재 이 학년에 안내할 추가 과목이 없습니다.</div></div></section>`;
@@ -394,20 +419,60 @@ function render(courses,teachers){
     h+=`</div></section>`;
   });
 
-  /* 시간표 */
+  /* 주간 시간표 — 학년별 시간표와 동일한 그리드 */
   const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
-  mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{ if(byDay[s.day]) byDay[s.day].push({...s,subj:c.subject,on:NOW.includes(c.subject)||targets.includes(c.subject)}); }));
+  mine.forEach(c=>parseDayTimes(c.schedule_text).forEach(s=>{
+    if(!byDay[s.day]) return;
+    byDay[s.day].push({...s, subj:c.subject, teacher:c.teacher,
+      on:NOW.includes(c.subject)||targets.includes(c.subject)});
+  }));
   if(DAY_LIST.some(d=>byDay[d].length)){
     const anyConf=targets.some(sub=>mine.filter(c=>c.subject===sub).some(c=>parseDayTimes(c.schedule_text).some(s=>busy.some(b=>ovl(s,b)))));
+    const START=9*60, END=22*60, PX=0.9, H=(END-START)*PX;
+    const lanes=blks=>{                       // 겹치는 블록 좌우 분할
+      blks.sort((a,b)=>a.start-b.start||a.end-b.end);
+      const le=[];
+      blks.forEach(b=>{ let i=0; for(;i<le.length;i++){ if(le[i]<=b.start) break; } b.lane=i; le[i]=b.end; });
+      blks.forEach(b=>{ const g=blks.filter(x=>x.start<b.end&&b.start<x.end); b.cols=Math.max(0,...g.map(x=>x.lane))+1; });
+    };
+    let g=`<div class="ggwrap"><div class="ggrid">`;
+    g+=`<div class="gg-h corner"></div>`+DAY_LIST.map(d=>`<div class="gg-h ${d==='일'?'sun':''}">${d}</div>`).join("");
+    g+=`<div style="grid-column:1 / -1;display:grid;grid-template-columns:56px repeat(7,1fr);position:relative">`;
+    g+=`<div class="gg-timecol" style="height:${H}px">`;
+    for(let t=START;t<=END;t+=60) g+=`<div class="gg-tlabel" style="top:${(t-START)*PX}px">${fmt(t)}</div>`;
+    g+=`</div>`;
+    DAY_LIST.forEach((d,di)=>{
+      g+=`<div class="gg-col ${di===6?'last':''}" style="height:${H}px">`;
+      for(let t=START;t<=END;t+=60) g+=`<div class="gg-line" style="top:${(t-START)*PX}px"></div>`;
+      const list=byDay[d]; lanes(list);
+      list.forEach(b=>{
+        const st=Math.max(b.start,START), en=Math.min(b.end,END);
+        if(en<=st) return;
+        const top=(st-START)*PX, hh=Math.max((en-st)*PX,34);
+        const L=b.lane/b.cols*100, W=100/b.cols;
+        const clinic=(b.type==="관리"||b.type==="클리닉");
+        const col=SC[b.subj]||"#8b93a7";
+        const box=clinic
+          ? `background:repeating-linear-gradient(135deg, ${col}33 0 5px, #fff 5px 10px);border:1.5px dashed ${col}`
+          : `background:${col}2e;border:1px solid ${col}`;
+        g+=`<div class="gblk ${b.on?'':'dim'}" style="top:${top}px;height:${hh}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}">
+          <div class="gsch">[${esc(GRADE)}]${b.teacher?` <span class="gteach">${esc(b.teacher)} T</span>`:""}</div>
+          <div class="gsub">${esc(b.subj||"")}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'관리':'수업'}</span></div>
+          <div class="gtm">${d} ${fmt(b.start)}~${fmt(b.end)}</div>
+        </div>`;
+      });
+      g+=`</div>`;
+    });
+    g+=`</div></div>`;
+    const used=[...new Set(DAY_LIST.flatMap(d=>byDay[d].map(x=>x.subj)).filter(Boolean))];
+    g+=`<div class="gg-legend">${used.map(s=>`<span class="k"><span class="gg-sw" style="background:${SC[s]||'#8b93a7'}2e;border:1px solid ${SC[s]||'#8b93a7'}"></span>${esc(s)}</span>`).join("")}
+      <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,#8b93a733 0 5px,#fff 5px 10px);border:1.5px dashed #8b93a7"></span>관리(클리닉)</span>
+      <span class="k" style="opacity:.45"><span class="gg-sw" style="background:#8b93a72e;border:1px solid #8b93a7"></span>안내 대상 외</span></div></div>`;
     h+=`<section class="paper"><div class="wrap reveal">
       <div class="eyebrow">주간 시간표</div>
       <h2 class="sec">${esc(GRADE)} 전체 시간표</h2>
-      <p class="lead">색이 진한 칸이 지금 안내드리는 과목입니다.</p>
-      <table class="ttbl"><thead><tr><th style="width:64px">요일</th><th>일정</th></tr></thead><tbody>${
-      DAY_LIST.map(d=>{
-        const l=byDay[d].slice().sort((a,b)=>a.start-b.start);
-        return `<tr><td class="day">${d}</td><td>${l.length?l.map(s=>`<span class="slot ${s.on?'':'dim'}" style="background:${SC[s.subj]||'#888'}">${esc(s.subj||"")} ${fmt(s.start)}~${fmt(s.end)}${s.type!=="정규"?" 관리":""}</span>`).join(""):`<span style="color:#aab;font-size:13px">—</span>`}</td></tr>`;
-      }).join("")}</tbody></table>
+      <p class="lead">색이 진한 칸이 지금 안내드리는 과목입니다. 관리(클리닉)는 빗금으로 표시했습니다.</p>
+      ${g}
       ${NOW.length?`<div class="note ${anyConf?'warn':''}">${anyConf?'일부 과목이 현재 수강 시간과 겹칩니다. <b>같은 과목의 다른 요일 반으로 조정</b>이 가능하니 상담 때 말씀해 주세요.':'안내드린 과목은 <b>현재 수강 중인 시간과 겹치지 않습니다.</b> 지금 스케줄 그대로 추가하실 수 있습니다.'}</div>`:""}
     </div></section>`;
   }
@@ -416,9 +481,9 @@ function render(courses,teachers){
   h+=consultSection(GRADE);
 
   /* FAQ */
-  const faqs=[]; targets.forEach(s=>{const cp=copyFor(s,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push(f));});
+  const faqs=[]; targets.forEach(s=>{const cp=copyFor(s,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push({...f,sub:s}));});
   if(faqs.length) h+=`<section><div class="wrap reveal"><div class="eyebrow">FAQ</div><h2 class="sec">자주 묻는 질문</h2>
-    ${faqs.map(f=>`<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></section>`;
+    ${faqs.map(f=>`<details><summary><span class="q-sub" style="background:${SC[f.sub]||'#8b93a7'}">${esc(f.sub)}</span>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></section>`;
 
   /* CTA */
   h+=`<section class="cta"><div class="wrap">
