@@ -357,8 +357,8 @@
     <button class="tab" data-tab="grade">🎓 학년별 시간표</button>
     <button class="tab" data-tab="fee">💰 수강료</button>
     <button class="tab" data-tab="day">📅 요일별·강의실</button>
-    <button class="tab" data-tab="edit">✏️ 시간표·수강료 수정</button>
-    <button class="tab" data-tab="manage">🗂️ 강좌 추가·삭제</button>
+    <button class="tab" data-tab="edit">✏️ 시간표·수강료 강좌 수정 및 추가</button>
+    <button class="tab" data-tab="manage">🗑️ 강좌 삭제</button>
     <button class="tab" data-tab="pack">🖨️ 상담용 자료</button>
   </div>
 
@@ -490,7 +490,7 @@
   <section id="tab-edit" class="hide">
     <div class="panel" style="padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <b>✏️ 학원 시간표·수강료 직접 수정</b>
-      <span class="muted">모든 강좌의 학년·강좌명·시간·수강료·📚교재비·비고를 바로 고치고, 강좌를 추가/복제/삭제할 수 있습니다. <b>입력 즉시 자동 저장</b>돼 시간표·수강료에 반영됩니다.</span>
+      <span class="muted">모든 강좌의 학년·강좌명·시간·수강료·📚교재비·비고를 바로 고치고, <b>새 강좌를 추가</b>하거나 복제할 수 있습니다. <b>입력 즉시 자동 저장</b>돼 시간표·수강료에 반영됩니다.</span>
       <span style="flex:1"></span>
       <a class="btn sm" href="control.html" target="_blank" style="text-decoration:none">↗ 새 창으로 크게</a>
     </div>
@@ -521,30 +521,12 @@
   <!-- ===== 강좌 추가·삭제 ===== -->
   <section id="tab-manage" class="hide">
     <div class="panel" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <b>🗂️ 강좌 추가·삭제</b>
-      <span class="muted">학년(중1→고3) 순으로 전체 강좌를 나열합니다. 삭제하면 시간표·수강료·강사 페이지에서 <b>즉시 함께 사라집니다</b>(폐강 처리).</span>
+      <b>🗑️ 강좌 삭제 (폐강 처리)</b>
+      <span class="muted">학년(중1→고3) 순으로 전체 강좌를 나열합니다. 삭제하면 시간표·수강료·강사 페이지에서 <b>즉시 함께 사라집니다.</b> 되돌릴 수 없습니다.<br>
+        새 강좌를 <b>추가</b>하시려면 <b>「✏️ 시간표·수강료 강좌 수정 및 추가」</b> 탭을 이용하세요.</span>
       <span style="flex:1"></span>
       <input class="search" id="mgSearch" placeholder="🔍 강좌명·강사 검색" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 11px;min-width:170px">
-      <button class="btn primary" id="mgAddBtn">＋ 강의 추가</button>
       <span class="muted" id="mgStat"></span>
-    </div>
-
-    <div class="panel hide" id="mgForm">
-      <div style="font-weight:800;margin-bottom:10px">＋ 새 강좌 추가 <span class="muted" style="font-weight:400">— 강사 페이지 입력 없이 여기서 바로 등록됩니다</span></div>
-      <div class="mg-grid">
-        <div class="f"><label>학년</label><select id="mgGrade"></select></div>
-        <div class="f"><label>과목</label><select id="mgSubject"></select></div>
-        <div class="f"><label>담당 강사</label><select id="mgTeacher"></select></div>
-        <div class="f"><label>유형</label><select id="mgType"><option>정규</option><option>특강</option></select></div>
-        <div class="f"><label>대상학교</label><select id="mgSchool"></select></div>
-        <div class="f" style="grid-column:1 / -1"><label>강좌명</label><input id="mgName" placeholder="예: 중2 영어정규반 (월수금)"></div>
-        <div class="f" style="grid-column:1 / -1"><label>시간 (여러 줄 가능 · 예: 월수금 18:30~20:00 / 금 20:00~21:00 관리)</label><textarea id="mgSched" style="min-height:56px" placeholder="월수금 18:30 ~ 20:00"></textarea></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn primary" id="mgSave">저장</button>
-        <button class="btn" id="mgCancel">취소</button>
-        <span class="muted" id="mgFormMsg"></span>
-      </div>
     </div>
 
     <div class="panel" style="padding:0;overflow:auto">
@@ -1701,21 +1683,9 @@ function renderPack(){
   document.getElementById("packStat").textContent=`${packGrade} · 문서 ${packOn.size}종`;
 }
 
-/* ===== 강좌 추가·삭제 ===== */
-const MG_SCHOOLS=["공통","미사고","미사강변고","하남고","풍산고","미사중","미사강변중","은가람중","윤슬중"];
-const uid=()=> (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
-  : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
+/* ===== 강좌 삭제(폐강 처리) — 추가는 '시간표·수강료 강좌 수정 및 추가' 탭에서 ===== */
 let mgSearch="";
-function mgFillSelects(){
-  const g=document.getElementById("mgGrade"), s=document.getElementById("mgSubject"),
-        t=document.getElementById("mgTeacher"), sc=document.getElementById("mgSchool");
-  g.innerHTML=GRADE_ORDER.map(x=>`<option>${x}</option>`).join("");
-  s.innerHTML=SUBJECT_ORDER.map(x=>`<option>${x}</option>`).join("");
-  t.innerHTML=ROSTER.map(x=>`<option>${esc(x.name)}</option>`).join("");
-  sc.innerHTML=MG_SCHOOLS.map(x=>`<option>${x}</option>`).join("");
-}
 function renderManage(){
-  mgFillSelects();
   let rows=DATA.slice();
   if(mgSearch){ const q=mgSearch.toLowerCase();
     rows=rows.filter(c=>[c.course_name,c.teacher,c.grade,c.subject].some(v=>String(v||"").toLowerCase().includes(q))); }
@@ -1740,33 +1710,6 @@ function renderManage(){
   document.getElementById("mgStat").textContent=`총 ${rows.length}강좌`;
 }
 document.getElementById("mgSearch").addEventListener("input",e=>{ mgSearch=e.target.value.trim(); renderManage(); });
-document.getElementById("mgAddBtn").addEventListener("click",()=>{
-  const f=document.getElementById("mgForm"); f.classList.toggle("hide");
-  if(!f.classList.contains("hide")){ document.getElementById("mgFormMsg").textContent=""; document.getElementById("mgName").focus(); }
-});
-document.getElementById("mgCancel").addEventListener("click",()=>document.getElementById("mgForm").classList.add("hide"));
-document.getElementById("mgSave").addEventListener("click", async ()=>{
-  const name=document.getElementById("mgName").value.trim();
-  const msg=document.getElementById("mgFormMsg");
-  if(!name){ msg.textContent="강좌명을 입력하세요."; msg.style.color="var(--danger)"; return; }
-  const grade=document.getElementById("mgGrade").value;
-  const row={ id:uid(), teacher:document.getElementById("mgTeacher").value, grade,
-    division:(grade||"").startsWith("중")?"중등":"고등",
-    subject:document.getElementById("mgSubject").value, course_name:name,
-    schedule_text:document.getElementById("mgSched").value.trim(),
-    target_school:document.getElementById("mgSchool").value,
-    course_type:document.getElementById("mgType").value,
-    audience:"", content:"", sort_order:(DATA.reduce((m,x)=>Math.max(m,x.sort_order||0),0)+1) };
-  msg.textContent="저장 중…"; msg.style.color="var(--muted)";
-  if(useSupa){
-    const {error}=await sb.from("courses").insert(row);
-    if(error){ msg.textContent="저장 오류: "+error.message; msg.style.color="var(--danger)"; return; }
-  }
-  DATA.push(row);
-  document.getElementById("mgName").value=""; document.getElementById("mgSched").value="";
-  msg.textContent="추가됨 ✓ — 시간표·수강료에 바로 반영됩니다."; msg.style.color="var(--ok)";
-  await loadData(); renderManage();
-});
 document.getElementById("mgBody").addEventListener("click", async e=>{
   const btn=e.target.closest("[data-del]"); if(!btn) return;
   const id=btn.dataset.del, c=DATA.find(x=>x.id===id); if(!c) return;
