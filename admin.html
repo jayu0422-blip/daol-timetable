@@ -892,6 +892,9 @@ function assignDay(day){
     list.forEach(base=>{
       const grp=list.filter(x=>ovl(x.s,base.s));
       if(grp.length>=2){
+        // 같은 강사·같은 과목·시간까지 완전히 동일 → 무학년 통합반(한 수업). 수업실/관리실로 나누지 않음
+        const merged = grp.every(x=>x.c.subject===grp[0].c.subject && x.s.start===grp[0].s.start && x.s.end===grp[0].s.end);
+        if(merged){ grp.forEach(x=>x.roomRole="통합(무학년)"); return; }
         grp.forEach(x=>{ if(x.s.type==="클리닉"||x.s.type==="관리") x.roomRole="관리실"; });
         const reg=grp.filter(x=>x.s.type==="정규"||x.s.type==="직보").sort((a,b)=>GRADE_ORDER.indexOf(a.c.grade)-GRADE_ORDER.indexOf(b.c.grade));
         if(reg.length>=2) reg.forEach((x,idx)=>{ x.roomRole=idx===0?"수업실":"관리실"; });
