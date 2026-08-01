@@ -917,6 +917,33 @@ const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7
 let selGrade="미사고1";
 function buildGradeChips(){ document.getElementById("gradeChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
 document.getElementById("gradeChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); });
+/* 강사가 입력한 "요일·시간대별 진행 내용" 파싱
+   지원 형식(줄 단위):
+   · "월: 단어테스트 + 어법"        → 해당 요일 블록에만
+   · "월수금: 단어테스트"           → 여러 요일
+   · "18:00~18:30 단어테스트"       → 그 시간을 포함하는 블록에만
+   · "월 18:00~19:00 단어테스트"    → 요일+시간 모두 일치
+   · 요일·시간 없는 줄              → 그 강좌 모든 블록 공통 */
+function notesFor(raw, day, start){
+  if(!String(raw||"").trim()) return "";
+  const hit=[], common=[];
+  String(raw).split(/\n|·|\//).forEach(line=>{
+    let s=line.trim(); if(!s) return;
+    const tm=s.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+    let t0=null,t1=null;
+    if(tm){ t0=(+tm[1])*60+(+tm[2]); t1=(+tm[3])*60+(+tm[4]); }
+    const head=s.split(/[::]/)[0];
+    const days=extractDays(head.length<=12?head:s.slice(0,12));
+    let body=s.replace(/^[^::]{0,12}[::]\s*/,"").replace(/\d{1,2}:\d{2}\s*[~\-–]\s*\d{1,2}:\d{2}\s*/,"").trim();
+    if(!body) body=s.trim();
+    const dayOK = days.length ? days.includes(day) : null;
+    const timeOK = (t0!=null) ? (start>=t0-1 && start<t1) : null;
+    if(dayOK===false || timeOK===false) return;          // 명시된 조건과 불일치 → 제외
+    if(dayOK===null && timeOK===null) common.push(body);  // 조건 없는 공통 줄
+    else hit.push(body);
+  });
+  return (hit.length?hit:common).join(" · ");
+}
 // 중등 영어 요일별 진행 내용(간단 표기) — 어법·서술형/독해는 날짜가 고정이 아니라 번갈아 진행
 function midEngDetail(day){
   if(day==="월"||day==="화") return "단어테스트 2단원 + 어법·서술형";
@@ -953,7 +980,8 @@ function renderGrade(){
       // 중등 영어 운영 규칙: 월·수 / 화·목 = 수업, 금 / 토 = 관리(클리닉)
       const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
       if(midEng) type = (s.day==="금"||s.day==="토") ? "클리닉" : "수업";
-      const detail = midEng ? midEngDetail(s.day) : "";
+      // 강사가 입력한 요일·시간대별 진행내용 우선, 없으면 중등영어 기본 문구
+      const detail = notesFor(c.session_notes, s.day, s.start) || (midEng ? midEngDetail(s.day) : "");
       byDay[s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,grade:cGrade(c),school:courseSchool(c),name:c.course_name,detail});
     });
   });

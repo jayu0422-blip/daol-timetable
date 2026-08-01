@@ -132,7 +132,7 @@ let saveTimer = null;
 
 function uid(){ return (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
   : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16)); }
-function blankRow(){ return {id:uid(), grade:"", subject:(me&&me.subject)||"", course_name:"", schedule_text:"", target_school:"공통", audience:"", content:"", course_type:"정규", material_fee:null, sort_order:rows.length}; }
+function blankRow(){ return {id:uid(), grade:"", subject:(me&&me.subject)||"", course_name:"", schedule_text:"", target_school:"공통", audience:"", content:"", course_type:"정규", material_fee:null, session_notes:"", sort_order:rows.length}; }
 
 /* ---------- 로드 ---------- */
 async function load(){
@@ -196,6 +196,7 @@ function render(){
         <div class="f"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="- 2026년 미사고1 예상 시험범위 총정리&#10;- ...">${esc(r.content)}</textarea></div>
         <div class="f"><label>유형</label><select data-k="course_type">${opt(TYPES,r.course_type)}</select></div>
         <div class="f"><label>📚 교재비 (원, 1인 기준 · 없으면 비움)</label><input type="text" inputmode="numeric" data-k="material_fee" value="${r.material_fee??""}" placeholder="예: 39000"/></div>
+        <div class="f full"><label>⏱️ 요일·시간대별 진행 내용 (시간표에 표시됩니다)</label><textarea data-k="session_notes" style="min-height:64px" placeholder="예)&#10;월: 단어테스트 2단원 + 어법·서술형&#10;수: 단어테스트 2단원 + 독해&#10;금: 단어 재테스트·듣기·워크북 복습·1:1 첨삭&#10;(또는) 18:00~18:30 단어테스트 / 18:30~20:00 독해">${esc(r.session_notes)}</textarea></div>
       </div>
       <div class="row-actions">
         <button class="btn sm" data-act="dup">⧉ 복제</button>
