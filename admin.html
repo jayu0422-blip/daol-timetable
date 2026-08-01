@@ -739,18 +739,48 @@ function titleFor(){
 const DAYS=["월","화","수","목","금","토","일"];
 function toMin(t){const m=String(t).match(/(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):null;}
 function fmt(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+// 세션 파싱 — 클리닉/관리 표기나 괄호로 감싼 줄은 kind:"클리닉"
+// 요일이 없는 줄(예: "(18:00 ~ 22:00 의무 클리닉)")은 바로 위 줄의 요일을 이어받음
 function sessions(scheduleText){
-  const out=[];
+  const out=[]; let lastDays=null;
   String(scheduleText||"").split(/\n/).forEach(line=>{
-    const m=line.match(/([월화수목금토일][월화수목금토일·,\s]*)\s*(\d{1,2}:\d{2})\s*[~\-–]\s*(\d{1,2}:\d{2})/);
-    if(!m) return;
-    const days=(m[1].match(/[월화수목금토일]/g)||[]);
-    const s=toMin(m[2]), e=toMin(m[3]); if(s==null||e==null||e<=s) return;
-    days.forEach(d=>out.push({day:d,start:s,end:e}));
+    const clinic = /클리닉|관리|자습/.test(line) || /^\s*[（(]/.test(line.trim());
+    let m=line.match(/([월화수목금토일][월화수목금토일·,\s]*)\s*(\d{1,2}:\d{2})\s*[~\-–]\s*(\d{1,2}:\d{2})/);
+    let days, s, e;
+    if(m){ days=(m[1].match(/[월화수목금토일]/g)||[]); s=toMin(m[2]); e=toMin(m[3]); lastDays=days; }
+    else{
+      const t=line.match(/(\d{1,2}:\d{2})\s*[~\-–]\s*(\d{1,2}:\d{2})/);
+      if(!t||!lastDays) return;
+      days=lastDays; s=toMin(t[1]); e=toMin(t[2]);          // 요일 생략 줄 → 직전 요일 상속
+    }
+    if(s==null||e==null||e<=s) return;
+    days.forEach(d=>out.push({day:d,start:s,end:e,kind:clinic?"클리닉":"수업"}));
   });
   return out;
 }
 function overlaps(a,b){ return a.day===b.day && a.start<b.end && b.start<a.end; }
+
+const isCommonSchool = c => !c.target_school || c.target_school==="공통";
+const isSpecialCourse = c => c.course_type==="특강" || /특강/.test(c.course_name||"");
+
+/* 충돌로 보지 않는 경우 — 실제 운영상 문제가 아닌 조합
+   ① 특강 ↔ 특강 : 택일 수강이므로 동시 수강 자체가 없음
+   ② 같은 강사의 수업 ↔ 클리닉 : 같은 시간·같은 공간에서 병행 운영(정규반 클리닉 = 특강반 수업 시간)
+   ③ 클리닉 ↔ 클리닉 : 유동 운영이라 겹쳐도 무방
+   ④ 다른 강사의 수업 ↔ 클리닉 : 클리닉은 여러 요일로 열려 있어 다른 요일로 대체 가능
+   → 즉 '진짜 충돌'은 수업 ↔ 수업 이면서 최소 한쪽이 정규인 경우뿐
+   반환값: null=진짜 충돌 / 문자열=충돌 아닌 사유 */
+function notAConflict(a,b,sa,sb){
+  if(isSpecialCourse(a)&&isSpecialCourse(b)) return "특강 ↔ 특강 (택일 수강)";
+  const ca=sa.kind==="클리닉", cb=sb.kind==="클리닉";
+  if(ca&&cb) return "클리닉 ↔ 클리닉 (유동 운영)";
+  if(ca||cb){
+    if(a.teacher===b.teacher) return `${a.teacher} 선생님 수업 ↔ 클리닉 (동일 시간 병행 운영)`;
+    const cn=(ca?a:b).course_name;
+    return `한쪽이 클리닉 — 「${cn}」 클리닉은 다른 요일로 대체 가능`;
+  }
+  return null;
+}
 
 // 충돌 그룹: 중등=학년 / 고등=학교+학년
 function conflictGroups(courses){
@@ -758,29 +788,54 @@ function conflictGroups(courses){
   courses.forEach(c=>{
     if(c.division==="중등"){ (groups["중등 "+c.grade]=groups["중등 "+c.grade]||[]).push(c); }
     else {
-      const schools = (!c.target_school||c.target_school==="공통") ? HIGH_SCHOOLS : [c.target_school];
+      const schools = isCommonSchool(c) ? HIGH_SCHOOLS : [c.target_school];
       schools.forEach(s=>{ const k=s+" "+c.grade; (groups[k]=groups[k]||[]).push(c); });
     }
   });
   return groups;
 }
+/* 반환: {hard:[진짜 충돌], soft:[클리닉 등 참고 항목]}
+   같은 강좌 쌍이 학교공통이라 여러 학교 그룹에 복제된 경우 → 1건으로 합치고 학교를 함께 표기 */
 function findConflicts(courses){
-  const groups=conflictGroups(courses), res=[];
+  const groups=conflictGroups(courses);
+  const pairs=new Map();   // key: a.id|b.id → 통합 레코드
   Object.entries(groups).forEach(([key,cs])=>{
     for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){
-      const A=sessions(cs[i].schedule_text), B=sessions(cs[j].schedule_text);
-      for(const a of A)for(const b of B){
-        if(overlaps(a,b)){
-          res.push({key, a:cs[i], b:cs[j], day:a.day, time:`${fmt(Math.max(a.start,b.start))}~${fmt(Math.min(a.end,b.end))}`, group:cs});
-          i=i; // keep
-          break;
-        }
+      const A=cs[i], B=cs[j];
+      const SA=sessions(A.schedule_text), SB=sessions(B.schedule_text);
+      let hit=null, reason=null;
+      outer:
+      for(const a of SA)for(const b of SB){
+        if(!overlaps(a,b)) continue;
+        const why=notAConflict(A,B,a,b);
+        if(!why){ hit={a,b}; reason=null; break outer; }   // 진짜 충돌 하나라도 있으면 그것으로 확정
+        if(!hit){ hit={a,b}; reason=why; }                  // 사유가 있는 겹침은 후보로만 보관
       }
+      if(!hit) continue;
+      const pk=[A.id,B.id].sort().join("|");
+      const rec=pairs.get(pk);
+      if(rec){
+        rec.keys.add(key);
+        if(!reason && rec.reason){   // 다른 학교 그룹에서 진짜 충돌이 확인되면 승격
+          rec.reason=null; rec.day=hit.a.day;
+          rec.time=`${fmt(Math.max(hit.a.start,hit.b.start))}~${fmt(Math.min(hit.a.end,hit.b.end))}`;
+          rec.kinds=`${hit.a.kind}↔${hit.b.kind}`;
+        }
+        continue;
+      }
+      pairs.set(pk,{keys:new Set([key]), a:A, b:B, reason,
+        day:hit.a.day, time:`${fmt(Math.max(hit.a.start,hit.b.start))}~${fmt(Math.min(hit.a.end,hit.b.end))}`,
+        kinds:`${hit.a.kind}↔${hit.b.kind}`, group:cs});
     }
   });
-  // 중복 제거
-  const seen=new Set();
-  return res.filter(r=>{const k=r.key+r.a.id+r.b.id;if(seen.has(k))return false;seen.add(k);return true;});
+  const all=[...pairs.values()].map(r=>{
+    // 학교공통 강좌끼리면 학교별로 나열하지 않고 "고1 전체" 한 줄로
+    const ks=[...r.keys];
+    r.key = (isCommonSchool(r.a)&&isCommonSchool(r.b)&&r.a.division!=="중등")
+      ? `${r.a.grade} 전체 (학교공통)` : ks.join(", ");
+    return r;
+  });
+  return { hard: all.filter(r=>!r.reason), soft: all.filter(r=>r.reason) };
 }
 // 재배치 제안: 그룹 내 b강좌를 겹치지 않는 빈 시간대로
 function suggest(conf){
@@ -799,18 +854,26 @@ function suggest(conf){
 /* ===== 생성 ===== */
 function generate(){
   const courses=selectedCourses().filter(c=>(c.course_name||"").trim() && (c.grade||"").trim());
-  const conf = preset==="special" ? [] : findConflicts(courses);  // 특강은 택일 수강이라 충돌검사 제외
-  renderConflicts(conf);
-  const flag=new Set(); conf.forEach(c=>{flag.add(c.a.id);flag.add(c.b.id);});
+  const r = preset==="special" ? {hard:[],soft:[]} : findConflicts(courses);   // 특강만 볼 땐 택일 수강이라 검사 제외
+  renderConflicts(r);
+  const flag=new Set(); r.hard.forEach(c=>{flag.add(c.a.id);flag.add(c.b.id);});   // 표에 빨간 테두리는 진짜 충돌만
   renderSheet(courses, flag, titleFor());
-  document.getElementById("genStat").textContent = `${courses.length}개 강좌 · 충돌 ${conf.length}건`;
+  document.getElementById("genStat").textContent =
+    `${courses.length}개 강좌 · 충돌 ${r.hard.length}건` + (r.soft.length?` · 참고 ${r.soft.length}건`:"");
 }
-function renderConflicts(conf){
+function renderConflicts(r){
   const box=document.getElementById("conflictBox");
-  if(!conf.length){ box.innerHTML=`<div class="conflicts ok"><h3>✅ 시간 충돌 없음</h3><div class="muted">선택 범위에서 같은 ${'{학년/학교+학년}'} 기준 겹치는 수업이 없습니다.</div></div>`; return; }
-  box.innerHTML = `<div class="conflicts"><h3>⚠️ 시간 충돌 ${conf.length}건 — 재배치 검토</h3>`+
-    conf.map(c=>`<div class="cf"><b>[${c.key}]</b> ${c.day} ${c.time} · 「${c.a.course_name}」(${c.a.teacher}) ↔ 「${c.b.course_name}」(${c.b.teacher})
-      <div class="sug">↳ 제안: ${suggest(c)}</div></div>`).join("")+`</div>`;
+  const soft = r.soft.length ? `<div class="conflicts ok" style="background:#fffbeb;border-color:#fde68a">
+      <h3 style="color:#92400e">ℹ️ 참고 ${r.soft.length}건 — 충돌 아님 (조치 불필요)</h3>`+
+      r.soft.map(c=>`<div class="cf"><b>[${esc(c.key)}]</b> ${c.day} ${c.time} · 「${esc(c.a.course_name)}」(${esc(c.a.teacher)}) ↔ 「${esc(c.b.course_name)}」(${esc(c.b.teacher)})
+        <div class="sug" style="color:#92400e">↳ ${esc(c.reason)}</div></div>`).join("")+`</div>` : "";
+  if(!r.hard.length){
+    box.innerHTML=`<div class="conflicts ok"><h3>✅ 시간 충돌 없음</h3><div class="muted">선택 범위에서 같은 ${'{학년/학교+학년}'} 기준 겹치는 수업이 없습니다.</div></div>`+soft;
+    return;
+  }
+  box.innerHTML = `<div class="conflicts"><h3>⚠️ 시간 충돌 ${r.hard.length}건 — 재배치 검토</h3>`+
+    r.hard.map(c=>`<div class="cf"><b>[${esc(c.key)}]</b> ${c.day} ${c.time} · 「${esc(c.a.course_name)}」(${esc(c.a.teacher)}) ↔ 「${esc(c.b.course_name)}」(${esc(c.b.teacher)})
+      <div class="sug">↳ 제안: ${suggest(c)}</div></div>`).join("")+`</div>`+soft;
 }
 function renderSheet(courses, flag, title){
   const sheet=document.getElementById("sheet");
