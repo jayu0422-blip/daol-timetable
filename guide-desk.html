@@ -56,6 +56,15 @@
   .qa .q{font-weight:800;color:var(--ink);margin-bottom:3px}
   .qa .a{font-size:14px;color:#374151}
 
+  .tbl-link code{font-size:12.5px;background:#f1f5f9;border:1px solid var(--line);border-radius:5px;padding:2px 7px;word-break:break-all;color:#1e293b;font-family:ui-monospace,Menlo,monospace}
+  .msg{background:#f8fafc;border:1px dashed #94a3b8;border-radius:10px;padding:13px 16px;font-size:13.5px;line-height:1.85;color:#334155;margin:10px 0}
+  .msg .ph{background:#fde68a;border-radius:5px;padding:1px 8px;font-weight:800;color:#78350f}
+  /* 화면 캡처 설명 */
+  .shot{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:12px 0 16px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .shot img{width:100%;height:auto;display:block;border-bottom:1px solid var(--line)}
+  .shot .cap{padding:11px 15px;font-size:13.5px;color:#374151;line-height:1.8}
+  .shot .cap b{color:var(--brand-ink)}
+  .shot .cap .n{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;font-size:12px;font-weight:800;align-items:center;justify-content:center;margin-right:5px;vertical-align:-3px}
   .link{background:#111827;color:#fff;border-radius:11px;padding:14px 18px;margin:14px 0;font-size:14px;line-height:1.9}
   .link b{color:#fbbf24}
   .link code{background:rgba(255,255,255,.12);border-radius:5px;padding:1px 7px;font-size:13px;word-break:break-all}
@@ -233,14 +242,36 @@
   </table>
   <div class="tip">선생님 화면에 <b>「👁 내 소개 미리보기」</b> 버튼이 있어서, 학부모에게 어떻게 나가는지 본인이 직접 확인하고 고칠 수 있습니다.</div>
   <div class="note"><b>인포에서 대신 고쳐도 됩니다.</b> <span class="tab">✏️ 시간표·수강료 강좌 수정 및 추가</span> 에서 모든 선생님 강좌를 고칠 수 있습니다.</div>
-  <div class="link">
-    <b>강사별 입력 링크</b> — 앞부분은 모두 같고 <code>?t=</code> 뒤 숫자만 다릅니다.<br>
-    <code>jayu0422-blip.github.io/daol-timetable/input.html?t=</code><br>
-    황웅 <b>a5e2a628</b> &nbsp; 민귀홍 <b>464af7f0</b> &nbsp; 윤재영 <b>47276347</b><br>
-    김영하 <b>aff9ae35</b> &nbsp; 이정관 <b>65b0e3ad</b><br>
-    임결 <b>c211bc44</b> &nbsp; 유용권 <b>f712867b</b>
-    <div style="margin-top:8px;font-size:13px;opacity:.85">※ 이 링크는 <b>본인에게만</b> 보내세요. 다른 선생님께 잘못 보내면 남의 강좌가 보이지는 않지만, 그 선생님 이름으로 입력하게 됩니다.</div>
-  </div>
+  <h3>선생님별 전용 주소 — 그대로 복사해서 보내세요</h3>
+  <p>선생님마다 주소가 다릅니다. <b>반드시 본인 것만</b> 보내주세요.</p>
+  <table class="tbl-link">
+    <tr><th style="width:88px">선생님</th><th style="width:62px">과목</th><th>전용 주소</th></tr>
+    <tr><td class="k">윤재영</td><td>영어</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=47276347</code></td></tr>
+    <tr><td class="k">황웅</td><td>영어</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=a5e2a628</code></td></tr>
+    <tr><td class="k">민귀홍</td><td>영어</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=464af7f0</code></td></tr>
+    <tr><td class="k">김영하</td><td>국어</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=aff9ae35</code></td></tr>
+    <tr><td class="k">이정관</td><td>국어</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=65b0e3ad</code></td></tr>
+    <tr><td class="k">임결</td><td>수학</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=c211bc44</code></td></tr>
+    <tr><td class="k">유용권</td><td>수학</td><td><code>https://jayu0422-blip.github.io/daol-timetable/input.html?t=f712867b</code></td></tr>
+  </table>
+  <div class="warn"><b>절대 하면 안 되는 것</b> — 다른 선생님 주소를 보내면 그 선생님 이름으로 강좌가 등록됩니다. 보내기 전에 <b>이름과 주소 끝 8자리</b>를 꼭 맞춰보세요.<br>
+    단톡방처럼 <b>여러 명이 함께 보는 곳에 올리지 마세요.</b> 1:1로만 보내주세요.</div>
+
+  <h3>보낼 때 쓰는 문구 (복사해서 쓰세요)</h3>
+  <div class="msg">선생님, 여름 강좌 입력 페이지입니다. 아래 링크로 들어가시면 <b>선생님 강좌만</b> 보입니다.<br>
+    ① 담당 강좌의 <b>시간·대상·내용·사용 교재</b><br>
+    ② <b>요일·시간대별 진행 내용</b> — 가능하면 시간대까지 나눠 적어주세요. 상담에서 학부모가 가장 많이 묻는 부분입니다.<br>
+    ③ <b>수업 원칙</b>과 <b>점수를 올리는 방식</b> — 학부모 안내문과 과목 소개 페이지에 그대로 실립니다.<br>
+    입력하시면 <b>자동 저장</b>되고, 「👁 내 소개 미리보기」로 학부모께 어떻게 나가는지 직접 확인하실 수 있습니다.<br>
+    ▶ <span class="ph">여기에 선생님 전용 링크 붙여넣기</span></div>
+
+  <h3>운영자·인포용 주소</h3>
+  <table class="tbl-link">
+    <tr><th style="width:150px">용도</th><th>주소</th></tr>
+    <tr><td class="k">운영자 전체 화면<br><span style="font-weight:400;color:var(--muted)">(인포데스크 기본)</span></td><td><code>https://jayu0422-blip.github.io/daol-timetable/admin.html</code></td></tr>
+    <tr><td class="k">이 설명서</td><td><code>https://jayu0422-blip.github.io/daol-timetable/guide-desk.html</code></td></tr>
+  </table>
+  <div class="warn"><b>운영자 주소는 학부모·학생에게 보내지 마세요.</b> 전 강좌 수강료와 모든 선생님 정보가 보입니다. 학부모께는 <b>「🔗 과목 안내 페이지」에서 만든 링크</b>만 보내주세요.</div>
 </div>
 
 <h2 id="h">7. 자주 하는 실수 — 이것만 조심하세요</h2>
@@ -251,6 +282,13 @@
   <div class="warn"><b>4. 시간을 대충 적음</b><br><code>주3회</code>, <code>저녁</code> 처럼 적으면 시간표에 <b>아예 안 나옵니다.</b> 반드시 <code>월수금 18:30~20:00</code> 형식으로.</div>
   <div class="warn"><b>5. 저장 버튼을 찾음</b><br>저장 버튼은 없습니다. 자동 저장입니다. <span class="btn">저장됨 ✓</span> 만 확인하세요.</div>
   <div class="warn"><b>6. 화면이 안 바뀔 때</b><br>다른 사람이 동시에 고치면 잠깐 안 맞을 수 있습니다. <span class="btn">↻ 새로고침</span> 을 누르거나 <kbd>F5</kbd>.</div>
+  <div class="warn"><b>7. 선생님께 다른 반 정보를 말하지 않기</b> — 특히 조심해 주세요<br>
+    선생님께는 <b>본인 담당 강좌 이야기만</b> 합니다. 아래는 절대 공개하지 않습니다.<br>
+    · 다른 학년·다른 학교 반의 <b>수강생 수</b><br>
+    · 다른 선생님 반의 <b>인원·수강료·정산 금액</b><br>
+    · 반별 등록 현황 비교<br>
+    선생님이 물어보시면 <b>“제가 답변드릴 수 있는 부분이 아니라 원장님께 여쭤보겠습니다”</b> 라고 안내하세요.
+    운영자 화면에는 전 강좌 정보가 다 보이기 때문에, <b>선생님 앞에서 운영자 화면을 열어두지 마세요.</b></div>
 </div>
 
 <h2 id="i">8. 상황별 빠른 찾기</h2>
