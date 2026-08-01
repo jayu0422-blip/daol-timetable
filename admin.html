@@ -934,7 +934,9 @@ function notesFor(raw, day, start){
     if(tm){ t0=(+tm[1])*60+(+tm[2]); t1=(+tm[3])*60+(+tm[4]); }
     const head=s.split(/[::]/)[0];
     const days=extractDays(head.length<=12?head:s.slice(0,12));
-    let body=s.replace(/^[^::]{0,12}[::]\s*/,"").replace(/\d{1,2}:\d{2}\s*[~\-–]\s*\d{1,2}:\d{2}\s*/,"").trim();
+    let body=s.replace(/\d{1,2}:\d{2}\s*[~\-–]\s*\d{1,2}:\d{2}\s*/,"")   // 시간 먼저 제거(18:00~18:30 오인식 방지)
+               .replace(/^\s*[^::\d]{0,12}[::]\s*/,"")                    // "월:" 같은 머리말 제거
+               .replace(/^\s*[월화수목금토일]{1,7}(요일)?\s+/,"").trim();  // 남은 요일 접두사 제거
     if(!body) body=s.trim();
     const dayOK = days.length ? days.includes(day) : null;
     const timeOK = (t0!=null) ? (start>=t0-1 && start<t1) : null;
