@@ -193,6 +193,7 @@
   .gu-block>b{display:block;font-size:11px;color:var(--brand-ink);margin-bottom:2px}
   .gu-block ul{margin:0;padding-left:17px}
   .gu-block li{font-size:12px;line-height:1.5;color:#374151}
+  .gu-fee{margin-top:6px;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;font-size:11.5px;color:#78350f;line-height:1.55}
   .gu-divider{margin:18px 0 10px;padding:7px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;font-weight:800;color:#1e40af}
   .gu-pact{margin-top:12px;border:1.5px solid #fdba74;border-radius:11px;background:#fffaf3;padding:12px 15px}
   .gu-pact-h{font-size:13.5px;font-weight:800;color:#9a3412;margin-bottom:6px}
@@ -460,7 +461,8 @@
         <tbody id="feeBody"></tbody>
       </table>
     </div>
-    <p class="muted">중등=월수강료(회차 무관) · 고등=선택 월 정규 회차로 청구액 산정 · 특강=전체(미납분). 빈칸은 미정(강사 확인 대기)입니다.</p>
+    <p class="muted">중등=월수강료(회차 무관) · 고등=선택 월 정규 회차로 청구액 산정 · 특강=전체(미납분). 빈칸은 미정(강사 확인 대기)입니다.<br>
+      <b style="color:var(--brand-ink)">📚 교재비</b> — 강좌에 따라 <b>학원에서 배부하는 교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</p>
 
     <div class="panel" style="margin-top:14px">
       <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
@@ -541,7 +543,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=75abf301"></script>
 <script src="copy.js?v=79cc0e2c"></script>
-<script src="scholars.js?v=017b9187"></script>
+<script src="scholars.js?v=d8eb2fc6"></script>
 <script src="consulting.js?v=e095804b"></script>
 <script src="scholars_all.js?v=32243876"></script>
 <script src="manual.js?v=9fea3143"></script>
@@ -1393,6 +1395,7 @@ function subjectCardsHtml(){
         ${aud.length?`<div class="gu-block"><b>이런 학생을 위한 강좌입니다</b><ul>${aud.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${cont.length?`<div class="gu-block"><b>수업에서 실제로 하는 것</b><ul>${cont.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${bullets(c.textbook).length?`<div class="gu-block"><b>📖 사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${(c.material_fee||bullets(c.textbook).length)?`<div class="gu-fee">📚 학원에서 배부하는 교재는 <b>교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
       </div>`;
     }).join("");
     // 과목 서사 + 담당 강사의 수업 원칙·전략으로 감싸 설득력을 높인다
@@ -1406,7 +1409,7 @@ function subjectCardsHtml(){
       </div>` : "";
     const names=[...new Set(list.map(c=>c.teacher).filter(Boolean))];
     const profs = names.map(n=>{
-      const t=TEACHERS[n]||{}, raw=(window.DAOL_SCHOLARS||{})[n]||{};
+      const t=teacherProfileFor(n, level), raw=(window.DAOL_SCHOLARS||{})[n]||{};
       const pick=window.DAOL_SCHOLAR_PICK||(a=>a||[]);
       const sc={career:raw.career, top:pick(raw.top), up:pick(raw.up)};   // 1등급·만점·90점↑·향상된 2등급만
       const career=(sc.career||[]).length?sc.career:(t.career?bullets(t.career):[]);
@@ -1580,6 +1583,17 @@ document.getElementById("packRefresh").addEventListener("click",renderPack);
 document.getElementById("packPrint").addEventListener("click",()=>window.print());
 
 function packDoc(title,note,inner){ return `<div class="pk-doc"><div class="pk-h">${esc(title)}<span>${esc(note||"")}</span></div><div class="pk-b">${inner}</div></div>`; }
+/* 강사 프로필 — 중등에서는 고등학교 실명 대신 ‘고등 대비·내신 대비’ 버전을 쓴다 */
+function teacherProfileFor(name, level){
+  const t = TEACHERS[name] || {};
+  if(level !== "중등") return t;
+  const m = (window.DAOL_MID_PROFILE||{})[name];
+  if(!m) return t;
+  return {...t, intro:m.intro||t.intro,
+    principle:(m.principle||[]).join("\n") || t.principle,
+    strategy:(m.strategy||[]).join("\n") || t.strategy};
+}
+
 /* 입시 컨설팅 — 시간표엔 넣지 않고 안내·상담자료·수강료에만 노출 */
 const won2 = n => Number(n).toLocaleString("ko-KR");
 // 수강료 탭 고정 표(회차·월 변동 없음)
@@ -1656,8 +1670,9 @@ function renderPack(){
   if(packOn.has("guide"))  h+=packDoc("③ 수업 방식 안내",packGrade,`<div class="pk-sheet">${guideHtml}</div>`);
   if(packOn.has("prof")){
     const pick=window.DAOL_SCHOLAR_PICK||(a=>a||[]);
+    const level = /^중/.test(packGrade) ? "중등" : "고등";
     const cards=names.map(n=>{
-      const t=TEACHERS[n]||{}, raw=(window.DAOL_SCHOLARS||{})[n]||{};
+      const t=teacherProfileFor(n, level), raw=(window.DAOL_SCHOLARS||{})[n]||{};
       const career=(raw.career||[]).length?raw.career:(t.career?bullets(t.career):[]);
       const top=pick(raw.top), up=pick(raw.up);
       return `<div class="pk-card">
@@ -1677,7 +1692,9 @@ function renderPack(){
   if(packOn.has("top")) h+=packDoc("⑤ 성적 우수자","2025년 중·고등부",
     `<img src="img/docs/성적우수자1.jpg" alt="성적우수자" style="margin-bottom:10px"><img src="img/docs/성적우수자2.jpg" alt="성적우수자">`);
   if(packOn.has("all")) h+=packDoc("⑤ 전체 성적 우수자","다올105 전체 명단", allScholarsHtml());
-  if(packOn.has("consult")) h+=packDoc("⑥ 입시 컨설팅",`${packGrade} · 예약제`, consultHtml(packGrade, !/^고/.test(packGrade)));
+  // 입시 컨설팅은 고등만 — 중등 상담 자료에는 넣지 않는다
+  if(packOn.has("consult") && /^(미사고|미사강변고|하남고|고3)/.test(packGrade))
+    h+=packDoc("⑥ 입시 컨설팅",`${packGrade} · 예약제`, consultHtml(packGrade,false));
   if(packOn.has("manual")) h+=packDoc("⑦ 학원 사용 설명서","신입생 학부모 필독 · A4 4쪽", window.DAOL_MANUAL || `<img src="img/docs/사용설명서.jpg" alt="학원 사용 설명서">`);
   document.getElementById("packView").innerHTML = h || `<div class="panel"><div class="empty">포함할 항목을 선택하세요.</div></div>`;
   document.getElementById("packStat").textContent=`${packGrade} · 문서 ${packOn.size}종`;

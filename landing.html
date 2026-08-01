@@ -122,6 +122,7 @@
   .cc-b>b{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--gold);margin-bottom:4px}
   .cc-b ul{margin:0;padding-left:18px}
   .cc-b li{font-size:14px;line-height:1.75;color:var(--text)}
+  .cc-fee{margin-top:9px;background:var(--cream);border:1px solid var(--gold-soft);border-radius:8px;padding:8px 11px;font-size:12.8px;color:#7a5f22;line-height:1.6}
   .flag{margin-top:11px;font-size:13.5px;font-weight:800;border-radius:9px;padding:9px 13px}
   .flag.ok{background:#eef8f1;color:var(--ok);border:1px solid #cce7d6}
   .flag.no{background:#fdf0ee;color:var(--danger);border:1px solid #f4d4cf}
@@ -178,7 +179,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=75abf301"></script>
 <script src="copy.js?v=79cc0e2c"></script>
-<script src="scholars.js?v=017b9187"></script>
+<script src="consulting.js?v=e095804b"></script>
+<script src="scholars.js?v=d8eb2fc6"></script>
 <script>
 const P=new URLSearchParams(location.search);
 const GRADE=P.get("g")||"중1";
@@ -255,6 +257,38 @@ function coursesForGrade(key,all){
 }
 const COPY=window.DAOL_COPY||[];
 const copyFor=(s,l)=>COPY.find(c=>c.subject===s&&c.level===l)||null;
+// 중등에서는 고등학교 실명 대신 ‘고등 대비·내신 대비’ 버전을 쓴다
+function profFor(t,name,level){
+  if(level!=="중등") return t;
+  const m=(window.DAOL_MID_PROFILE||{})[name]; if(!m) return t;
+  return {...t, intro:m.intro||t.intro,
+    principle:(m.principle||[]).join("\n")||t.principle,
+    strategy:(m.strategy||[]).join("\n")||t.strategy};
+}
+// 입시 컨설팅 (고등 전용)
+function consultSection(grade){
+  const C=window.DAOL_CONSULT; if(!C) return "";
+  const G=/고3|수능/.test(grade)?"고3":(/고2/.test(grade)?"고2":(/고1/.test(grade)?"고1":null));
+  if(!G) return "";
+  const g=C.byGrade[G]; if(!g) return "";
+  const list=g.list.map(id=>C.programs.find(p=>p.id===id)).filter(Boolean);
+  const w=n=>Number(n).toLocaleString("ko-KR");
+  return `<section class="paper"><div class="wrap reveal">
+    <div class="eyebrow">입시 컨설팅</div>
+    <h2 class="sec">${esc(C.why.title)}</h2>
+    <p class="lead">${C.why.body.split("\n").map(x=>esc(x)).join("<br>")}</p>
+    <div class="pillars" style="grid-template-columns:repeat(3,1fr)">${C.why.points.map((p,i)=>
+      `<div class="pl"><div class="n">0${i+1}</div><b>${esc(p.t)}</b><span>${esc(p.d)}</span></div>`).join("")}</div>
+    <div class="note warn" style="margin-top:18px">${g.tip}</div>
+    <table class="vs" style="margin-top:16px"><thead><tr><th>프로그램</th><th>내용</th><th class="our">비용</th></tr></thead><tbody>${
+      list.map(p=>`<tr>
+        <td class="ax">${esc(p.name)}<br><span style="font-size:11.5px;font-weight:600;color:var(--muted)">${esc(p.times)} · ${esc(p.docs)}</span></td>
+        <td>${esc(p.desc)}${p.caution?`<div style="margin-top:5px;font-size:12.5px;color:var(--danger)">※ ${esc(p.caution)}</div>`:""}</td>
+        <td class="our" style="text-align:right;white-space:nowrap"><b>${w(p.price)}원</b><br><span style="font-size:12px;color:var(--ok);font-weight:800">재원생 ${w(Math.round(p.price*(1-p.disc)))}원</span></td>
+      </tr>`).join("")}</tbody></table>
+    <div class="note" style="margin-top:14px">${C.note}</div>
+  </div></section>`;
+}
 
 function render(courses,teachers){
   const level=/^중/.test(GRADE)?"중등":"고등";
@@ -321,7 +355,7 @@ function render(courses,teachers){
         <div class="pillars">${cp.solution_points.map((p,idx)=>`<div class="pl"><div class="n">0${idx+1}</div><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div></div>`;
     }
     const profs=names.map(n=>{
-      const t=teachers[n]||{}, raw=(window.DAOL_SCHOLARS||{})[n]||{};
+      const t=profFor(teachers[n]||{}, n, level), raw=(window.DAOL_SCHOLARS||{})[n]||{};
       const pick=window.DAOL_SCHOLAR_PICK||(a=>a||[]);
       const sc={career:raw.career, top:pick(raw.top), up:pick(raw.up)};   // 1등급·만점·90점↑·향상된 2등급만
       const career=(sc.career||[]).length?sc.career:(t.career?bullets(t.career):[]);
@@ -351,6 +385,7 @@ function render(courses,teachers){
         ${bullets(c.audience).length?`<div class="cc-b"><b>이런 학생을 위한 강좌입니다</b><ul>${bullets(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${bullets(c.content).length?`<div class="cc-b"><b>수업에서 실제로 하는 것</b><ul>${bullets(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${bullets(c.textbook).length?`<div class="cc-b"><b>사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${(c.material_fee||bullets(c.textbook).length)?`<div class="cc-fee">📚 학원에서 배부하는 교재는 <b>교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
         ${NOW.length?`<div class="flag ${conf?'no':'ok'}">${conf?'현재 수강 과목과 시간이 겹칩니다 — 같은 과목의 다른 요일 반으로 조정 가능합니다':'현재 수강 중인 과목과 시간이 겹치지 않습니다'}</div>`:""}
       </div>`;
     });
@@ -376,6 +411,9 @@ function render(courses,teachers){
       ${NOW.length?`<div class="note ${anyConf?'warn':''}">${anyConf?'일부 과목이 현재 수강 시간과 겹칩니다. <b>같은 과목의 다른 요일 반으로 조정</b>이 가능하니 상담 때 말씀해 주세요.':'안내드린 과목은 <b>현재 수강 중인 시간과 겹치지 않습니다.</b> 지금 스케줄 그대로 추가하실 수 있습니다.'}</div>`:""}
     </div></section>`;
   }
+
+  /* 입시 컨설팅 (고등) */
+  h+=consultSection(GRADE);
 
   /* FAQ */
   const faqs=[]; targets.forEach(s=>{const cp=copyFor(s,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push(f));});
