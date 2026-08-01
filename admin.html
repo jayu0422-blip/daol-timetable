@@ -428,19 +428,16 @@
     <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <div class="chips" id="gChips"></div>
       <span style="flex:1"></span>
-      <button class="btn sm" id="gradePrint">🖨️ PDF/인쇄</button>
-      <button class="btn sm" id="gradePng">🖼️ 이미지저장</button>
+      <button class="btn primary" id="allPrint">🖨️ 전체 인쇄 / PDF (시간표+안내)</button>
+      <button class="btn sm" id="allPng">🖼️ 전체 이미지저장</button>
+      <button class="btn sm" id="engPng" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;font-weight:700">📩 중등영어 안내 이미지(2장)</button>
       <span class="muted" id="gradeStat"></span>
     </div>
     <div id="gradeSheet"><div class="empty">학년을 선택하세요.</div></div>
-    <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">
+    <div class="panel noprint" style="margin-top:14px;padding:9px 14px">
       <b>📖 2페이지 — 수업 방식·안내</b>
-      <span class="muted">시간표와 함께 배부하는 설명 페이지입니다.</span>
-      <span style="flex:1"></span>
-      <button class="btn sm" id="guidePrint">🖨️ PDF/인쇄</button>
-      <button class="btn sm" id="guidePng">🖼️ 이미지저장</button>
-      <button class="btn sm" id="engPng" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;font-weight:700">📩 중등영어 안내 이미지(2장)</button>
-      <span class="muted" id="guideStat"></span>
+      <span class="muted">아래 내용은 <b>위 시간표와 함께</b> 인쇄·저장됩니다. 따로 누르지 않아도 됩니다.</span>
+      <span class="muted" id="guideStat" style="margin-left:8px"></span>
     </div>
     <div id="guideSheet"></div>
     <div id="gradeUnparsed"></div>
@@ -1586,34 +1583,49 @@ document.getElementById("engPng").addEventListener("click", async ()=>{
     st.style.color="var(--ok)"; st.textContent="이미지 2장 저장 완료 ✓ 다운로드 폴더를 확인하세요.";
   }catch(e){ st.style.color="var(--danger)"; st.textContent="이미지 생성 실패 — 인터넷 연결을 확인하세요."; }
 });
-document.getElementById("guidePng").addEventListener("click", async ()=>{
-  document.getElementById("guideStat").textContent="이미지 생성 중…";
-  try{ const c=await guideCanvas(); const a=document.createElement("a"); a.download=`${selGrade}_수업방식안내.png`; a.href=c.toDataURL("image/png"); a.click(); document.getElementById("guideStat").textContent="이미지 저장 완료 ✓"; }
-  catch(e){ alert("이미지 생성 실패 — 인터넷 연결을 확인하세요."); }
-});
-document.getElementById("guidePrint").addEventListener("click", async ()=>{
-  document.getElementById("guideStat").textContent="PDF 준비 중…";
-  try{
-    const c=await guideCanvas(); const img=c.toDataURL("image/png");
-    const w=window.open("","_blank");
-    w.document.write(`<!doctype html><html><head><title>${selGrade} 수업방식 안내</title><style>@page{size:A4 portrait;margin:8mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:281mm}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
-    w.document.close(); document.getElementById("guideStat").textContent="";
-  }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
-});
 async function gradeCanvas(){ await loadH2C(); return await html2canvas(document.getElementById("gradeSheet"),{scale:2,backgroundColor:"#ffffff"}); }
-document.getElementById("gradePng").addEventListener("click", async ()=>{
-  document.getElementById("gradeStat").textContent="이미지 생성 중…";
-  try{ const c=await gradeCanvas(); const a=document.createElement("a"); a.download=`${selGrade}_시간표.png`; a.href=c.toDataURL("image/png"); a.click(); document.getElementById("gradeStat").textContent="이미지 저장 완료 ✓"; }
-  catch(e){ alert("이미지 생성 실패 — 인터넷 연결을 확인하세요."); }
-});
-document.getElementById("gradePrint").addEventListener("click", async ()=>{
-  document.getElementById("gradeStat").textContent="PDF 준비 중…";
+
+/* 시간표 + 수업방식 안내를 한 번에 출력 */
+async function bothCanvas(){
+  await loadH2C();
+  const tt = await html2canvas(document.getElementById("gradeSheet"),{scale:2,backgroundColor:"#ffffff"});
+  const gd = await html2canvas(document.getElementById("guideSheet"),{scale:2,backgroundColor:"#ffffff"});
+  return {tt, gd};
+}
+document.getElementById("allPng").addEventListener("click", async ()=>{
+  const st=document.getElementById("gradeStat");
+  st.style.color=""; st.textContent="이미지 만드는 중… (2장)";
   try{
-    const c=await gradeCanvas(); const img=c.toDataURL("image/png"); const landscape=c.width>=c.height;
+    const {tt,gd}=await bothCanvas();
+    const save=(c,n)=>{ const a=document.createElement("a"); a.download=n; a.href=c.toDataURL("image/png"); a.click(); };
+    save(tt, `${selGrade}_1_시간표.png`);
+    await new Promise(r=>setTimeout(r,600));
+    save(gd, `${selGrade}_2_수업방식안내.png`);
+    st.style.color="var(--ok)"; st.textContent="이미지 2장 저장 완료 ✓ (시간표 + 수업방식 안내)";
+  }catch(e){ st.style.color="var(--danger)"; st.textContent="이미지 생성 실패 — 인터넷 연결을 확인하세요."; }
+});
+document.getElementById("allPrint").addEventListener("click", async ()=>{
+  const st=document.getElementById("gradeStat");
+  st.style.color=""; st.textContent="PDF 준비 중… (시간표 + 안내)";
+  try{
+    const {tt,gd}=await bothCanvas();
+    const ttLand = tt.width>=tt.height;
     const w=window.open("","_blank");
-    w.document.write(`<!doctype html><html><head><title>${selGrade} 시간표</title><style>@page{size:A4 ${landscape?"landscape":"portrait"};margin:6mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:${landscape?"192mm":"280mm"}}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
-    w.document.close(); document.getElementById("gradeStat").textContent="";
-  }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
+    w.document.write(`<!doctype html><html><head><title>${selGrade} 시간표·수업방식 안내</title><style>
+      @page{margin:6mm}
+      html,body{margin:0;padding:0}
+      .pg{page-break-after:always;break-after:page;display:flex;align-items:center;justify-content:center;height:100vh}
+      .pg:last-child{page-break-after:auto;break-after:auto}
+      img{display:block;max-width:100%;max-height:100%}
+      @media print{ .pg{height:auto} }
+    </style></head><body>
+      <div class="pg" style="page-break-after:always"><img src="${tt.toDataURL("image/png")}"></div>
+      <div class="pg"><img src="${gd.toDataURL("image/png")}"></div>
+      <script>window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});<\/script>
+    </body></html>`);
+    w.document.close();
+    st.textContent="인쇄창에서 ‘용지 방향’을 확인한 뒤 인쇄하세요.";
+  }catch(e){ st.style.color="var(--danger)"; st.textContent="PDF 준비 실패 — 인터넷 연결을 확인하세요."; }
 });
 
 /* ===== 과목 안내 페이지(랜딩) 링크 생성기 =====
