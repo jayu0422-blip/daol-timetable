@@ -128,11 +128,36 @@
   .gblk .gtag.reg{background:#1d4ed8;color:#fff}
   .gblk .gtag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
   .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
-  .gblk.clinic{background:#fff!important;border:2px dashed currentColor}
+  .gblk .gdet{font-size:9.5px;color:#374151;margin-top:2px;line-height:1.3;border-top:1px dotted rgba(0,0,0,.18);padding-top:2px}
+  .gblk.clinic{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(0,0,0,.12)}
   .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:2px 18px 14px;font-size:11.5px;color:var(--muted)}
   .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
   .gg-sw{width:16px;height:12px;border-radius:3px;display:inline-block}
   @media print{ #gradeSheet{box-shadow:none;border:none} }
+
+  /* ===== 2페이지: 수업 방식·안내 ===== */
+  #guideSheet{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:22px 26px}
+  .gu-head{text-align:center;border-bottom:2px solid #7c2d12;padding-bottom:10px;margin-bottom:16px}
+  .gu-head .t1{font-size:11.5px;font-weight:800;letter-spacing:3px;color:var(--brand-ink)}
+  .gu-head .t2{font-size:21px;font-weight:800;color:#7c2d12;margin-top:3px}
+  .gu-sec{margin-bottom:16px}
+  .gu-sec h3{margin:0 0 7px;font-size:14.5px;color:#7c2d12;border-left:4px solid var(--brand);padding-left:8px}
+  .gu-sec p,.gu-sec li{font-size:12.5px;line-height:1.6;color:#374151}
+  .gu-sec ul{margin:5px 0 0;padding-left:19px}
+  .gu-table{width:100%;border-collapse:collapse;margin-top:6px}
+  .gu-table th,.gu-table td{border:1px solid var(--line);padding:7px 9px;font-size:12px;text-align:left;vertical-align:top}
+  .gu-table th{background:#fdf6ec;font-weight:800;color:#7c2d12;white-space:nowrap}
+  .gu-opt{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+  .gu-card{border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .gu-card.a{background:#f0f9ff;border-color:#bae6fd}
+  .gu-card.b{background:#fff7ed;border-color:#fed7aa}
+  .gu-card h4{margin:0 0 5px;font-size:13px}
+  .gu-card .tagline{font-size:11px;font-weight:800;border-radius:4px;padding:1px 6px;display:inline-block;margin-bottom:5px}
+  .gu-card.a .tagline{background:#0369a1;color:#fff}
+  .gu-card.b .tagline{background:#c2410c;color:#fff}
+  .gu-warn{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 13px;font-size:12px;color:#7f1d1d;line-height:1.6}
+  .gu-key{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#78350f;line-height:1.6;font-weight:600}
+  @media print{ #guideSheet{box-shadow:none;border:none} }
 </style>
 </head>
 <body>
@@ -214,6 +239,15 @@
       <span class="muted" id="gradeStat"></span>
     </div>
     <div id="gradeSheet"><div class="empty">학년을 선택하세요.</div></div>
+    <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">
+      <b>📖 2페이지 — 수업 방식·안내</b>
+      <span class="muted">시간표와 함께 배부하는 설명 페이지입니다.</span>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="guidePrint">🖨️ PDF/인쇄</button>
+      <button class="btn sm" id="guidePng">🖼️ 이미지저장</button>
+      <span class="muted" id="guideStat"></span>
+    </div>
+    <div id="guideSheet"></div>
     <div id="gradeUnparsed"></div>
     <p class="muted noprint">요일·시간·정규/클리닉은 강좌의 ‘시간’ 칸에서 자동 인식합니다. 고1 수학은 미사고·하남고·미사강변고 <b>합반</b>이라 세 학교 시간표에 동일하게(임결반/유용권반) 표시됩니다. 하남고1은 영어·수학이 미사고1과 동일합니다.</p>
   </section>
@@ -883,6 +917,13 @@ const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7
 let selGrade="미사고1";
 function buildGradeChips(){ document.getElementById("gradeChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
 document.getElementById("gradeChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); });
+// 중등 영어 요일별 진행 내용(간단 표기) — 어법·서술형/독해는 날짜가 고정이 아니라 번갈아 진행
+function midEngDetail(day){
+  if(day==="월"||day==="화") return "단어테스트 2단원 + 어법·서술형";
+  if(day==="수"||day==="목") return "단어테스트 2단원 + 독해";
+  if(day==="금"||day==="토") return "단어 재테스트 · 듣기 · 워크북 복습 · 1:1 첨삭";
+  return "";
+}
 // 학년: grade값 우선, 비어있으면 강좌명에서 보완
 function cGrade(c){ let g=ggf(c.grade); if(!g){ const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/); if(m) g=ggf(m[1]); } return g; }
 function coursesForGrade(key){
@@ -908,8 +949,12 @@ function renderGrade(){
     if(p.failed) unparsed.push(c);
     p.sessions.forEach(s=>{
       if(!byDay[s.day]) return;
-      const type=(s.type==="관리"||s.type==="클리닉")?"클리닉":"수업";
-      byDay[s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,grade:cGrade(c),school:courseSchool(c),name:c.course_name});
+      let type=(s.type==="관리"||s.type==="클리닉")?"클리닉":"수업";
+      // 중등 영어 운영 규칙: 월·수 / 화·목 = 수업, 금 / 토 = 관리(클리닉)
+      const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+      if(midEng) type = (s.day==="금"||s.day==="토") ? "클리닉" : "수업";
+      const detail = midEng ? midEngDetail(s.day) : "";
+      byDay[s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,grade:cGrade(c),school:courseSchool(c),name:c.course_name,detail});
     });
   });
   // 특이사항 메모
@@ -918,6 +963,7 @@ function renderGrade(){
   if(sunKor) notes.push("국어 클리닉은 <b>일요일 유동</b> 운영(학생별 조정).");
   if(selGrade==="미사고1"||selGrade==="미사강변고1") notes.push("고1 수학은 미사고·하남고·미사강변고 <b>합반</b>(임결반/유용권반).");
   if(selGrade==="미사고1") notes.push("하남고1은 영어·수학이 미사고1과 동일.");
+  if(/^중[123]$/.test(selGrade)) notes.push("영어: <b>월·수(화·목)=수업</b>, <b>금(토)=관리 클리닉</b>. 관리일은 선택 가능(자세한 내용은 ‘📖 수업 방식·안내’).");
   const noteHtml = notes.length ? `<div class="gg-note"><b>[안내]</b><br>${notes.join("<br>")}</div>` : `<div style="width:220px"></div>`;
   // 헤더
   let html=`<div class="gg-top">
@@ -939,14 +985,19 @@ function renderGrade(){
       const st=Math.max(b.start,START), en=Math.min(b.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,34);
       const L=b.lane/b.cols*100, W=100/b.cols;
       const col=SUBJ_COLOR[b.subj]||"#e5e7eb", bcol=SUBJ_BORDER[b.subj]||"#6b7280", clinic=b.type==="클리닉";
-      const box=clinic?`background:#fff;border:2px dashed ${bcol}`:`background:${col};border:1px solid rgba(0,0,0,.12)`;
+      // 같은 과목색 유지 + 클리닉은 옅은 그라데이션으로 구분
+      const box=clinic
+        ? `background:linear-gradient(135deg,#fff 0%,${col} 100%);border:1px dashed ${bcol}`
+        : `background:linear-gradient(135deg,${col} 0%,${col} 100%);border:1px solid rgba(0,0,0,.12)`;
       const style=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}`;
       const schoolTag=b.school?`[${b.school}]`:`[${selGrade}]`;
       const teamTag=(b.subj==="수학"&&b.grade==="고1")?` ${esc(b.teacher)}반`:"";
+      const detail=b.detail?`<div class="gdet">${esc(b.detail)}</div>`:"";
       html+=`<div class="gblk ${clinic?'clinic':''}" style="${style}">
         <div class="gsch">${esc(schoolTag)}${teamTag}</div>
-        <div class="gsub">${esc(b.subj)}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'클리닉':'정규'}</span></div>
+        <div class="gsub">${esc(b.subj)}<span class="gtag ${clinic?'cli':'reg'}">${clinic?'관리(클리닉)':'수업'}</span></div>
         <div class="gtm">${d} ${fmt(b.start)}~${fmt(b.end)}</div>
+        ${detail}
       </div>`;
     });
     html+=`</div>`;
@@ -957,13 +1008,96 @@ function renderGrade(){
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>영어</span>
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['수학']}"></span>수학</span>
     <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['과학']}"></span>과학</span>
-    <span class="k"><span class="gg-sw" style="background:#1d4ed8"></span>정규(채움)</span>
-    <span class="k"><span class="gg-sw" style="background:#fff;border:2px dashed #f59e0b"></span>클리닉(점선)</span>
+    <span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR['영어']}"></span>수업(진한색)</span>
+    <span class="k"><span class="gg-sw" style="background:linear-gradient(135deg,#fff,${SUBJ_COLOR['영어']});border:1px dashed ${SUBJ_BORDER['영어']}"></span>관리·클리닉(옅은 그라데이션)</span>
   </div>`;
   document.getElementById("gradeSheet").innerHTML=html;
   document.getElementById("gradeUnparsed").innerHTML = unparsed.length ? `<div class="unparsed"><b>⚠️ 시간 표기 확인 필요 ${unparsed.length}건</b> — 강사 입력을 "요일 HH:MM~HH:MM" 형식으로 정리하면 자동 배치됩니다.<br>`+unparsed.map(c=>`· [${esc(c.teacher)}] ${esc(c.course_name)} — "${esc((c.schedule_text||"").replace(/\n/g," / "))}"`).join("<br>")+`</div>` : "";
   document.getElementById("gradeStat").textContent=`${cs.length}강좌 · 블록 ${DAY_LIST.reduce((a,d)=>a+byDay[d].length,0)}개`;
+  renderGuide();
 }
+/* ===== 2페이지: 수업 방식·안내 ===== */
+function renderGuide(){
+  const isMid=/^중[123]$/.test(selGrade);
+  let html=`<div class="gu-head"><div class="t1">D A O L 1 0 5 &nbsp; G U I D E</div><div class="t2">${esc(selGrade)} 수업 방식 안내</div></div>`;
+
+  if(isMid){
+    html+=`<div class="gu-sec"><h3>1. 요일별 진행 방식</h3>
+      <table class="gu-table">
+        <tr><th style="width:110px">월·수 (또는 화·목)</th><td><b>수업일</b> — 단어 테스트(2단원) + 어법·서술형 / 독해<br>
+          <span style="color:#6b7280">※ 어법·서술형과 독해는 요일이 고정된 것이 아니라, 하루는 어법·서술형 / 하루는 독해 형태로 번갈아 진행되며 순서가 바뀌거나 섞여 나갈 수 있습니다.</span></td></tr>
+        <tr><th>금 (또는 토)</th><td><b>관리(클리닉)일</b> — 주중 단어 재테스트 · 듣기 · 주중 진행한 어법/서술형/독해 <b>워크북 재확인</b> · 모르는 부분 <b>1:1 첨삭</b>(상세 분석서 제공)</td></tr>
+      </table></div>`;
+
+    html+=`<div class="gu-sec"><h3>2. 단어 테스트 기준</h3>
+      <ul>
+        <li>처음 <b>약 2주</b>까지는 표제어 뜻 <b>하나만</b> 써도 통과입니다.</li>
+        <li>이후에는 <b>뜻 전체 + 유의어 + 파생어</b>까지 요구합니다.</li>
+        <li>최종적으로는 <b>예문 빈칸</b>에서 그 단어가 <b>어떤 뜻으로 쓰였는지</b>까지 확인하는 방식으로 진행합니다.</li>
+        <li>이 방식이 아니면 실제 점수 상승으로 이어지지 않기에, 학원은 이 기준을 지향합니다.</li>
+      </ul></div>`;
+
+    html+=`<div class="gu-sec"><h3>3. 영어 수강 방식 — 두 가지 선택</h3>
+      <div class="gu-opt">
+        <div class="gu-card a"><span class="tagline">선택 A · 수업 중심</span>
+          <h4>주중 수업만 수강 (월·수 / 화·목)</h4>
+          <p>수업만 듣고, 복습·숙제·정리는 <b>가정에서 학생이 스스로</b> 수행하는 방식입니다.</p>
+          <p style="color:#0369a1"><b>이런 학생에게 적합</b><br>
+          · 레벨테스트 <b>만점 또는 1개 정도 오답</b>인 극상위권<br>
+          · 자기주도 학습이 이미 완성되어 스스로 복습이 가능한 학생</p>
+        </div>
+        <div class="gu-card b"><span class="tagline">선택 B · 수업 + 관리 (권장)</span>
+          <h4>주중 수업 + 금(토) 관리 클리닉</h4>
+          <p>성적 향상 과정을 <b>학원에 위탁</b>하는 방식입니다. 복습·코칭·1:1 첨삭까지 학원이 책임집니다.</p>
+          <p style="color:#c2410c"><b>진행 내용</b><br>
+          · 주중 단어 재테스트 · 듣기<br>
+          · 주중 어법/서술형/독해 <b>워크북 전면 재확인</b><br>
+          · 상세 분석서를 주고 <b>학생이 직접 해석을 쓰고 단서를 찾도록</b> 유도<br>
+          · 그 과정에서 <b>진짜 모르는 부분만 1:1 첨삭</b></p>
+        </div>
+      </div>
+      <p style="margin-top:8px;color:#6b7280;font-size:12px">※ 관리일(금·토)은 옵션으로 열어두었지만, <b>실제로는 대부분의 학생이 필수적으로 진행</b>하고 있습니다.</p>
+    </div>`;
+
+    html+=`<div class="gu-sec"><h3>4. 관리(금·토)를 듣지 않을 경우 — 반드시 확인해 주세요</h3>
+      <div class="gu-warn">
+        관리 수업은 주중보다 <b>강도가 높습니다.</b> 주중에는 모르는 문제를 강사가 해설해 주지만, 관리일에는 학생이 스스로 해석을 쓰고 문제의 단서를 찾아야 하며 어휘도 다시 복습해야 하므로 학생들이 힘들어하는 편입니다. 그래서 <b>아직 마음의 준비가 되지 않은 학생</b>에게는 미수강을 허용하고 있습니다. 다만 다음 사항을 감안해 주세요.<br><br>
+        · 주간 리포트가 <b>개별 상황을 담기 어렵고</b>, 주중(월·수 또는 화·목) 단어 테스트 통과 여부 정도만 정리되어 나갑니다.<br>
+        · <b>성적 향상은 학원에서 보장할 수 없습니다.</b><br>
+        · 시간이 지날수록 관리에 참여하는 학생들과 이해도 차이가 벌어질 수 있고, 그 시점에 학원이 해 드릴 수 있는 부분이 제한됩니다.
+      </div></div>`;
+
+    html+=`<div class="gu-sec"><h3>5. 가장 중요한 부분</h3>
+      <div class="gu-key">성적은 <b>복습과 숙제를 집에서 실제로 해내는 학생</b>에게서만 오릅니다. 주도성이 매우 강한 학생이 아니라면, 수업은 들었지만 <b>점수는 오르지 않는</b> 경우가 대부분입니다. 이 점을 충분히 고려하여 선택해 주시기 바랍니다.</div></div>`;
+
+    html+=`<div class="gu-sec"><h3>6. 참고</h3><p>요일·시간·수강료 등 <b>수업 조건과 수강료는 선택 A/B에 관계없이 동일</b>합니다.</p></div>`;
+  } else {
+    html+=`<div class="gu-sec"><h3>1. 수업 · 관리(클리닉) 구분</h3>
+      <p>시간표에서 <b>진한 색 블록은 수업</b>, <b>옅은 그라데이션 블록은 관리(클리닉)</b>입니다.</p>
+      <ul>
+        <li><b>수업</b> — 개념 강의·문제 풀이 등 정규 진행</li>
+        <li><b>관리(클리닉)</b> — 복습·재테스트·질문 및 1:1 첨삭 중심</li>
+      </ul></div>`;
+    if(selGrade.indexOf("고1")>-1) html+=`<div class="gu-sec"><h3>2. 고1 수학 합반 안내</h3><p>고1 수학은 <b>미사고·하남고·미사강변고 합반</b>으로 운영되며, <b>임결 선생님 반</b>과 <b>유용권 선생님 반</b>으로 구분됩니다. 하남고1은 영어·수학이 미사고1과 동일하게 진행됩니다.</p></div>`;
+    html+=`<div class="gu-sec"><h3>${selGrade.indexOf("고1")>-1?"3":"2"}. 국어 클리닉</h3><p>국어 클리닉은 <b>일요일에 유동적으로</b> 운영되며, 학생별 일정에 맞춰 조정됩니다.</p></div>`;
+  }
+  document.getElementById("guideSheet").innerHTML=html;
+}
+async function guideCanvas(){ await loadH2C(); return await html2canvas(document.getElementById("guideSheet"),{scale:2,backgroundColor:"#ffffff"}); }
+document.getElementById("guidePng").addEventListener("click", async ()=>{
+  document.getElementById("guideStat").textContent="이미지 생성 중…";
+  try{ const c=await guideCanvas(); const a=document.createElement("a"); a.download=`${selGrade}_수업방식안내.png`; a.href=c.toDataURL("image/png"); a.click(); document.getElementById("guideStat").textContent="이미지 저장 완료 ✓"; }
+  catch(e){ alert("이미지 생성 실패 — 인터넷 연결을 확인하세요."); }
+});
+document.getElementById("guidePrint").addEventListener("click", async ()=>{
+  document.getElementById("guideStat").textContent="PDF 준비 중…";
+  try{
+    const c=await guideCanvas(); const img=c.toDataURL("image/png");
+    const w=window.open("","_blank");
+    w.document.write(`<!doctype html><html><head><title>${selGrade} 수업방식 안내</title><style>@page{size:A4 portrait;margin:8mm}html,body{margin:0;padding:0}img{display:block;margin:0 auto;max-width:100%;max-height:281mm}</style></head><body><img src="${img}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
+    w.document.close(); document.getElementById("guideStat").textContent="";
+  }catch(e){ alert("PDF 준비 실패 — 인터넷 연결을 확인하세요."); }
+});
 async function gradeCanvas(){ await loadH2C(); return await html2canvas(document.getElementById("gradeSheet"),{scale:2,backgroundColor:"#ffffff"}); }
 document.getElementById("gradePng").addEventListener("click", async ()=>{
   document.getElementById("gradeStat").textContent="이미지 생성 중…";
