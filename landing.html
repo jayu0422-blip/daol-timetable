@@ -178,7 +178,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=75abf301"></script>
 <script src="copy.js?v=79cc0e2c"></script>
-<script src="scholars.js?v=79f65b8f"></script>
+<script src="scholars.js?v=2beaf3d4"></script>
 <script>
 const P=new URLSearchParams(location.search);
 const GRADE=P.get("g")||"중1";
@@ -321,7 +321,9 @@ function render(courses,teachers){
         <div class="pillars">${cp.solution_points.map((p,idx)=>`<div class="pl"><div class="n">0${idx+1}</div><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div></div>`;
     }
     const profs=names.map(n=>{
-      const t=teachers[n]||{}, sc=(window.DAOL_SCHOLARS||{})[n]||{};
+      const t=teachers[n]||{}, raw=(window.DAOL_SCHOLARS||{})[n]||{};
+      const pick=window.DAOL_SCHOLAR_PICK||(a=>a||[]);
+      const sc={career:raw.career, top:pick(raw.top), up:pick(raw.up)};   // 1등급·만점·90점↑·향상된 2등급만
       const career=(sc.career||[]).length?sc.career:(t.career?bullets(t.career):[]);
       if(!(t.photo_url||t.principle||t.strategy||career.length||(sc.top||[]).length)) return "";
       return `<div class="tprofile reveal">

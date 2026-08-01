@@ -1,4 +1,31 @@
-/* 다올105 강사별 프로필·성적우수자 (2025년 중·고등부 기준) */
+/* 다올105 강사별 프로필·성적우수자 (2025년 중·고등부 기준)
+   노출 기준(원장 지침):
+   · 1등급 / 만점 / 90점 이상만 노출
+   · 2등급은 그보다 낮은 등급에서 향상된 경우에만 노출
+   · 대학 합격 실적은 항상 노출
+   원본은 그대로 두고 화면에 뿌릴 때 걸러낸다(기준이 바뀌면 이 함수만 고치면 됨). */
+window.DAOL_SCHOLAR_OK = function(s){
+  const t = String(s||"").replace(/\([^)]*\)/g, "");          // "(2등급 상승)" 같은 증감 표기는 제외하고 판정
+  if(!t.trim()) return false;
+  if(/대학|학과|캠퍼스|의대|약대|치대|한의대|간호|[가-힣]대(?=\s|$)/.test(t) && !/등급|점/.test(t)) return true;
+  const sc = [...t.matchAll(/(\d{2,3}(?:\.\d+)?)\s*점/g)].map(m=>parseFloat(m[1]));
+  if(sc.length) return sc[sc.length-1] >= 90;                 // 마지막(결과) 점수 기준
+  const gr = [...t.matchAll(/(\d)\s*등급/g)].map(m=>+m[1]);
+  if(gr.length){
+    const to = gr[gr.length-1];                               // 마지막(결과) 등급
+    if(to === 1) return true;
+    if(to === 2){                                             // 2등급은 '하위 등급에서 향상'만
+      const m = t.match(/(\d)\s*(?:등급)?\s*(?:→|->)/);
+      const from = m ? +m[1] : (gr.length>1 ? gr[0] : null);
+      return from != null && from > 2;
+    }
+    return false;
+  }
+  return false;
+};
+window.DAOL_SCHOLAR_PICK = arr => (arr||[]).filter(window.DAOL_SCHOLAR_OK);
+
+
 window.DAOL_SCHOLARS = {
   "김영하": {
     career: ["이화여자대학교 석사 졸", "현) 다올105 국어과 원장", "현) 천재교육 밀크T 온라인 국어강사", "전) 하이스트 국어 대표강사"],
