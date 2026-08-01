@@ -927,7 +927,7 @@ document.getElementById("gradeChips").addEventListener("click",e=>{ const c=e.ta
 function notesFor(raw, day, start){
   if(!String(raw||"").trim()) return "";
   const hit=[], common=[];
-  String(raw).split(/\n|·|\//).forEach(line=>{
+  String(raw).split(/\n|\//).forEach(line=>{   // 줄바꿈·슬래시만 구분자(·는 본문에 흔히 쓰여 제외)
     let s=line.trim(); if(!s) return;
     const tm=s.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
     let t0=null,t1=null;
