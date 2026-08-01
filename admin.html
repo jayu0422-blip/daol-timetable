@@ -224,7 +224,12 @@
   .pk-card .n{font-size:14.5px;font-weight:800}
   .pk-card .n em{font-style:normal;font-size:11px;color:var(--muted);font-weight:600;margin-left:5px}
   .pk-card .q{font-size:12.5px;color:var(--brand-ink);font-weight:700;margin:3px 0 5px}
-  .pk-card b.lb{display:block;font-size:10.5px;color:var(--brand-ink);margin-top:4px}
+  .pk-card b.lb{display:block;font-size:10.5px;color:var(--brand-ink);margin-top:5px}
+  .pk-career{font-size:11px;color:var(--muted);line-height:1.5;margin-top:2px}
+  .pk-sch{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+  .pk-sch span{font-size:10.5px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:4px;padding:1px 6px}
+  .pk-sch.up span{color:#075985;background:#e0f2fe}
+  .pk-todo{margin-top:6px;font-size:10.5px;color:#b91c1c;background:#fef2f2;border:1px dashed #fecaca;border-radius:6px;padding:4px 7px}
   .pk-card ul{margin:1px 0 0;padding-left:16px}
   .pk-card li{font-size:11.8px;line-height:1.5;color:#374151}
   @media print{
@@ -1507,14 +1512,21 @@ function renderPack(){
   if(packOn.has("tt"))     h+=packDoc("② 학년별 시간표",packGrade,`<div class="pk-sheet">${ttHtml}</div>`);
   if(packOn.has("guide"))  h+=packDoc("③ 수업 방식 안내",packGrade,`<div class="pk-sheet">${guideHtml}</div>`);
   if(packOn.has("prof")){
+    const pick=window.DAOL_SCHOLAR_PICK||(a=>a||[]);
     const cards=names.map(n=>{
-      const t=TEACHERS[n]||{};
+      const t=TEACHERS[n]||{}, raw=(window.DAOL_SCHOLARS||{})[n]||{};
+      const career=(raw.career||[]).length?raw.career:(t.career?bullets(t.career):[]);
+      const top=pick(raw.top), up=pick(raw.up);
       return `<div class="pk-card">
         ${t.photo_url?`<img src="${escA(t.photo_url)}" alt="${esc(n)}">`:""}
-        <div><div class="n">${esc(n)} 선생님${t.subject?`<em>${esc(t.subject)}</em>`:""}${t.career?`<em>${esc(t.career)}</em>`:""}</div>
+        <div><div class="n">${esc(n)} 선생님${t.subject?`<em>${esc(t.subject)}</em>`:""}</div>
+        ${career.length?`<div class="pk-career">${career.map(x=>esc(x)).join(" · ")}</div>`:""}
         ${t.intro?`<div class="q">“${esc(t.intro)}”</div>`:""}
         ${t.principle?`<b class="lb">수업 원칙</b><ul>${bullets(t.principle).slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
         ${t.strategy?`<b class="lb">점수를 올리는 방식</b><ul>${bullets(t.strategy).slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+        ${top.length?`<b class="lb">🏅 성적 우수자</b><div class="pk-sch">${top.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+        ${up.length?`<b class="lb">📈 성적 향상자</b><div class="pk-sch up">${up.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+        ${(!t.principle&&!t.strategy)?`<div class="pk-todo noprint">⚠ 수업 원칙·전략 미입력 — 강사 페이지에서 입력하면 여기에 표시됩니다</div>`:""}
         </div></div>`;
     }).join("");
     h+=packDoc("④ 담당 강사 프로필",`${packGrade} · ${names.length}명`,`<div class="pk-prof">${cards||'<span class="muted">담당 강사 정보가 없습니다.</span>'}</div>`);
