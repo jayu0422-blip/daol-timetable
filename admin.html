@@ -172,7 +172,15 @@
   .gu-prof-b{flex:1}
   .gu-prof-n{font-size:13.5px;font-weight:800;color:#1f2430}
   .gu-prof-n span{font-size:11px;font-weight:600;color:var(--muted)}
+  .gu-prof-c{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}
   .gu-prof-i{font-size:12.5px;color:#b45309;font-weight:700;margin:3px 0 5px}
+  .gu-sch{margin-top:7px;background:#fffdf5;border:1px solid #fde68a;border-radius:8px;padding:7px 10px}
+  .gu-sch.up{background:#f0f9ff;border-color:#bae6fd}
+  .gu-sch>b{display:block;font-size:11px;color:#92400e;margin-bottom:3px}
+  .gu-sch.up>b{color:#0369a1}
+  .gu-sch-l{display:flex;flex-wrap:wrap;gap:4px}
+  .gu-sch-l span{font-size:11px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:5px;padding:1px 7px}
+  .gu-sch.up .gu-sch-l span{color:#075985;background:#e0f2fe}
   .gu-prof-s{margin-top:5px}
   .gu-prof-s>b{display:block;font-size:11px;color:var(--brand-ink);margin-bottom:2px}
   .gu-prof-s ul{margin:0;padding-left:17px}
@@ -455,6 +463,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="copy.js"></script>
+<script src="scholars.js"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -1307,21 +1316,27 @@ function subjectCardsHtml(){
     // 과목 서사 + 담당 강사의 수업 원칙·전략으로 감싸 설득력을 높인다
     const level = /^중/.test(selGrade) ? "중등" : "고등";
     const cp = copyFor(sub, level);
+    // 중등은 비유 유지, 고등은 비유 대신 강사 프로필·성적 우수자로 설득
     const intro = cp ? `<div class="gu-intro">
         <div class="gu-intro-h">${esc(cp.problem.title)}</div>
         <p>${esc(cp.problem.body)}</p>
-        <div class="gu-intro-a"><b>${esc(cp.analogy.title)}</b> ${esc(cp.analogy.body)}</div>
+        ${level==="중등"?`<div class="gu-intro-a"><b>${esc(cp.analogy.title)}</b> ${esc(cp.analogy.body)}</div>`:""}
       </div>` : "";
     const names=[...new Set(list.map(c=>c.teacher).filter(Boolean))];
     const profs = names.map(n=>{
-      const t=TEACHERS[n]; if(!t || !(t.principle||t.strategy||t.intro)) return "";
+      const t=TEACHERS[n]||{}, sc=(window.DAOL_SCHOLARS||{})[n]||{};
+      const career=(sc.career||[]).length?sc.career:(t.career?bullets(t.career):[]);
+      if(!(t.principle||t.strategy||t.intro||career.length||(sc.top||[]).length)) return "";
       return `<div class="gu-prof">
         ${t.photo_url?`<img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님">`:""}
         <div class="gu-prof-b">
-          <div class="gu-prof-n">${esc(n)} 선생님${t.career?` <span>${esc(t.career)}</span>`:""}</div>
+          <div class="gu-prof-n">${esc(n)} 선생님</div>
+          ${career.length?`<div class="gu-prof-c">${career.map(x=>esc(x)).join(" · ")}</div>`:""}
           ${t.intro?`<div class="gu-prof-i">“${esc(t.intro)}”</div>`:""}
           ${t.principle?`<div class="gu-prof-s"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
           ${t.strategy?`<div class="gu-prof-s"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+          ${(sc.top||[]).length?`<div class="gu-sch"><b>🏅 성적 우수자</b><div class="gu-sch-l">${sc.top.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}
+          ${(sc.up||[]).length?`<div class="gu-sch up"><b>📈 성적 향상자</b><div class="gu-sch-l">${sc.up.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}
         </div></div>`;
     }).join("");
     return `<div class="gu-sec"><h3>${esc(sub)}</h3>${intro}${profs}${body}</div>`;

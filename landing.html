@@ -97,7 +97,15 @@
   .tp-photo img{width:100%;height:auto;object-fit:cover}
   .tp-name{font-family:var(--serif);font-size:22px;font-weight:800;color:var(--ink)}
   .tp-name em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--muted);margin-left:8px}
+  .tp-career{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.6}
   .tp-quote{font-family:var(--serif);font-size:16px;color:var(--navy-soft);margin:7px 0 12px;line-height:1.6}
+  .sch{margin-top:12px;background:var(--cream);border:1px solid var(--gold-soft);border-radius:11px;padding:11px 13px}
+  .sch.up{background:#f3f7fc;border-color:#cfdcf0}
+  .sch>b{display:block;font-size:11.5px;font-weight:800;letter-spacing:.06em;color:var(--gold);margin-bottom:6px}
+  .sch.up>b{color:var(--navy-soft)}
+  .sch-l{display:flex;flex-wrap:wrap;gap:5px}
+  .sch-l span{font-size:12px;font-weight:800;color:var(--navy);background:#fff;border:1px solid var(--gold-soft);border-radius:7px;padding:3px 9px}
+  .sch.up .sch-l span{border-color:#cfdcf0}
   .tp-b{margin-top:9px}
   .tp-b b{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--gold);border-bottom:1px solid var(--gold-soft);padding-bottom:2px;margin-bottom:5px}
   .tp-b ul{margin:0;padding-left:18px}
@@ -170,6 +178,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="copy.js"></script>
+<script src="scholars.js"></script>
 <script>
 const P=new URLSearchParams(location.search);
 const GRADE=P.get("g")||"중1";
@@ -300,7 +309,7 @@ function render(courses,teachers){
       h+=`<div class="eyebrow">지금 이런 상황이라면</div>
         <h2 class="sec">${esc(cp.problem.title)}</h2>
         <div class="story"><p>${esc(cp.problem.body)}</p>
-          <div class="pull"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div>
+          ${level==="중등"?`<div class="pull"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div>`:""}
         </div>`;
       h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">흔한 오해</div>
         <h3 class="sub">${esc(cp.myth.title)}</h3><p class="lead">${esc(cp.myth.body)}</p></div>`;
@@ -312,13 +321,18 @@ function render(courses,teachers){
         <div class="pillars">${cp.solution_points.map((p,idx)=>`<div class="pl"><div class="n">0${idx+1}</div><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div></div>`;
     }
     const profs=names.map(n=>{
-      const t=teachers[n]; if(!t) return "";
+      const t=teachers[n]||{}, sc=(window.DAOL_SCHOLARS||{})[n]||{};
+      const career=(sc.career||[]).length?sc.career:(t.career?bullets(t.career):[]);
+      if(!(t.photo_url||t.principle||t.strategy||career.length||(sc.top||[]).length)) return "";
       return `<div class="tprofile reveal">
         ${t.photo_url?`<div class="tp-photo"><img src="${escA(t.photo_url)}" alt="${esc(n)} 선생님"></div>`:""}
-        <div><div class="tp-name">${esc(n)} 선생님${t.career?`<em>${esc(t.career)}</em>`:""}</div>
+        <div><div class="tp-name">${esc(n)} 선생님</div>
+        ${career.length?`<div class="tp-career">${career.map(x=>esc(x)).join(" · ")}</div>`:""}
         ${t.intro?`<div class="tp-quote">“${esc(t.intro)}”</div>`:""}
         ${t.principle?`<div class="tp-b"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${t.strategy?`<div class="tp-b"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+        ${(sc.top||[]).length?`<div class="sch"><b>🏅 성적 우수자</b><div class="sch-l">${sc.top.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}
+        ${(sc.up||[]).length?`<div class="sch up"><b>📈 성적 향상자</b><div class="sch-l">${sc.up.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}
         </div></div>`;
     }).join("");
     if(profs) h+=`<div style="margin-top:36px"><div class="eyebrow">담당 선생님</div>${profs}</div>`;
