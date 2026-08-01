@@ -367,8 +367,7 @@
     <button class="tab" data-tab="fee">💰 수강료</button>
     <button class="tab" data-tab="day">📅 요일별·강의실</button>
     <span class="tabsep"></span>
-    <button class="tab" data-tab="edit">✏️ 시간표·수강료 강좌 수정 및 추가</button>
-    <button class="tab" data-tab="manage">🗑️ 강좌 삭제</button>
+    <button class="tab" data-tab="edit">✏️ 강좌 수정·추가·삭제</button>
     <span class="tabsep"></span>
     <button class="tab" data-tab="pack">🖨️ 상담용 자료</button>
     <button class="tab" data-tab="lp">🔗 과목 안내 페이지</button>
@@ -503,7 +502,7 @@
   <section id="tab-edit" class="hide">
     <div class="panel" style="padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <b>✏️ 학원 시간표·수강료 직접 수정</b>
-      <span class="muted">모든 강좌의 학년·강좌명·시간·수강료·📚교재비·비고를 바로 고치고, <b>새 강좌를 추가</b>하거나 복제할 수 있습니다. <b>입력 즉시 자동 저장</b>돼 시간표·수강료에 반영됩니다.</span>
+      <span class="muted">모든 강좌를 여기서 <b>수정·추가·복제·삭제(폐강)</b> 합니다. <b>입력 즉시 자동 저장</b>돼 시간표·수강료에 반영됩니다.</span>
       <span style="flex:1"></span>
       <a class="btn sm" href="control.html" target="_blank" style="text-decoration:none">↗ 새 창으로 크게</a>
     </div>
@@ -559,29 +558,11 @@
     <div id="packView"></div>
   </section>
 
-  <!-- ===== 강좌 추가·삭제 ===== -->
-  <section id="tab-manage" class="hide">
-    <div class="panel" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <b>🗑️ 강좌 삭제 (폐강 처리)</b>
-      <span class="muted">학년(중1→고3) 순으로 전체 강좌를 나열합니다. 삭제하면 시간표·수강료·강사 페이지에서 <b>즉시 함께 사라집니다.</b> 되돌릴 수 없습니다.<br>
-        새 강좌를 <b>추가</b>하시려면 <b>「✏️ 시간표·수강료 강좌 수정 및 추가」</b> 탭을 이용하세요.</span>
-      <span style="flex:1"></span>
-      <input class="search" id="mgSearch" placeholder="🔍 강좌명·강사 검색" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 11px;min-width:170px">
-      <span class="muted" id="mgStat"></span>
-    </div>
-
-    <div class="panel" style="padding:0;overflow:auto">
-      <table class="dash" id="mgTable">
-        <thead><tr><th style="width:78px">학년</th><th style="width:66px">과목</th><th>강좌명</th><th style="width:86px">강사</th><th style="width:210px">시간</th><th style="width:64px">유형</th><th style="width:96px">삭제</th></tr></thead>
-        <tbody id="mgBody"></tbody>
-      </table>
-    </div>
-  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=75abf301"></script>
-<script src="copy.js?v=e6c45a1a"></script>
+<script src="copy.js?v=ba9da420"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script src="consulting.js?v=e095804b"></script>
 <script src="scholars_all.js?v=32243876"></script>
@@ -675,8 +656,7 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","grade","fee","day","edit","manage","pack","lp"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
-  if(t.dataset.tab==="manage") renderManage();
+  ["dash","gen","grade","fee","day","edit","pack","lp"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="pack"){ buildPackChips(); renderPack(); }
   if(t.dataset.tab==="lp"){ buildLpChips(); renderLp(); }
   if(t.dataset.tab==="fee") renderFee();
@@ -1797,46 +1777,6 @@ function renderPack(){
   document.getElementById("packStat").textContent=`${packGrade} · 문서 ${packOn.size}종`;
 }
 
-/* ===== 강좌 삭제(폐강 처리) — 추가는 '시간표·수강료 강좌 수정 및 추가' 탭에서 ===== */
-let mgSearch="";
-function renderManage(){
-  let rows=DATA.slice();
-  if(mgSearch){ const q=mgSearch.toLowerCase();
-    rows=rows.filter(c=>[c.course_name,c.teacher,c.grade,c.subject].some(v=>String(v||"").toLowerCase().includes(q))); }
-  rows.sort((a,b)=>(GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade))
-    || (SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))
-    || String(a.course_name||"").localeCompare(String(b.course_name||""),"ko"));
-  let html="", lastG=null;
-  rows.forEach(c=>{
-    const g=c.grade||"(학년 미지정)";
-    if(g!==lastG){ lastG=g; html+=`<tr class="mg-grouphead"><td colspan="7">${esc(g)}</td></tr>`; }
-    html+=`<tr data-id="${c.id}">
-      <td>${esc(c.grade||"—")}</td>
-      <td>${esc(c.subject||"—")}</td>
-      <td><b>${esc(c.course_name||"(강좌명 없음)")}</b></td>
-      <td>${esc(c.teacher||"—")}</td>
-      <td class="mg-sched">${esc((c.schedule_text||"—").replace(/\n/g,"\n"))}</td>
-      <td><span class="mg-gtag">${esc(c.course_type||"정규")}</span></td>
-      <td><button class="btn sm danger" data-del="${c.id}">🗑 삭제</button></td>
-    </tr>`;
-  });
-  document.getElementById("mgBody").innerHTML = html || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">표시할 강좌가 없습니다.</td></tr>`;
-  document.getElementById("mgStat").textContent=`총 ${rows.length}강좌`;
-}
-document.getElementById("mgSearch").addEventListener("input",e=>{ mgSearch=e.target.value.trim(); renderManage(); });
-document.getElementById("mgBody").addEventListener("click", async e=>{
-  const btn=e.target.closest("[data-del]"); if(!btn) return;
-  const id=btn.dataset.del, c=DATA.find(x=>x.id===id); if(!c) return;
-  if(!confirm(`"${c.course_name||"(강좌명 없음)"}" 강좌를 삭제할까요?\n\n· 담당: ${c.teacher||"-"} / ${c.grade||"-"} ${c.subject||""}\n· 시간표·수강료·강사 페이지에서 모두 사라집니다.\n· 되돌릴 수 없습니다.`)) return;
-  document.getElementById("mgStat").textContent="삭제 중…";
-  if(useSupa){
-    const {error}=await sb.from("courses").delete().eq("id",id);
-    if(error){ document.getElementById("mgStat").textContent="삭제 오류: "+error.message; return; }
-  }
-  DATA=DATA.filter(x=>x.id!==id);
-  await loadData(); renderManage();
-  document.getElementById("mgStat").textContent="삭제됨 ✓";
-});
 
 buildSchoolFilter();
 loadData();

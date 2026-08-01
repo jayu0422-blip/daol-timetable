@@ -51,6 +51,30 @@
   .detail-grid .f{display:flex;flex-direction:column;gap:3px}
   .detail-grid label{font-size:11px;font-weight:700;color:var(--muted)}
   .rowbtns{display:flex;gap:4px;white-space:nowrap}
+  /* 상세 버튼 — 미입력이면 눈에 띄게 */
+  .btn.detail{font-weight:800}
+  .btn.detail.ok{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
+  .btn.detail.soft{background:#fffbeb;border-color:#fbbf24;color:#92400e}
+  .btn.detail.hard{background:#fee2e2;border-color:#ef4444;color:#b91c1c;animation:blink 1.4s ease-in-out infinite}
+  @keyframes blink{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.55)}50%{box-shadow:0 0 0 5px rgba(239,68,68,0)}}
+  /* 삭제 버튼 — 확실히 구분 */
+  .btn.delbtn{background:#fff1f2;border-color:#fca5a5;color:#b91c1c;font-weight:800}
+  .btn.delbtn:hover{background:#dc2626;border-color:#dc2626;color:#fff}
+  /* 상세란 색 구분 */
+  .miss-bar{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin-bottom:11px;font-size:12.5px;color:#92400e}
+  .miss-bar.hard{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+  .miss-bar span{display:block;margin-top:2px;font-size:11.5px;opacity:.9}
+  .detail-grid .grp{border-radius:9px;padding:8px 10px;border:1px solid transparent}
+  .detail-grid .grp.time{background:#eef6ff;border-color:#c7ddf7}
+  .detail-grid .grp.who {background:#f2fbf4;border-color:#c8ecd2}
+  .detail-grid .grp.what{background:#fff8ee;border-color:#f6dfba}
+  .detail-grid .grp.flow{background:#f6f2fd;border-color:#dcd0f5}
+  .detail-grid .grp.book{background:#fdf2f8;border-color:#f5cfe4}
+  .detail-grid .grp.need{border-color:#f87171;box-shadow:0 0 0 2px rgba(248,113,113,.18)}
+  .detail-grid .grp.need textarea{border-color:#f87171;background:#fff}
+  .detail-grid .grp label{font-size:11.5px;font-weight:800;color:#334155}
+  .detail-grid .grp label span{font-weight:500;color:var(--muted)}
+  .detail-grid .grp label b.req{background:#dc2626;color:#fff;border-radius:4px;padding:0 6px;font-size:10px;margin-left:3px}
   .divlbl{font-size:12px;color:var(--muted);font-weight:700;padding-top:6px}
   .hide{display:none!important}
   .empty{padding:40px;text-align:center;color:var(--muted)}
@@ -200,8 +224,22 @@ function render(){
   buildTeacherChips();
 }
 
+/* 필수 항목 누락 검사 — 빠지면 시간표·안내문이 비어서 나간다 */
+const REQ=[
+  {k:"schedule_text", t:"시간",            hard:true},
+  {k:"session_notes", t:"요일·시간대별 진행 내용"},
+  {k:"textbook",      t:"사용 교재"},
+  {k:"audience",      t:"강좌 대상"},
+  {k:"content",       t:"강좌 내용"}
+];
+function missingOf(c){ return REQ.filter(r=>!String(c[r.k]||"").trim()); }
+
 function rowHtml(c){
   const id=c.id;
+  const miss=missingOf(c), hard=miss.some(m=>m.hard);
+  const detailCls = hard ? "btn sm detail hard" : (miss.length ? "btn sm detail soft" : "btn sm detail ok");
+  const detailTxt = hard ? `⚠ 시간 미입력` : (miss.length ? `⚠ 상세 ${miss.length}` : `⋯ 상세`);
+  const detailTip = miss.length ? `미입력: ${miss.map(m=>m.t).join(", ")}` : "시간·대상·내용·교재 보기";
   return `
   <tr data-id="${id}">
     <td class="cell-teacher"><select data-k="teacher">${teacherOptions(c.teacher)}</select></td>
@@ -214,20 +252,22 @@ function rowHtml(c){
     <td class="cell-won"><input class="won" data-k="material_fee" inputmode="numeric" value="${won(c.material_fee)}" placeholder="0"></td>
     <td class="cell-note"><input data-k="tuition_note" value="${escA(c.tuition_note)}" placeholder="비고"></td>
     <td><div class="rowbtns">
-      <button class="btn sm" data-act="detail" title="시간·대상학교·대상·내용">⋯ 상세</button>
+      <button class="${detailCls}" data-act="detail" title="${escA(detailTip)}">${detailTxt}</button>
       <button class="btn sm" data-act="dup" title="복제">⧉</button>
-      <button class="btn sm danger" data-act="del" title="삭제">🗑</button>
+      <button class="btn sm delbtn" data-act="del" title="이 강좌를 삭제(폐강)합니다">🗑 삭제</button>
     </div></td>
   </tr>
   <tr class="detail-row hide" data-detail="${id}"><td colspan="10">
+    ${miss.length?`<div class="miss-bar ${hard?'hard':''}">${hard?'⛔':'⚠️'} <b>미입력 ${miss.length}개</b> — ${miss.map(m=>esc(m.t)).join(" · ")}
+      ${hard?'<span>시간이 없으면 <b>시간표에 아예 나오지 않습니다.</b> 먼저 채워주세요.</span>':'<span>학부모 안내문에서 해당 항목이 빈칸으로 나갑니다.</span>'}</div>`:""}
     <div class="detail-grid">
       <div class="f"><label>구분(자동)</label><div class="divlbl">${esc(divisionOf(c.grade))}</div></div>
       <div class="f"><label>대상학교</label><select data-k="target_school">${optList(SCHOOLS,c.target_school||"공통")}</select></div>
-      <div class="f"><label>시간 (여러 줄 가능)</label><textarea data-k="schedule_text" placeholder="예: 월수금 18:30~20:00">${esc(c.schedule_text)}</textarea></div>
-      <div class="f"><label>강좌 대상</label><textarea data-k="audience" placeholder="어떤 학생이 듣는지">${esc(c.audience)}</textarea></div>
-      <div class="f" style="grid-column:2 / span 3"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="수업 내용">${esc(c.content)}</textarea></div>
-      <div class="f" style="grid-column:2 / span 3"><label>⏱️ 요일·시간대별 진행 내용 (학년별 시간표에 표시)</label><textarea data-k="session_notes" placeholder="예) 월: 18:00~18:30 단어테스트 / 18:30~20:00 어법·서술형">${esc(c.session_notes)}</textarea></div>
-      <div class="f" style="grid-column:2 / span 3"><label>📖 사용 교재 (수업 방식 안내에 표시)</label><textarea data-k="textbook" placeholder="예) 해커스 중학영문법 2학년 / 자이스토리 문학">${esc(c.textbook)}</textarea></div>
+      <div class="f grp time ${String(c.schedule_text||"").trim()?"":"need"}"><label>🕘 시간 <b class="req">필수</b> <span>(여러 줄 가능)</span></label><textarea data-k="schedule_text" placeholder="예: 월수금 18:30~20:00">${esc(c.schedule_text)}</textarea></div>
+      <div class="f grp who ${String(c.audience||"").trim()?"":"need"}"><label>👥 강좌 대상</label><textarea data-k="audience" placeholder="어떤 학생이 듣는지">${esc(c.audience)}</textarea></div>
+      <div class="f grp what ${String(c.content||"").trim()?"":"need"}" style="grid-column:2 / span 3"><label>📘 강좌 내용·특징·목표</label><textarea data-k="content" placeholder="수업 내용">${esc(c.content)}</textarea></div>
+      <div class="f grp flow ${String(c.session_notes||"").trim()?"":"need"}" style="grid-column:2 / span 3"><label>⏱️ 요일·시간대별 진행 내용 <span>(학년별 시간표에 표시)</span></label><textarea data-k="session_notes" placeholder="예) 월: 18:00~18:30 단어테스트 / 18:30~20:00 어법·서술형">${esc(c.session_notes)}</textarea></div>
+      <div class="f grp book ${String(c.textbook||"").trim()?"":"need"}" style="grid-column:2 / span 3"><label>📖 사용 교재 <span>(수업 방식 안내에 표시)</span></label><textarea data-k="textbook" placeholder="예) 해커스 중학영문법 2학년 / 자이스토리 문학">${esc(c.textbook)}</textarea></div>
     </div>
   </td></tr>`;
 }
@@ -300,7 +340,16 @@ document.getElementById("body").addEventListener("click", e=>{
     const el=document.querySelector(`tr[data-id="${copy.id}"] [data-k=course_name]`); if(el){el.focus();el.select&&el.select();}
   } else if(act==="del"){
     if(!c) return;
-    if(!confirm(`"${c.teacher||""} · ${c.course_name||"(무제)"}" 강좌를 삭제할까요?\n삭제하면 시간표·수강료에서도 사라집니다.`)) return;
+    // 1차 확인 — 무엇을 지우는지 그대로 보여준다
+    const line = `${c.teacher||"(강사 없음)"} · ${c.grade||"(학년 없음)"} ${c.subject||""}\n${c.course_name||"(강좌명 없음)"}`;
+    if(!confirm(
+      `⚠️ 강좌를 삭제합니다 (폐강 처리)\n\n${line}\n${"─".repeat(28)}\n`+
+      `· 시간표, 수강료, 상담용 자료, 강사 페이지에서 즉시 사라집니다.\n`+
+      `· 학부모께 이미 보낸 안내 링크에서도 사라집니다.\n`+
+      `· 삭제하면 되돌릴 수 없습니다.\n\n`+
+      `※ 시간만 바뀐 경우라면 삭제하지 말고 수정하세요.\n\n계속하시겠습니까?`)) return;
+    // 2차 확인 — 실수 방지
+    if(!confirm(`정말 삭제할까요?\n\n삭제 대상 → ${c.course_name||"(강좌명 없음)"}\n\n되돌릴 수 없습니다. 확실하면 [확인]을 눌러주세요.`)) { setStat("삭제 취소됨","ok"); return; }
     DATA = DATA.filter(x=>x.id!==id);
     render();
     if(useSupa){ markLocalWrite(); sb.from("courses").delete().eq("id",id).then(({error})=>{ markLocalWrite(); setStat(error?("삭제 오류: "+error.message):"삭제됨 ✓", error?"err":"ok"); }); }
