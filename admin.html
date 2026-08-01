@@ -211,6 +211,24 @@
   .gu-split-bar .s30{flex:0 0 30%;background:#fdba74;color:#7c2d12;display:flex;align-items:center;justify-content:center}
   .gu-split-cap{font-size:11.5px;color:#7c2d12;margin-top:5px;line-height:1.55}
 
+  /* ===== 전체 성적 우수자 (A4 1장) ===== */
+  .as{background:linear-gradient(160deg,#1c1508,#2e2412 55%,#3d2f16);color:#f5ead2;border-radius:10px;padding:20px 22px 18px}
+  .as-top{text-align:center;border-bottom:1px solid rgba(212,175,90,.35);padding-bottom:12px;margin-bottom:14px}
+  .as-brand{font-size:10.5px;font-weight:800;letter-spacing:.32em;color:#d4af5a}
+  .as-top h2{font-size:24px;font-weight:800;margin:5px 0 3px;color:#f0d494;letter-spacing:-.01em}
+  .as-cnt{font-size:11.5px;color:#c8b48a}
+  .as-sec{display:flex;align-items:center;gap:8px;margin:13px 0 7px}
+  .as-sec b{font-size:13px;font-weight:800;color:#f0d494}
+  .as-sec span{font-size:10.5px;color:#b9a173;background:rgba(212,175,90,.14);border:1px solid rgba(212,175,90,.3);border-radius:999px;padding:1px 9px}
+  .as-sec::after{content:"";flex:1;height:1px;background:rgba(212,175,90,.22)}
+  .as-grid{display:flex;flex-wrap:wrap;gap:4px}
+  .as-i{font-size:11.5px;font-weight:700;color:#f5ead2;background:rgba(255,255,255,.06);border:1px solid rgba(212,175,90,.25);border-radius:5px;padding:2px 8px}
+  .as-i.s100{color:#1c1508;background:linear-gradient(180deg,#f0d494,#d4af5a);border-color:transparent}
+  .as-grid.uni{gap:5px}
+  .as-u{font-size:11.5px;color:#f5ead2;background:rgba(255,255,255,.05);border:1px solid rgba(212,175,90,.28);border-radius:6px;padding:2px 9px}
+  .as-u b{color:#f0d494;margin-right:5px}
+  .as-foot{margin-top:14px;padding-top:9px;border-top:1px solid rgba(212,175,90,.22);font-size:10px;color:#a3906a;text-align:center}
+
   /* ===== 학원 사용 설명서 (A4 재편집본) ===== */
   .mn{--nv:#2b3a52;--gd:#c79a3e;--cr:#faf7f0;--ln:#e3dccb;color:#22262e;font-size:12.2px;line-height:1.75;word-break:keep-all}
   .mn-page{background:#fff;padding:16px 20px 22px}
@@ -1386,8 +1404,8 @@ function subjectCardsHtml(){
           ${t.intro?`<div class="gu-prof-i">“${esc(t.intro)}”</div>`:""}
           ${t.principle?`<div class="gu-prof-s"><b>수업 원칙</b><ul>${bullets(t.principle).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
           ${t.strategy?`<div class="gu-prof-s"><b>점수를 올리는 방식</b><ul>${bullets(t.strategy).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-          ${(sc.top||[]).length?`<div class="gu-sch"><b>🏅 성적 우수자</b><div class="gu-sch-l">${sc.top.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}
-          ${(sc.up||[]).length?`<div class="gu-sch up"><b>📈 성적 향상자</b><div class="gu-sch-l">${sc.up.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}
+          ${(sc.top||[]).length?`<div class="gu-sch"><b>🏅 주요 성적 우수자</b><div class="gu-sch-l">${sc.top.map(x=>`<span>${esc(x)}</span>`).join("")}<span class="more">외 다수</span></div></div>`:""}
+          ${(sc.up||[]).length?`<div class="gu-sch up"><b>📈 주요 성적 향상자</b><div class="gu-sch-l">${sc.up.map(x=>`<span>${esc(x)}</span>`).join("")}<span class="more">외 다수</span></div></div>`:""}
         </div></div>`;
     }).join("");
     return `<div class="gu-sec"><h3>${esc(sub)}</h3>${intro}${profs}${body}</div>`;
@@ -1527,7 +1545,8 @@ const PACK_ITEMS=[
   {k:"flyer",  t:"학원 리플렛",     d:"다올105 × 대치더올 소개"},
   {k:"tt",     t:"학년별 시간표",   d:"선택 학년 주간 시간표"},
   {k:"guide",  t:"수업 방식 안내",  d:"과목별 강좌·강사 원칙"},
-  {k:"prof",   t:"강사 프로필·실적", d:"해당 학년 담당 강사 + 성적 우수자"},
+  {k:"prof",   t:"강사 프로필·실적", d:"해당 학년 담당 강사 + 주요 성적 우수자"},
+  {k:"all",    t:"전체 성적 우수자", d:"학원 전체 명단 A4 1장"},
   {k:"manual", t:"학원 사용 설명서",d:"수강료·환불·보강 규정"}
 ];
 let packGrade="중1";
@@ -1542,6 +1561,22 @@ document.getElementById("packRefresh").addEventListener("click",renderPack);
 document.getElementById("packPrint").addEventListener("click",()=>window.print());
 
 function packDoc(title,note,inner){ return `<div class="pk-doc"><div class="pk-h">${esc(title)}<span>${esc(note||"")}</span></div><div class="pk-b">${inner}</div></div>`; }
+/* 전체 성적 우수자 — A4 1장 */
+function allScholarsHtml(){
+  const A=window.DAOL_ALL_SCHOLARS;
+  if(!A) return `<div class="empty">명단 데이터가 없습니다.</div>`;
+  const n=(A.grade1||[]).length+(A.full100||[]).length+(A.univ||[]).length;
+  return `<div class="as">
+    <div class="as-top"><div class="as-brand">D A O L 1 0 5</div><h2>전체 성적 우수자</h2><div class="as-cnt">총 ${n}명</div></div>
+    <div class="as-sec"><b>1등급</b><span>${(A.grade1||[]).length}명</span></div>
+    <div class="as-grid">${(A.grade1||[]).map(x=>`<span class="as-i">${esc(x)}</span>`).join("")}</div>
+    <div class="as-sec"><b>만점 (100점)</b><span>${(A.full100||[]).length}명</span></div>
+    <div class="as-grid">${(A.full100||[]).map(x=>`<span class="as-i s100">${esc(x)}</span>`).join("")}</div>
+    <div class="as-sec"><b>대학 합격</b><span>${(A.univ||[]).length}명</span></div>
+    <div class="as-grid uni">${(A.univ||[]).map(([nm,u])=>`<span class="as-u"><b>${esc(nm)}</b>${esc(u)}</span>`).join("")}</div>
+    <div class="as-foot">※ 개인정보 보호를 위해 이름은 일부만 표기했습니다.</div>
+  </div>`;
+}
 function renderPack(){
   // 학년별 시간표·안내는 기존 렌더러를 그대로 재사용
   const keepGrade=selGrade; selGrade=packGrade; renderGrade(); selGrade=keepGrade;
@@ -1567,8 +1602,8 @@ function renderPack(){
         ${t.intro?`<div class="q">“${esc(t.intro)}”</div>`:""}
         ${t.principle?`<b class="lb">수업 원칙</b><ul>${bullets(t.principle).slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
         ${t.strategy?`<b class="lb">점수를 올리는 방식</b><ul>${bullets(t.strategy).slice(0,3).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-        ${top.length?`<b class="lb">🏅 성적 우수자</b><div class="pk-sch">${top.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
-        ${up.length?`<b class="lb">📈 성적 향상자</b><div class="pk-sch up">${up.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+        ${top.length?`<b class="lb">🏅 주요 성적 우수자</b><div class="pk-sch">${top.map(x=>`<span>${esc(x)}</span>`).join("")}<span class="more">외 다수</span></div>`:""}
+        ${up.length?`<b class="lb">📈 주요 성적 향상자</b><div class="pk-sch up">${up.map(x=>`<span>${esc(x)}</span>`).join("")}<span class="more">외 다수</span></div>`:""}
         ${(!t.principle&&!t.strategy)?`<div class="pk-todo noprint">⚠ 수업 원칙·전략 미입력 — 강사 페이지에서 입력하면 여기에 표시됩니다</div>`:""}
         </div></div>`;
     }).join("");
@@ -1576,7 +1611,8 @@ function renderPack(){
   }
   if(packOn.has("top")) h+=packDoc("⑤ 성적 우수자","2025년 중·고등부",
     `<img src="img/docs/성적우수자1.jpg" alt="성적우수자" style="margin-bottom:10px"><img src="img/docs/성적우수자2.jpg" alt="성적우수자">`);
-  if(packOn.has("manual")) h+=packDoc("⑤ 학원 사용 설명서","신입생 학부모 필독 · A4 4쪽", window.DAOL_MANUAL || `<img src="img/docs/사용설명서.jpg" alt="학원 사용 설명서">`);
+  if(packOn.has("all")) h+=packDoc("⑤ 전체 성적 우수자","다올105 전체 명단", allScholarsHtml());
+  if(packOn.has("manual")) h+=packDoc("⑥ 학원 사용 설명서","신입생 학부모 필독 · A4 4쪽", window.DAOL_MANUAL || `<img src="img/docs/사용설명서.jpg" alt="학원 사용 설명서">`);
   document.getElementById("packView").innerHTML = h || `<div class="panel"><div class="empty">포함할 항목을 선택하세요.</div></div>`;
   document.getElementById("packStat").textContent=`${packGrade} · 문서 ${packOn.size}종`;
 }
