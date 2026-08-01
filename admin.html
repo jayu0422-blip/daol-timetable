@@ -178,6 +178,15 @@
   .gu-pact li{font-size:12.5px;line-height:1.65;color:#374151;margin-bottom:4px}
   .gu-pact-seal{margin-top:10px;padding:9px 12px;background:#7c2d12;color:#fff;border-radius:8px;font-size:12.5px;line-height:1.6;font-weight:700}
   .gu-pact-seal span{display:inline-block;margin-top:3px;font-weight:400;color:#fed7aa;font-size:11.5px}
+  .gu-alert{margin-top:8px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:9px 11px}
+  .gu-alert>b{display:block;font-size:11.5px;color:#9f1239;margin-bottom:4px}
+  .gu-alert ul{margin:0;padding-left:16px}
+  .gu-alert li{font-size:11.5px;line-height:1.6;color:#7f1d1d;margin-bottom:3px}
+  .gu-split{margin-top:8px}
+  .gu-split-bar{display:flex;height:26px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:800;color:#fff}
+  .gu-split-bar .s70{flex:0 0 70%;background:#c2410c;display:flex;align-items:center;justify-content:center}
+  .gu-split-bar .s30{flex:0 0 30%;background:#fdba74;color:#7c2d12;display:flex;align-items:center;justify-content:center}
+  .gu-split-cap{font-size:11.5px;color:#7c2d12;margin-top:5px;line-height:1.55}
 
   /* ===== 강좌 추가·삭제 ===== */
   .mg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
@@ -1261,38 +1270,53 @@ function renderGuide(){
           · 자기주도 학습이 완성되어 스스로 복습이 가능한 학생<br>
           · 금·토 <b>관리 수업의 강도를 아직 받아들이기 어려운</b> 학생<br>
           · 당장의 성적 상승보다 <b>과목 수업을 듣는 것 자체에 만족</b>하는 학생</p>
-          <p style="margin-top:6px;color:#0369a1">관리일이 부담스러운 경우 <b>말씀만 주시면 빼 드립니다.</b> 억지로 끌고 가지 않습니다.</p>
+          <div class="gu-alert">
+            <b>반드시 먼저 알아두셔야 합니다</b>
+            <ul>
+              <li>이 방식은 <b>학생의 자기주도성을 전제로 설계된 커리큘럼</b>입니다. 스스로 복습·암기·오답 정리를 해내지 못하는 학생에게는 <b>성적 향상을 보장할 수 없습니다.</b></li>
+              <li>이해도는 한 번에 무너지지 않습니다. <b>매주 아주 미세하게 조금씩</b> 밀리기 때문에, 문제를 알아차렸을 때는 이미 여러 단원이 지나가 있는 경우가 많습니다.</li>
+              <li>주말 관리까지 함께 하는 학생들과는 <b>시간이 갈수록 격차가 벌어집니다.</b> 같은 수업을 들어도 복습의 밀도가 다르기 때문입니다.</li>
+            </ul>
+          </div>
+          <p style="margin-top:6px;color:#0369a1">그럼에도 관리일이 부담스러운 경우 <b>말씀만 주시면 빼 드립니다.</b> 억지로 끌고 가지 않습니다.</p>
         </div>
         <div class="gu-card b"><span class="tagline">선택 B · 수업 + 관리 (권장)</span>
           <h4>주중 수업 + 금(토) 관리 클리닉</h4>
-          <p>성적 향상 과정을 <b>학원에 위탁</b>하는 방식입니다. 복습·코칭·1:1 첨삭까지 학원이 책임집니다.</p>
-          <p style="color:#c2410c"><b>학원이 하는 것</b><br>
+          <p>성적 향상 과정을 <b>학원에 위탁</b>하는 방식입니다. 복습·코칭·1:1 첨삭까지 학원이 끌고 갑니다.</p>
+          <div class="gu-split">
+            <div class="gu-split-bar"><span class="s70">학원 책임 70%</span><span class="s30">학생 30%</span></div>
+            <div class="gu-split-cap">성적은 학원 혼자 만들 수 없습니다. <b>학원이 70% 이상을 책임지고</b>, 나머지 <b>30%는 학생이 채워야</b> 완성됩니다.</div>
+          </div>
+          <p style="color:#c2410c;margin-top:8px"><b>학원이 책임지는 70%</b><br>
           · 주중 단어 재테스트 · 듣기<br>
           · 주중 어법/서술형/독해 <b>워크북 전면 재확인</b><br>
           · 상세 분석서를 주고 <b>학생이 직접 해석을 쓰고 단서를 찾도록</b> 유도<br>
-          · 그 과정에서 <b>진짜 모르는 부분만 1:1 첨삭</b></p>
+          · 그 과정에서 <b>진짜 모르는 부분만 1:1 첨삭</b><br>
+          · 주간 리포트로 <b>무엇이 되고 무엇이 안 되는지</b> 전달</p>
         </div>
       </div>
       <div class="gu-pact">
-        <div class="gu-pact-h">선택 B — 학원이 책임지는 대신, 학생이 지켜야 할 세 가지</div>
-        <p>관리는 학원이 끌고 가지만, <b>학생이 지켜주지 않으면 성립하지 않는 부분</b>이 있습니다. 아래 세 가지는 반드시 함께 가야 합니다.</p>
+        <div class="gu-pact-h">선택 B — 학생이 채워야 할 30%, 세 가지</div>
+        <p>관리는 학원이 끌고 가지만, <b>학생이 지켜주지 않으면 성립하지 않는 부분</b>이 있습니다. 이 세 가지가 나머지 30%입니다.</p>
         <ol>
           <li><b>단어는 몰아서 외우지 않습니다.</b> 시험 직전에 한 번에 외우는 방식은 그 주만 넘길 뿐, 다음 주면 사라집니다. 매 수업 분량을 그날그날 가져가야 합니다.</li>
           <li><b>과제는 밀도 있게 해옵니다.</b> 빈칸만 채워오는 것이 아니라, <b>내가 무엇을 모르는지까지 표시해서</b> 가져와야 합니다. 그래야 관리일에 그 지점만 정확히 짚어 드릴 수 있습니다.</li>
           <li><b>출석을 지킵니다.</b> 관리 수업은 <b>한 달 4회 중 최소 3회 이상</b> 참여해야 흐름이 끊기지 않습니다.</li>
         </ol>
-        <div class="gu-pact-seal">이 세 가지가 지켜지면, <b>1년 안에 성적을 끌어올리는 것을 학원이 책임지고 함께 갑니다.</b><br>
-          <span>지키지 못한 부분이 있으면 그 시점에 솔직하게 말씀드리고, 무엇을 바꿔야 하는지 함께 조정합니다.</span></div>
+        <div class="gu-pact-seal">이 세 가지(30%)가 지켜지면, 나머지 70%는 학원이 책임집니다. <b>1년 안에 성적을 끌어올리는 것을 학원이 보장하고 함께 갑니다.</b><br>
+          <span>반대로 이 30%가 지켜지지 않으면 보장은 성립하지 않습니다. 그 시점에 솔직하게 말씀드리고, 무엇을 바꿔야 하는지 함께 조정합니다.</span></div>
       </div>
       <p style="margin-top:8px;color:#6b7280;font-size:12px">※ 관리일(금·토)은 옵션으로 열어두었지만, <b>실제로는 대부분의 학생이 필수적으로 진행</b>하고 있습니다.</p>
     </div>`;
 
     html+=`<div class="gu-sec"><h3>4. 관리(금·토)를 듣지 않을 경우 — 반드시 확인해 주세요</h3>
       <div class="gu-warn">
-        관리 수업은 주중보다 <b>강도가 높습니다.</b> 주중에는 모르는 문제를 강사가 해설해 주지만, 관리일에는 학생이 스스로 해석을 쓰고 문제의 단서를 찾아야 하며 어휘도 다시 복습해야 하므로 학생들이 힘들어하는 편입니다. 그래서 <b>아직 마음의 준비가 되지 않은 학생</b>에게는 미수강을 허용하고 있습니다. 다만 다음 사항을 감안해 주세요.<br><br>
+        관리 수업은 주중보다 <b>강도가 높습니다.</b> 주중에는 모르는 문제를 강사가 해설해 주지만, 관리일에는 학생이 스스로 해석을 쓰고 문제의 단서를 찾아야 하며 어휘도 다시 복습해야 하므로 학생들이 힘들어하는 편입니다. 그래서 <b>아직 마음의 준비가 되지 않은 학생</b>에게는 미수강을 허용하고 있습니다. 다만 아래는 반드시 감안해 주셔야 합니다.<br><br>
+        · <b>선택 A는 자기주도성을 전제로 한 커리큘럼입니다.</b> 집에서 스스로 복습·암기·오답 정리를 해내지 못하는 학생에게는 <b>성적 향상을 보장할 수 없습니다.</b> 이것은 예외 없이 적용됩니다.<br>
+        · 이해도는 한 번에 무너지지 않고 <b>매주 미세하게 조금씩</b> 밀립니다. 그래서 문제를 알아차렸을 때는 이미 여러 단원이 지나가 있는 경우가 많습니다.<br>
+        · 주말 관리까지 하는 학생들과 <b>시간이 갈수록 격차가 벌어집니다.</b> 같은 수업을 들어도 복습의 밀도가 다르기 때문입니다.<br>
         · 주간 리포트가 <b>개별 상황을 담기 어렵고</b>, 주중(월·수 또는 화·목) 단어 테스트 통과 여부 정도만 정리되어 나갑니다.<br>
-        · <b>성적 향상은 학원에서 보장할 수 없습니다.</b><br>
-        · 시간이 지날수록 관리에 참여하는 학생들과 이해도 차이가 벌어질 수 있고, 그 시점에 학원이 해 드릴 수 있는 부분이 제한됩니다.
+        · 그 시점에 학원이 해 드릴 수 있는 부분이 제한됩니다.
       </div></div>`;
 
     html+=`<div class="gu-sec"><h3>5. 가장 중요한 부분</h3>
