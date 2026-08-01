@@ -261,7 +261,7 @@
     </div>
     <div id="guideSheet"></div>
     <div id="gradeUnparsed"></div>
-    <p class="muted noprint">요일·시간·정규/클리닉은 강좌의 ‘시간’ 칸에서 자동 인식합니다. 고1 수학은 미사고·하남고·미사강변고 <b>합반</b>이라 세 학교 시간표에 동일하게(임결반/유용권반) 표시됩니다. 하남고1은 영어·수학이 미사고1과 동일합니다.</p>
+    <p class="muted noprint">요일·시간·수업/관리는 강좌의 ‘시간’ 칸에서 자동 인식합니다. <b>(내부 참고)</b> 고1 수학과 하남고1 영어는 같은 강좌가 해당 학교 시간표에 각각 표시되며, 출력물에는 선택한 학교·학년으로만 표기됩니다.</p>
   </section>
 
   <!-- ===== 수강료 ===== -->
@@ -1049,9 +1049,6 @@ function renderGrade(){
   const sunKor = cs.some(c=>c.subject==="국어" && /일/.test(c.schedule_text||"") && /(관리|클리닉)/.test(c.schedule_text||""));
   const notes=[];
   if(sunKor) notes.push("국어 클리닉은 <b>일요일 유동</b> 운영(학생별 조정).");
-  if(/고1$/.test(selGrade)) notes.push("고1 수학은 미사고·하남고·미사강변고 <b>합반</b>(임결반/유용권반).");
-  if(selGrade==="미사고1") notes.push("하남고1은 영어·수학이 미사고1과 동일.");
-  if(selGrade==="하남고1") notes.push("하남고1은 <b>영어·수학이 미사고1과 동일</b>하게 진행됩니다.");
   if(/^중[123]$/.test(selGrade)) notes.push("영어: <b>월·수(화·목)=수업</b>, <b>금(토)=관리 클리닉</b>. 관리일은 선택 가능(자세한 내용은 ‘📖 수업 방식·안내’).");
   const noteHtml = notes.length ? `<div class="gg-note"><b>[안내]</b><br>${notes.join("<br>")}</div>` : `<div style="width:220px"></div>`;
   // 헤더
@@ -1084,7 +1081,7 @@ function renderGrade(){
           ? `background:repeating-linear-gradient(135deg,${col} 0 7px,#ffffff 7px 14px);border:1.5px dashed ${bcol};z-index:1`
           : `background:${col};border:1px solid rgba(0,0,0,.12);z-index:1`;
       const style=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}`;
-      const schoolTag=(selGrade==="하남고1"&&b.school==="미사고") ? "[미사고1 동일반]" : (b.school?`[${b.school}]`:`[${selGrade}]`);
+      const schoolTag=`[${selGrade}]`;   // 학부모용 — 선택한 학년·학교로 표기(합반 등 내부 사정 비노출)
       const teamTag=(b.subj==="수학"&&b.grade==="고1")?` ${esc(b.teacher)}반`:"";
       const detail=b.detail?`<div class="gdet">${esc(b.detail)}</div>`:"";
       const unitBadge=b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:"";
@@ -1175,7 +1172,6 @@ function renderGuide(){
     <p>시간표에서 <b>단색 블록은 수업</b>, <b>빗금 블록은 관리(클리닉)</b>입니다.</p>
     <ul><li><b>수업</b> — 개념 강의·문제 풀이 등 정규 진행</li>
     <li><b>관리(클리닉)</b> — 복습·재테스트·질문 및 1:1 첨삭 중심</li></ul></div>`;
-  if(/고1$/.test(selGrade)) html+=`<div class="gu-sec"><h3>고1 수학 합반 안내</h3><p>고1 수학은 <b>미사고·하남고·미사강변고 합반</b>으로 운영되며, <b>임결 선생님 반</b>과 <b>유용권 선생님 반</b>으로 구분됩니다.${selGrade==="하남고1"?" <b>하남고1은 영어·수학이 미사고1과 동일한 반</b>으로 진행됩니다.":" 하남고1은 영어·수학이 미사고1과 동일하게 진행됩니다."}</p></div>`;
   if(coursesForGrade(selGrade).some(c=>c.subject==="국어" && /일/.test(c.schedule_text||"") && /(관리|클리닉)/.test(c.schedule_text||"")))
     html+=`<div class="gu-sec"><h3>국어 클리닉</h3><p>국어 클리닉은 <b>일요일에 유동적으로</b> 운영되며, 학생별 일정에 맞춰 조정됩니다.</p></div>`;
 
