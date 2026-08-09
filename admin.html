@@ -144,7 +144,24 @@
   .gg-legend{display:flex;gap:14px;flex-wrap:wrap;padding:2px 18px 14px;font-size:11.5px;color:var(--muted)}
   .gg-legend .k{display:inline-flex;align-items:center;gap:5px}
   .gg-sw{width:16px;height:12px;border-radius:3px;display:inline-block}
-  @media print{ #gradeSheet{box-shadow:none;border:none} }
+  /* 전학년 통합본 — 세로 학년 / 가로 요일 */
+  .atbl{width:100%;border-collapse:collapse;min-width:980px;margin:0 10px 10px}
+  .atbl th,.atbl td{border:1px solid var(--line);vertical-align:top;padding:4px}
+  .atbl thead th{background:#fdf6ec;font-size:13px;font-weight:800;text-align:center;padding:8px 4px;border-bottom:2px solid #374151}
+  .atbl thead th.wk{color:#2563eb}.atbl thead th.sun{color:#dc2626}
+  .atbl th.acorner{background:transparent;border-bottom:2px solid #374151;width:96px}
+  .atbl th.agrade{background:#f3f4f6;font-size:13px;font-weight:800;text-align:center;color:#111827;white-space:nowrap}
+  .atbl td{width:calc((100% - 96px)/7)}
+  .atbl td.aempty{color:#d1d5db;text-align:center;font-size:11px}
+  .acell{border-radius:6px;padding:3px 5px;margin-bottom:3px;font-size:10.5px;line-height:1.3;color:#111827}
+  .acell:last-child{margin-bottom:0}
+  .acell .at{font-size:9.5px;color:#4b5563;font-weight:700}
+  .acell .an{font-weight:800;font-size:11px}
+  .acell .ateach{font-weight:700;color:#374151;font-size:10px}
+  .acell .atag{display:inline-block;font-size:8.5px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:1px}
+  .acell .atag.reg{background:#1d4ed8;color:#fff}
+  .acell .atag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
+  @media print{ #gradeSheet{box-shadow:none;border:none} .atbl{min-width:0} }
 
   /* ===== 2페이지: 수업 방식·안내 ===== */
   #guideSheet{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:22px 26px}
@@ -1258,7 +1275,11 @@ function renderDay(){
 }
 
 /* ===== 학년별 주간 시간표 ===== */
-const GRADE_BUTTONS=["중1","중2","중3","미사고1","미사강변고1","하남고1","미사고2","미사강변고2","고3"];
+const ALL_KEY="🗂 전학년 통합";
+const GRADE_BUTTONS=[ALL_KEY,"중1","중2","중3","미사고1","미사강변고1","하남고1","미사고2","미사강변고2","고3"];
+/* 통합본 요일 순서 — 월수금반 / 화목토반이 붙어 보이도록 */
+const DAY_ORDER_ALL=["월","수","금","화","목","토","일"];
+const GRADES_ALL=["중1","중2","중3","미사고1","미사강변고1","하남고1","미사고2","미사강변고2","고3"];
 const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
 let selGrade="미사고1";
 function buildGradeChips(){ document.getElementById("gChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
@@ -1358,7 +1379,62 @@ function coursesForGrade(key){
     return sch===null || sch===wantSchool;              // 그 외 과목: 공통 또는 해당 학교
   });
 }
+/* ===== 전학년 통합본 — 세로 학년(중1→고3), 가로 요일(월수금 → 화목토) ===== */
+function renderCombined(){
+  let total=0;
+  const cells={};
+  GRADES_ALL.forEach(g=>{
+    cells[g]={}; DAY_ORDER_ALL.forEach(d=>cells[g][d]=[]);
+    coursesForGrade(g).forEach(c=>{
+      const p=parseDayTimes(c.schedule_text);
+      p.sessions.forEach(s=>{
+        if(!cells[g][s.day]) return;
+        const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+        let type=(s.type==="관리"||s.type==="클리닉")?"클리닉":"수업";
+        if(midEng) type=(s.day==="금"||s.day==="토")?"클리닉":"수업";
+        cells[g][s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,
+          unit:mathUnit(c),special:isSpecial(c)});
+        total++;
+      });
+    });
+  });
+  const rows=GRADES_ALL.map(g=>{
+    const empty=DAY_ORDER_ALL.every(d=>!cells[g][d].length);
+    if(empty) return "";
+    return `<tr><th class="agrade">${esc(g)}</th>`+DAY_ORDER_ALL.map(d=>{
+      const list=cells[g][d].slice().sort((a,b)=>a.start-b.start);
+      if(!list.length) return `<td class="aempty">·</td>`;
+      return `<td>`+list.map(b=>{
+        const col=SUBJ_COLOR[b.subj]||"#e5e7eb", bcol=SUBJ_BORDER[b.subj]||"#6b7280", cli=b.type==="클리닉";
+        const bg=cli?`background:repeating-linear-gradient(135deg,${col} 0 6px,#fff 6px 12px);border:1px dashed ${bcol}`
+                    :`background:${col};border:1px solid rgba(0,0,0,.12)`;
+        return `<div class="acell" style="${bg}">
+          <div class="at">${fmt(b.start)}~${fmt(b.end)}</div>
+          <div class="an">${esc(b.subj||"")}${b.teacher?` <span class="ateach">${esc(b.teacher)}</span>`:""}
+            <span class="atag ${cli?"cli":"reg"}">${cli?"관리":"수업"}</span></div>
+          ${b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:""}
+          ${b.special?`<span class="gsp">특강</span>`:""}
+        </div>`;}).join("")+`</td>`;
+    }).join("")+`</tr>`;
+  }).join("");
+  document.getElementById("gradeSheet").innerHTML=`
+    <div class="gg-top">
+      <div class="gg-brand">📘 다올105<br><span style="font-size:9px;color:#9ca3af">미사학원</span></div>
+      <div class="gg-title"><div class="tt">T I M E &nbsp; T A B L E</div><div class="gn">전학년 통합</div></div>
+      <div class="gg-note"><b>[보는 법]</b><br>세로 = 학년(중1→고3) · 가로 = <b>월·수·금 → 화·목·토</b><br>빗금 = 관리(클리닉)</div>
+    </div>
+    <table class="atbl"><thead><tr><th class="acorner">학년</th>${DAY_ORDER_ALL.map(d=>`<th class="${d==="일"?"sun":"wk"}">${d}</th>`).join("")}</tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="gg-legend">
+      ${["국어","영어","수학","과학"].map(s=>`<span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR[s]}"></span>${s}</span>`).join("")}
+      <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,${SUBJ_COLOR["영어"]} 0 4px,#fff 4px 8px);border:1px dashed ${SUBJ_BORDER["영어"]}"></span>관리(클리닉)</span>
+    </div>`;
+  document.getElementById("gradeUnparsed").innerHTML="";
+  document.getElementById("gradeStat").textContent=`전학년 통합 · 블록 ${total}개`;
+  document.getElementById("guideSheet").innerHTML=`<div class="empty" style="padding:30px;text-align:center;color:var(--muted)">전학년 통합본에는 수업 방식 안내가 붙지 않습니다. 학년을 하나 고르면 함께 나옵니다.</div>`;
+}
 function renderGrade(){
+  if(selGrade===ALL_KEY){ renderCombined(); return; }
   const cs=coursesForGrade(selGrade);
   const START=9*60, END=22*60, PX=0.9, H=(END-START)*PX;
   const byDay={}; DAY_LIST.forEach(d=>byDay[d]=[]);
