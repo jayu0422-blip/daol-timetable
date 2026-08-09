@@ -149,7 +149,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
-<script src="config.js?v=75abf301"></script>
+<script src="config.js?v=c8fc78c3"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
 const GRADES = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -320,7 +320,9 @@ function render(){
         <div class="f"><label>강좌 대상 (어떤 학생이 들어야 하나)</label><textarea data-k="audience" placeholder="- 미사고1 내신 선행이 필요한 학생&#10;- ...">${esc(r.audience)}</textarea></div>
         <div class="f"><label>강좌 내용·특징·목표</label><textarea data-k="content" placeholder="- 2026년 미사고1 예상 시험범위 총정리&#10;- ...">${esc(r.content)}</textarea></div>
         <div class="f"><label>유형</label><select data-k="course_type">${opt(TYPES,r.course_type)}</select></div>
-        <div class="f"><label>📚 교재비 (원, 1인 기준 · 없으면 비움)</label><input type="text" inputmode="numeric" data-k="material_fee" value="${r.material_fee??""}" placeholder="예: 39000"/></div>
+        <div class="f"><label>📚 교재비 (1인 기준 · 아래 구간에서만 선택)</label>
+          <select data-k="material_fee">${window.daolMaterialOptions(r.material_fee)}</select>
+          <div class="hint" style="font-size:11.5px;color:#6b7280;margin-top:3px">교재비는 <b>교습비에 포함</b>해 교육청에 신고·게시합니다(별도 수납 불가). 그래서 정해진 구간만 쓸 수 있습니다.</div></div>
         <div class="f full"><label>📖 사용 교재</label><textarea data-k="textbook" style="min-height:46px" placeholder="예) 해커스 중학영문법 2학년 / 자이스토리 문학 / 쎈 수학 (여러 권이면 줄바꿈)">${esc(r.textbook)}</textarea>
           <span class="hint">수업 방식 안내와 상담 자료에 그대로 들어갑니다.</span></div>
         <div class="f full"><label>⏱️ 요일·시간대별 진행 내용 (시간표에 표시됩니다)</label>

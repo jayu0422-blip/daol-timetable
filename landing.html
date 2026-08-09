@@ -213,7 +213,7 @@
 <div id="app"><div class="empty">불러오는 중…</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=75abf301"></script>
+<script src="config.js?v=c8fc78c3"></script>
 <script src="copy.js?v=ba9da420"></script>
 <script src="consulting.js?v=e095804b"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
@@ -474,7 +474,7 @@ function render(courses,teachers){
         ${bullets(c.audience).length?`<div class="cc-b"><b>이런 학생을 위한 강좌입니다</b><ul>${bullets(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${bullets(c.content).length?`<div class="cc-b"><b>수업에서 실제로 하는 것</b><ul>${bullets(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${bullets(c.textbook).length?`<div class="cc-b"><b>사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-        ${(c.material_fee||bullets(c.textbook).length)?`<div class="cc-fee">📚 학원에서 배부하는 교재는 <b>교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
+        ${(c.material_fee||bullets(c.textbook).length)?`<div class="cc-fee">📚 학원에서 배부하는 교재는 <b>교재비${c.material_fee?` ${Number(c.material_fee).toLocaleString()}원`:""}</b>가 <b>월 교습비에 포함</b>되어 청구됩니다(학원법상 별도 수납 불가). 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
         ${NOW.length?`<div class="flag ${conf?'no':'ok'}">${conf?'현재 수강 과목과 시간이 겹칩니다 — 같은 과목의 다른 요일 반으로 조정 가능합니다':'현재 수강 중인 과목과 시간이 겹치지 않습니다'}</div>`:""}
       </div>`;
     });

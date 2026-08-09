@@ -46,6 +46,9 @@
   .cell-teacher{min-width:96px}.cell-grade{min-width:96px}.cell-subj{min-width:80px}
   .cell-name{min-width:220px}.cell-type{min-width:74px}.cell-sess{min-width:56px}
   .cell-won{min-width:96px}.cell-note{min-width:150px}
+  /* 교재비는 정해진 구간만 — 구 단가가 남아 있으면 빨갛게 눈에 띄게 */
+  select.matsel{width:100%}
+  select.matsel.legacy{background:#fef2f2;border-color:#ef4444;color:#b91c1c;font-weight:800}
   .detail-row td{background:#f6f8fc;padding:12px 14px;border-left:3px solid var(--brand);box-shadow:inset 0 1px 0 #dde5f0}
   .detail-grid{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:12px;align-items:start}
   .detail-grid .f{display:flex;flex-direction:column;gap:3px}
@@ -131,7 +134,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=75abf301"></script>
+<script src="config.js?v=c8fc78c3"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADES   = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -249,7 +252,7 @@ function rowHtml(c){
     <td class="cell-type"><select data-k="course_type">${optList(TYPES,c.course_type||"정규")}</select></td>
     <td class="cell-sess"><input type="number" data-k="sessions" value="${c.sessions??""}" min="0" placeholder="—"></td>
     <td class="cell-won"><input class="won" data-k="tuition" inputmode="numeric" value="${won(c.tuition)}" placeholder="0"></td>
-    <td class="cell-won"><input class="won" data-k="material_fee" inputmode="numeric" value="${won(c.material_fee)}" placeholder="0"></td>
+    <td class="cell-won"><select class="matsel${window.daolIsLegacyMaterial(c.material_fee)?" legacy":""}" data-k="material_fee">${window.daolMaterialOptions(c.material_fee)}</select></td>
     <td class="cell-note"><input data-k="tuition_note" value="${escA(c.tuition_note)}" placeholder="비고"></td>
     <td><div class="rowbtns">
       <button class="${detailCls}" data-act="detail" title="${escA(detailTip)}">${detailTxt}</button>
@@ -314,6 +317,7 @@ document.getElementById("body").addEventListener("input", e=>{
   const tr=e.target.closest("tr"); const id=(tr.dataset.id||tr.dataset.detail); const k=inp.dataset.k;
   let v = inp.value;
   if(inp.classList.contains("won")) { const n=digits(v); v = n===""?null:+n; }
+  else if(k==="material_fee"){ v = v===""?null:+v; inp.classList.toggle("legacy", window.daolIsLegacyMaterial(v)); }
   else if(k==="sessions"){ v = v===""?null:+v; }
   const patch = {[k]:v};
   if(k==="grade"){ patch.division = divisionOf(v);

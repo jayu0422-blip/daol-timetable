@@ -447,7 +447,7 @@ function render(courses,teachers){
             ${bl(c.audience).length?`<b class="lb">이런 학생을 위한 강좌입니다</b><ul>${bl(c.audience).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
             ${bl(c.content).length?`<b class="lb">수업에서 실제로 하는 것</b><ul>${bl(c.content).slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
             ${bl(c.textbook).length?`<b class="lb">사용 교재</b><ul>${bl(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-            ${(c.material_fee||bl(c.textbook).length)?`<div class="box">📚 학원에서 배부하는 교재는 <b>교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
+            ${(c.material_fee||bl(c.textbook).length)?`<div class="box">📚 학원에서 배부하는 교재는 <b>교재비${c.material_fee?` ${Number(c.material_fee).toLocaleString()}원`:""}</b>가 <b>월 교습비에 포함</b>되어 청구됩니다. 학원법상 교재비를 따로 받을 수 없어, 교육청에 신고·게시한 교습비 안에 포함해 안내드립니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
           </div>`;}).join("")}
       </div>`;}).join("")}
   </div></section>`;

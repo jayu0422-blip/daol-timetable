@@ -103,6 +103,10 @@
   .rblk .rtype{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 3px;background:rgba(255,255,255,.55)}
   .rblk.conflict{outline:2px solid var(--danger);outline-offset:-2px}
   .unparsed{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin:12px 0;font-size:12.5px}
+  .unparsed:empty{display:none}
+  /* 교재비는 교육청 고지 구간만 — 구 단가가 남아 있으면 빨갛게 */
+  select.matsel{width:100%;font-family:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  select.matsel.legacy{background:#fef2f2;border-color:#ef4444;color:#b91c1c;font-weight:800}
   .unparsed b{color:#92400e}
   @media print{ #daySheet{box-shadow:none;border:none} }
 
@@ -463,12 +467,14 @@
     </div>
     <div class="panel" style="padding:0;overflow:auto">
       <table class="dash" id="feeTable">
-        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:64px">기준회차</th><th style="width:110px">기준수강료</th><th style="width:60px" id="thMonSess">회차</th><th style="width:120px" id="thMonAmt">청구액</th><th style="width:90px">📚교재비</th><th>비고</th></tr></thead>
+        <thead><tr><th>강사</th><th>구분</th><th>학년</th><th>과목</th><th>강좌명</th><th style="width:64px">기준회차</th><th style="width:110px">기준수강료</th><th style="width:60px" id="thMonSess">회차</th><th style="width:120px" id="thMonAmt">청구액</th><th style="width:110px">📚교재비</th><th style="width:120px">고지 교습비<br><span style="font-weight:400;font-size:10px">청구액+교재비</span></th><th>비고</th></tr></thead>
         <tbody id="feeBody"></tbody>
       </table>
     </div>
+    <div id="feeLegacyWarn" class="unparsed" style="margin-top:10px"></div>
     <p class="muted">중등=월수강료(회차 무관) · 고등=선택 월 정규 회차로 청구액 산정 · 특강=전체(미납분). 빈칸은 미정(강사 확인 대기)입니다.<br>
-      <b style="color:var(--brand-ink)">📚 교재비</b> — 강좌에 따라 <b>학원에서 배부하는 교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</p>
+      <b style="color:var(--brand-ink)">📚 교재비</b> — 학원법상 <b>교재비를 따로 받을 수 없어 교습비에 포함해 신고·게시</b>합니다. 그래서 정해진 8개 구간(<b>9,000 / 19,000 / 29,000 / 39,000 / 49,000 / 59,000 / 69,000 / 79,000원</b>)에서만 고를 수 있습니다.<br>
+      <b style="color:#7c2d12">고지 교습비 = 청구액 + 교재비</b> — 학부모께 안내·청구하는 금액이자 교육청에 신고하고 학원에 게시하는 금액입니다. 이 금액을 초과해 받으면 과태료 대상입니다.</p>
 
     <div class="panel" style="margin-top:14px">
       <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
@@ -557,7 +563,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=75abf301"></script>
+<script src="config.js?v=c8fc78c3"></script>
 <script src="copy.js?v=ba9da420"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script src="consulting.js?v=e095804b"></script>
@@ -1006,13 +1012,20 @@ function renderFee(){
       <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="tuition" value="${won(c.tuition)}" style="width:108px"></td>
       <td style="text-align:center;font-weight:700">${mb.sess!=null?mb.sess:(c.division==="중등"?"월":"—")}</td>
       <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}${mb.disc?`<br><span style="font-size:10px;color:#059669;font-weight:700">재원생 20%↓</span>`:""}</td>
-      <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="material_fee" value="${won(c.material_fee)}" style="width:78px" placeholder="0"></td>
+      <td><select class="fee-in matsel${window.daolIsLegacyMaterial(c.material_fee)?" legacy":""}" data-k="material_fee">${window.daolMaterialOptions(c.material_fee)}</select></td>
+      <td style="font-weight:800;color:#7c2d12;text-align:right">${won((mb.amount||0)+(c.material_fee||0))}</td>
       <td><input type="text" class="fee-in" data-k="note" value="${escA(c.tuition_note||"")}" style="width:100%;min-width:180px"></td>
     </tr>`;
   }).join("");
   const sub=rows.reduce((a,c)=>a+(c.tuition||0),0);
   document.getElementById("feeStat").textContent=`${feeTeacher==="전체"?"전체 합계":feeTeacher+" 소계"}(기준) ${won(sub)}원 · ${rows.length}강좌`;
-  document.getElementById("feeMonthTotal").textContent=`${m}월 · 수강료 ${won(monthTotal)}원 + 교재비 ${won(matTotal)}원 = 합 ${won(monthTotal+matTotal)}원 (1인 기준)`;
+  document.getElementById("feeMonthTotal").textContent=`${m}월 · 수강료 ${won(monthTotal)}원 + 교재비 ${won(matTotal)}원 = 고지 교습비 ${won(monthTotal+matTotal)}원 (1인 기준)`;
+  const legacy=rows.filter(c=>window.daolIsLegacyMaterial(c.material_fee));
+  const lw=document.getElementById("feeLegacyWarn");
+  if(lw) lw.innerHTML = legacy.length
+    ? `⚠️ <b>교재비 구간을 벗어난 강좌 ${legacy.length}건</b> — 교육청 고지 구간(${window.DAOL_MATERIAL_TIERS.map(t=>t.toLocaleString()).join(" / ")}원)으로 바꿔야 합니다.<br>`
+      + legacy.map(c=>`· [${esc(c.teacher)}] ${esc(c.course_name)} — 현재 ${won(c.material_fee)}원`).join("<br>")
+    : "";
   renderFeeConsult();   // 입시 컨설팅 — 항시 고정 표시
 }
 document.getElementById("feeMonth").addEventListener("change",renderFee);
@@ -1027,7 +1040,9 @@ document.getElementById("feeBody").addEventListener("input",e=>{
     if(r.base!=null&&r.baseSess!=null){ const t=prorate(r.base,r.baseSess,v); patch.tuition=t; tr.querySelector('[data-k=tuition]').value=won(t); }
     feeSave(id,patch);
   } else if(k==="tuition"){ const n=String(inp.value).replace(/[^0-9]/g,""); feeSave(id,{tuition:n===""?null:+n}); }
-  else if(k==="material_fee"){ const n=String(inp.value).replace(/[^0-9]/g,""); if(c) c.material_fee=(n===""?null:+n); feeSave(id,{material_fee:n===""?null:+n}); }
+  else if(k==="material_fee"){ const v=inp.value===""?null:+inp.value; if(c) c.material_fee=v;
+    inp.classList.toggle("legacy", window.daolIsLegacyMaterial(v));
+    feeSave(id,{material_fee:v}); renderFee(); }   // 고지 교습비 열 즉시 갱신
   else if(k==="note"){ feeSave(id,{tuition_note:inp.value}); }
 });
 document.getElementById("feeBody").addEventListener("blur",e=>{ const i=e.target.closest(".fee-won"); if(i){ const n=String(i.value).replace(/[^0-9]/g,""); i.value=won(n===""?"":+n); } },true);
@@ -1474,7 +1489,7 @@ function subjectCardsHtml(){
         ${aud.length?`<div class="gu-block"><b>이런 학생을 위한 강좌입니다</b><ul>${aud.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${cont.length?`<div class="gu-block"><b>수업에서 실제로 하는 것</b><ul>${cont.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
         ${bullets(c.textbook).length?`<div class="gu-block"><b>📖 사용 교재</b><ul>${bullets(c.textbook).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-        ${(c.material_fee||bullets(c.textbook).length)?`<div class="gu-fee">📚 학원에서 배부하는 교재는 <b>교재비(1만원~5만원)</b>가 수강료에 추가되어 청구됩니다. 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
+        ${(c.material_fee||bullets(c.textbook).length)?`<div class="gu-fee">📚 학원에서 배부하는 교재는 <b>교재비${c.material_fee?` ${won(c.material_fee)}원`:""}</b>가 <b>교습비에 포함</b>되어 청구됩니다(학원법상 별도 수납 불가). 외부 교재는 개별 구매하시면 됩니다.</div>`:""}
       </div>`;
     }).join("");
     // 과목 서사 + 담당 강사의 수업 원칙·전략으로 감싸 설득력을 높인다
