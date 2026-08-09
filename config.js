@@ -28,6 +28,22 @@ window.daolMaterialOptions = function (v) {
   if (cur != null && !T.includes(cur)) h += `<option value="${cur}" selected>⚠ ${cur.toLocaleString()}원 (구 단가 — 변경 필요)</option>`;
   return h;
 };
+/* (4) 학원 유인물 사용비 — 강사 교재비와 별개로 학원이 청구하는 자체 제작물 실비.
+   교재 사용량이 많은 반(예: 황웅 선생님 반)은 강사 교재비 + 학원 유인물비가 함께 붙는다.
+   구간은 교재비와 동일하게 쓰고 기본값만 9,000원. */
+window.DAOL_HANDOUT_DEFAULT = 9000;
+window.daolHandoutOptions = function (v) {
+  const T = window.DAOL_MATERIAL_TIERS;
+  const cur = (v === "" || v == null) ? null : Number(String(v).replace(/[^0-9]/g, "")) || null;
+  let h = `<option value=""${cur == null ? " selected" : ""}>없음</option>`;
+  h += T.map(t => `<option value="${t}"${cur === t ? " selected" : ""}>${t.toLocaleString()}원${t === window.DAOL_HANDOUT_DEFAULT ? " (기본)" : ""}</option>`).join("");
+  if (cur != null && !T.includes(cur)) h += `<option value="${cur}" selected>⚠ ${cur.toLocaleString()}원 (구 단가 — 변경 필요)</option>`;
+  return h;
+};
+/* 고지·청구 금액 = 수강료 + 강사 교재비 + 학원 유인물비 */
+window.daolTotalFee = (tuition, material, handout) =>
+  (Number(tuition) || 0) + (Number(material) || 0) + (Number(handout) || 0);
+
 /* 0·빈값은 '없음'으로 본다(구 단가 경고 대상 아님) */
 window.daolIsLegacyMaterial = function (v) {
   const n = (v === "" || v == null) ? null : (Number(String(v).replace(/[^0-9]/g, "")) || null);

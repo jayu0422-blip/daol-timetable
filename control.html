@@ -49,6 +49,8 @@
   /* 교재비는 정해진 구간만 — 구 단가가 남아 있으면 빨갛게 눈에 띄게 */
   select.matsel{width:100%}
   select.matsel.legacy{background:#fef2f2;border-color:#ef4444;color:#b91c1c;font-weight:800}
+  select.matsel.hand{background:#f5f3ff;border-color:#c4b5fd}
+  td.cell-won.total{font-weight:800;color:#7c2d12;text-align:right;background:#fffaf2}
   .detail-row td{background:#f6f8fc;padding:12px 14px;border-left:3px solid var(--brand);box-shadow:inset 0 1px 0 #dde5f0}
   .detail-grid{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:12px;align-items:start}
   .detail-grid .f{display:flex;flex-direction:column;gap:3px}
@@ -118,7 +120,7 @@
       <thead><tr>
         <th class="cell-teacher">강사</th><th class="cell-grade">학년</th><th class="cell-subj">과목</th>
         <th class="cell-name">강좌명</th><th class="cell-type">유형</th>
-        <th class="cell-sess">회차</th><th class="cell-won">수강료</th><th class="cell-won">📚교재비</th>
+        <th class="cell-sess">회차</th><th class="cell-won">수강료</th><th class="cell-won">📚교재비<br><span style="font-weight:400;font-size:10px">(강사)</span></th><th class="cell-won">🖨️유인물비<br><span style="font-weight:400;font-size:10px">(학원)</span></th><th class="cell-won">고지 교습비</th>
         <th class="cell-note">비고</th><th style="min-width:118px">관리</th>
       </tr></thead>
       <tbody id="body"></tbody>
@@ -134,7 +136,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=c8fc78c3"></script>
+<script src="config.js?v=8c7f4255"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADES   = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -253,6 +255,8 @@ function rowHtml(c){
     <td class="cell-sess"><input type="number" data-k="sessions" value="${c.sessions??""}" min="0" placeholder="—"></td>
     <td class="cell-won"><input class="won" data-k="tuition" inputmode="numeric" value="${won(c.tuition)}" placeholder="0"></td>
     <td class="cell-won"><select class="matsel${window.daolIsLegacyMaterial(c.material_fee)?" legacy":""}" data-k="material_fee">${window.daolMaterialOptions(c.material_fee)}</select></td>
+    <td class="cell-won"><select class="matsel hand" data-k="handout_fee">${window.daolHandoutOptions(c.handout_fee)}</select></td>
+    <td class="cell-won total">${won(window.daolTotalFee(c.tuition,c.material_fee,c.handout_fee))}</td>
     <td class="cell-note"><input data-k="tuition_note" value="${escA(c.tuition_note)}" placeholder="비고"></td>
     <td><div class="rowbtns">
       <button class="${detailCls}" data-act="detail" title="${escA(detailTip)}">${detailTxt}</button>
@@ -260,7 +264,7 @@ function rowHtml(c){
       <button class="btn sm delbtn" data-act="del" title="이 강좌를 삭제(폐강)합니다">🗑 삭제</button>
     </div></td>
   </tr>
-  <tr class="detail-row hide" data-detail="${id}"><td colspan="10">
+  <tr class="detail-row hide" data-detail="${id}"><td colspan="12">
     ${miss.length?`<div class="miss-bar ${hard?'hard':''}">${hard?'⛔':'⚠️'} <b>미입력 ${miss.length}개</b> — ${miss.map(m=>esc(m.t)).join(" · ")}
       ${hard?'<span>시간이 없으면 <b>시간표에 아예 나오지 않습니다.</b> 먼저 채워주세요.</span>':'<span>학부모 안내문에서 해당 항목이 빈칸으로 나갑니다.</span>'}</div>`:""}
     <div class="detail-grid">
@@ -317,8 +321,15 @@ document.getElementById("body").addEventListener("input", e=>{
   const tr=e.target.closest("tr"); const id=(tr.dataset.id||tr.dataset.detail); const k=inp.dataset.k;
   let v = inp.value;
   if(inp.classList.contains("won")) { const n=digits(v); v = n===""?null:+n; }
-  else if(k==="material_fee"){ v = v===""?null:+v; inp.classList.toggle("legacy", window.daolIsLegacyMaterial(v)); }
+  else if(k==="material_fee"||k==="handout_fee"){ v = v===""?null:+v;
+    if(k==="material_fee") inp.classList.toggle("legacy", window.daolIsLegacyMaterial(v));
+    const row=DATA.find(x=>x.id===id); if(row){ row[k]=v;
+      const cell=tr.querySelector(".cell-won.total");
+      if(cell) cell.textContent=won(window.daolTotalFee(row.tuition,row.material_fee,row.handout_fee)); } }
   else if(k==="sessions"){ v = v===""?null:+v; }
+  if(k==="tuition"){ const row=DATA.find(x=>x.id===id); if(row){ row.tuition=v;
+      const cell=tr.querySelector(".cell-won.total");
+      if(cell) cell.textContent=won(window.daolTotalFee(row.tuition,row.material_fee,row.handout_fee)); } }
   const patch = {[k]:v};
   if(k==="grade"){ patch.division = divisionOf(v);
     const dr=document.querySelector(`[data-detail="${id}"] .divlbl`); if(dr) dr.textContent=patch.division; }
@@ -368,7 +379,7 @@ document.getElementById("addBtn").addEventListener("click", ()=>{
     id:uid(), teacher:(t?t.name:(ROSTER[0]&&ROSTER[0].name)||""),
     grade:"", subject:(t?t.subject:""), course_name:"", schedule_text:"",
     target_school:"공통", audience:"", content:"", course_type:"정규",
-    sessions:null, tuition:null, tuition_note:"", material_fee:null, session_notes:"",
+    sessions:null, tuition:null, tuition_note:"", material_fee:null, handout_fee:window.DAOL_HANDOUT_DEFAULT, session_notes:"",
     sort_order:(DATA.reduce((m,x)=>Math.max(m,x.sort_order||0),0)+1)
   };
   DATA.push(c); upsertRow(c);
