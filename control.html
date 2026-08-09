@@ -50,6 +50,7 @@
   select.matsel{width:100%}
   select.matsel.legacy{background:#fef2f2;border-color:#ef4444;color:#b91c1c;font-weight:800}
   select.matsel.hand{background:#f5f3ff;border-color:#c4b5fd}
+  select.matsel.off{background:#f3f4f6;color:#9ca3af;border-color:#e5e7eb;cursor:not-allowed}
   td.cell-won.total{font-weight:800;color:#7c2d12;text-align:right;background:#fffaf2}
   .detail-row td{background:#f6f8fc;padding:12px 14px;border-left:3px solid var(--brand);box-shadow:inset 0 1px 0 #dde5f0}
   .detail-grid{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:12px;align-items:start}
@@ -136,7 +137,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=8c7f4255"></script>
+<script src="config.js?v=12eefbb9"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADES   = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -255,7 +256,7 @@ function rowHtml(c){
     <td class="cell-sess"><input type="number" data-k="sessions" value="${c.sessions??""}" min="0" placeholder="—"></td>
     <td class="cell-won"><input class="won" data-k="tuition" inputmode="numeric" value="${won(c.tuition)}" placeholder="0"></td>
     <td class="cell-won"><select class="matsel${window.daolIsLegacyMaterial(c.material_fee)?" legacy":""}" data-k="material_fee">${window.daolMaterialOptions(c.material_fee)}</select></td>
-    <td class="cell-won"><select class="matsel hand" data-k="handout_fee">${window.daolHandoutOptions(c.handout_fee)}</select></td>
+    <td class="cell-won">${window.daolHandoutCell(c,"matsel hand")}</td>
     <td class="cell-won total">${won(window.daolTotalFee(c.tuition,c.material_fee,c.handout_fee))}</td>
     <td class="cell-note"><input data-k="tuition_note" value="${escA(c.tuition_note)}" placeholder="비고"></td>
     <td><div class="rowbtns">
@@ -331,6 +332,10 @@ document.getElementById("body").addEventListener("input", e=>{
       const cell=tr.querySelector(".cell-won.total");
       if(cell) cell.textContent=won(window.daolTotalFee(row.tuition,row.material_fee,row.handout_fee)); } }
   const patch = {[k]:v};
+  if(k==="grade"||k==="subject"){ const row=DATA.find(x=>x.id===id);
+    if(row){ row[k]=v; if(k==="grade") row.division=divisionOf(v);
+      if(!window.daolHandoutAllowed(row) && row.handout_fee!=null){ row.handout_fee=null; patchRow(id,{handout_fee:null}); }
+      setTimeout(render,0); } }
   if(k==="grade"){ patch.division = divisionOf(v);
     const dr=document.querySelector(`[data-detail="${id}"] .divlbl`); if(dr) dr.textContent=patch.division; }
   patchRow(id, patch);

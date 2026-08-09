@@ -32,6 +32,13 @@ window.daolMaterialOptions = function (v) {
    교재 사용량이 많은 반(예: 황웅 선생님 반)은 강사 교재비 + 학원 유인물비가 함께 붙는다.
    구간은 교재비와 동일하게 쓰고 기본값만 9,000원. */
 window.DAOL_HANDOUT_DEFAULT = 9000;
+/* 부과 가능 범위 — 자체 제작 인쇄물이 실제로 나가는 '고등 영어'에 한정.
+   다른 과목·학교급은 출판 교재만으로 진행하므로 칸 자체를 잠근다. */
+window.daolHandoutAllowed = function (c) {
+  const div = c && (c.division || "");
+  const subj = c && (c.subject || "");
+  return div === "고등" && subj === "영어";
+};
 window.daolHandoutOptions = function (v) {
   const T = window.DAOL_MATERIAL_TIERS;
   const cur = (v === "" || v == null) ? null : Number(String(v).replace(/[^0-9]/g, "")) || null;
@@ -43,6 +50,12 @@ window.daolHandoutOptions = function (v) {
 /* 고지·청구 금액 = 수강료 + 강사 교재비 + 학원 유인물비 */
 window.daolTotalFee = (tuition, material, handout) =>
   (Number(tuition) || 0) + (Number(material) || 0) + (Number(handout) || 0);
+/* 잠긴 칸 표시 — 고등 영어가 아니면 '해당 없음'으로 고정 */
+window.daolHandoutCell = function (c, cls) {
+  if (!window.daolHandoutAllowed(c))
+    return `<select class="${cls} off" data-k="handout_fee" disabled title="유인물 사용비는 고등 영어 강좌에만 부과합니다"><option>해당 없음</option></select>`;
+  return `<select class="${cls}" data-k="handout_fee">${window.daolHandoutOptions(c.handout_fee)}</select>`;
+};
 
 /* 0·빈값은 '없음'으로 본다(구 단가 경고 대상 아님) */
 window.daolIsLegacyMaterial = function (v) {
