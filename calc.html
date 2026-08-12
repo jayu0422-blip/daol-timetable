@@ -70,6 +70,7 @@
     <button data-t="refund" class="on">💸 환불액 계산</button>
     <button data-t="study">📚 관리형독서실 환불</button>
     <button data-t="join">🧾 중도 등록 수강료</button>
+    <button data-t="pack">🎒 종합반 계산</button>
   </div>
 
   <!-- ── 1. 환불액 계산 ─────────────────────────── -->
@@ -109,6 +110,19 @@
     <div id="jnOut"></div>
   </div>
 
+  <!-- ── 4. 종합반 ─────────────────────────────── -->
+  <div class="panel hide" id="p-pack">
+    <h2>종합반 계산</h2>
+    <div class="hint">학년을 고르면 그 학년에 열려 있는 반이 과목별로 나옵니다. 들을 과목만 고르면 합계가 나옵니다.
+      <b>4과목을 함께 들으면 10% 할인</b>입니다.</div>
+    <div class="f" style="margin-bottom:12px"><label>학년</label><div class="chips" id="pkGrades"></div></div>
+    <div class="grid" id="pkSubjects"></div>
+    <div class="f" style="margin-top:12px">
+      <label><input type="checkbox" id="pkStudy" style="width:auto;margin-right:6px;vertical-align:-2px">관리형독서실(자습관) 함께 등록</label>
+    </div>
+    <div id="pkOut"></div>
+  </div>
+
   <div class="panel">
     <h2 style="font-size:14px">적용 규칙</h2>
     <table class="rule">
@@ -118,6 +132,7 @@
       <tr><td>국어 (고등)</td><td>4회</td><td>기준 초과 시 <b>회차당 추가 청구(상한 없음)</b></td></tr>
       <tr><td>영어 (중등)</td><td>8회</td><td>월수금반은 <b>월·수</b>, 화목토반은 <b>화·목</b>만 회차로 셈. 8회를 넘어도 정액</td></tr>
       <tr><td>영어 (고등)</td><td>강좌별</td><td>회차당 정산. 고3 영어는 월 450,000원 상한</td></tr>
+      <tr><td>종합반</td><td>—</td><td><b>4과목을 함께 들으면 10% 할인.</b> 관리형독서실은 수강 과목당 50,000원 할인(별도 체계)</td></tr>
     </table>
     <table class="rule">
       <tr><th style="width:60%">환불 시점 (총교습시간 기준)</th><th>반환액</th></tr>
@@ -308,6 +323,63 @@ function calcJoin(){
     </div>`;
 }
 
+/* ===== 4. 종합반 ===== */
+const GRADE_ORDER=["중1","중2","중3","중등공통","중등","고1","고2","고3/수능"];
+const SUBJ_ORDER=["국어","영어","수학","과학"];
+let pkGrade=null;
+
+function buildPackGrades(){
+  const gs=[...new Set(DATA.map(c=>c.grade||c.division).filter(Boolean))]
+    .sort((a,b)=>(GRADE_ORDER.indexOf(a)+99)%199-(GRADE_ORDER.indexOf(b)+99)%199);
+  if(!pkGrade) pkGrade=gs.find(g=>g==="중1")||gs[0];
+  document.getElementById("pkGrades").innerHTML=gs.map(g=>
+    `<span class="chip ${g===pkGrade?"on":""}" data-g="${esc(g)}">${esc(g)}</span>`).join("");
+}
+function buildPackSubjects(){
+  const rows=DATA.filter(c=>(c.grade||c.division)===pkGrade && c.tuition!=null);
+  const by={}; rows.forEach(c=>(by[c.subject||"기타"]=by[c.subject||"기타"]||[]).push(c));
+  const subs=SUBJ_ORDER.filter(s=>by[s]).concat(Object.keys(by).filter(s=>!SUBJ_ORDER.includes(s)));
+  document.getElementById("pkSubjects").innerHTML = subs.length
+    ? subs.map(sub=>`<div class="f"><label>${esc(sub)}</label>
+        <select class="pk-sel" data-sub="${esc(sub)}">
+          <option value="">선택 안 함</option>
+          ${by[sub].map(c=>`<option value="${c.id}">${esc(c.course_name)} — ${won(c.tuition)}원</option>`).join("")}
+        </select></div>`).join("")
+    : `<div class="muted">이 학년에 수강료가 설정된 반이 없습니다.</div>`;
+  document.querySelectorAll(".pk-sel").forEach(el=>el.addEventListener("input",calcPack));
+}
+function calcPack(){
+  const box=document.getElementById("pkOut");
+  const picked=[...document.querySelectorAll(".pk-sel")].map(el=>DATA.find(c=>c.id===el.value)).filter(Boolean);
+  const n=picked.length;
+  const withStudy=document.getElementById("pkStudy").checked;
+  if(!n && !withStudy){ box.innerHTML=`<div class="out"><div class="k">들을 과목을 고르세요.</div></div>`; return; }
+
+  const subtotal=picked.reduce((a,c)=>a+(c.tuition||0),0);
+  const disc = n>=4 ? Math.floor(subtotal*0.1/10)*10 : 0;
+  const study = withStudy ? Math.max(0, 390000-50000*Math.min(n,4)) : 0;
+  const total = subtotal - disc + study;
+
+  box.innerHTML=`
+    <div class="out ok">
+      <div class="k">${esc(pkGrade)} · ${n}과목${withStudy?" + 관리형독서실":""}</div>
+      <div class="amt ok">${won(total)}원</div>
+      <div class="steps">
+        ${picked.map(c=>`${esc(c.subject)} — ${esc(c.course_name)} <b>${won(c.tuition)}원</b>`).join("<br>")}
+        ${n?`<br>과목 소계 <b>${won(subtotal)}원</b>`:""}
+        ${disc?`<br>4과목 할인 10% <b>−${won(disc)}원</b>`:""}
+        ${withStudy?`<br>관리형독서실 <b>${won(study)}원</b> (390,000 − 50,000 × ${Math.min(n,4)}과목)`:""}
+      </div>
+      ${n<4?`<div class="warn">현재 개설 과목이 <b>국어·영어·수학 3과목</b>이라 4과목 구성이 나오지 않습니다.
+        <b>10% 할인은 실질적으로 적용되는 경우가 없습니다.</b> 과학이 열리면 그때부터 적용됩니다.</div>`:""}
+    </div>`;
+}
+document.getElementById("pkGrades").addEventListener("click",e=>{
+  const c=e.target.closest(".chip"); if(!c) return;
+  pkGrade=c.dataset.g; buildPackGrades(); buildPackSubjects(); calcPack();
+});
+document.getElementById("pkStudy").addEventListener("change",calcPack);
+
 /* ===== 부팅 ===== */
 function fillCourses(){
   const opts=DATA.slice().sort((a,b)=>
@@ -320,7 +392,7 @@ function fillCourses(){
 document.getElementById("tabs").addEventListener("click",e=>{
   const b=e.target.closest("button[data-t]"); if(!b) return;
   document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
-  ["refund","study","join"].forEach(t=>
+  ["refund","study","join","pack"].forEach(t=>
     document.getElementById("p-"+t).classList.toggle("hide", t!==b.dataset.t));
 });
 ["rfCourse","rfDate","rfPaid"].forEach(id=>document.getElementById(id).addEventListener("input",calcRefund));
@@ -340,7 +412,8 @@ document.getElementById("tabs").addEventListener("click",e=>{
   const {data}=await sb.from("courses").select("*");
   DATA=(data||[]).filter(c=>(c.course_name||"").trim());
   document.getElementById("modeTag").textContent=`실시간 · ${DATA.length}개 강좌`;
-  fillCourses(); calcRefund(); calcStudy(); calcJoin();
+  fillCourses(); buildPackGrades(); buildPackSubjects();
+  calcRefund(); calcStudy(); calcJoin(); calcPack();
 })();
 </script>
 </body>
