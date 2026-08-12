@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 — 환불·수강료 계산기</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#059669; --danger:#dc2626; --info:#2563eb;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px 14px 90px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .top h1{font-size:19px;font-weight:800;margin:0}
+  .tag{font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  a.nav{font-size:12.5px;color:var(--info);text-decoration:none}a.nav:hover{text-decoration:underline}
+  .sub{color:var(--muted);font-size:12.5px;margin:2px 0 14px}
+
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tabs button{font:inherit;font-size:13.5px;font-weight:700;border:1px solid var(--line);background:#fff;
+    color:var(--muted);border-radius:10px;padding:9px 16px;cursor:pointer}
+  .tabs button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+  .panel h2{font-size:15.5px;font-weight:800;margin:0 0 4px}
+  .panel .hint{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .f{display:flex;flex-direction:column;gap:5px}
+  .f label{font-size:12px;font-weight:700;color:var(--muted)}
+  .f select,.f input{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;width:100%}
+  .f select:focus,.f input:focus{outline:2px solid #fde68a;border-color:var(--brand)}
+
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;user-select:none}
+  .chip.on{background:#fff7ed;border-color:var(--brand);color:var(--brand-ink);font-weight:700}
+
+  .out{margin-top:16px;border-radius:12px;padding:18px 20px;border:2px solid var(--line);background:#fafbfc}
+  .out.ok{border-color:#a7d9bf;background:#f2fbf6}
+  .out.no{border-color:#f3b8b3;background:#fef4f3}
+  .amt{font-size:34px;font-weight:800;letter-spacing:-.5px}
+  .amt.ok{color:var(--ok)} .amt.no{color:var(--danger)}
+  .out .k{font-size:12.5px;color:var(--muted);margin-bottom:3px}
+  .steps{margin-top:14px;padding-top:12px;border-top:1px dashed #cfd6df;font-size:12.5px;color:#4b5563;line-height:1.9}
+  .steps b{color:var(--ink)}
+  .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:9px;padding:9px 12px;font-size:12.5px;margin-top:10px;line-height:1.7}
+
+  table.rule{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px;background:#fff}
+  table.rule th,table.rule td{border:1px solid var(--line);padding:7px 9px;text-align:left}
+  table.rule th{background:#fdf6ec;color:var(--brand-ink);font-weight:800;font-size:11.5px}
+  table.rule tr.hit td{background:#fff7ed;font-weight:700}
+  .muted{color:var(--muted);font-size:12.5px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🧮 다올105 환불·수강료 계산기</h1>
+    <span class="tag" id="modeTag">불러오는 중…</span>
+    <span style="flex:1"></span>
+    <a class="nav" href="admin.html">← 운영자 대시보드</a>
+  </div>
+  <div class="sub">학원법 시행령 [별표 4] 반환기준(교습기간 1개월 이내) 기준입니다. 정규와 클리닉을 모두 총교습시간에 넣어 계산합니다.</div>
+
+  <div class="tabs" id="tabs">
+    <button data-t="refund" class="on">💸 환불액 계산</button>
+    <button data-t="study">📚 관리형독서실 환불</button>
+    <button data-t="join">🧾 중도 등록 수강료</button>
+  </div>
+
+  <!-- ── 1. 환불액 계산 ─────────────────────────── -->
+  <div class="panel" id="p-refund">
+    <h2>환불액 계산</h2>
+    <div class="hint">반과 환불 요청일을 고르면 자동으로 계산됩니다. 총교습시간의 1/2이 지나면 환불액이 없습니다.</div>
+    <div class="grid">
+      <div class="f"><label>반</label><select id="rfCourse"></select></div>
+      <div class="f"><label>환불 요청일</label><input type="date" id="rfDate"></div>
+      <div class="f"><label>납부액 (비우면 기준 수강료)</label><input type="text" inputmode="numeric" id="rfPaid" placeholder="자동"></div>
+    </div>
+    <div id="rfOut"></div>
+  </div>
+
+  <!-- ── 2. 관리형독서실 ─────────────────────────── -->
+  <div class="panel hide" id="p-study">
+    <h2>관리형독서실(자습관) 환불액 계산</h2>
+    <div class="hint">9월부터 기본 <b>390,000원</b>, 수강 과목 1개당 <b>50,000원 할인</b>입니다. 퇴관일까지 이용한 일수로 계산합니다.</div>
+    <div class="grid">
+      <div class="f"><label>수강 과목 수 (할인 적용)</label>
+        <select id="stSubj"><option value="0">0과목 — 390,000원</option><option value="1">1과목 — 340,000원</option>
+          <option value="2">2과목 — 290,000원</option><option value="3">3과목 — 240,000원</option>
+          <option value="4">4과목 — 190,000원</option></select></div>
+      <div class="f"><label>퇴관일</label><input type="date" id="stDate"></div>
+    </div>
+    <div id="stOut"></div>
+  </div>
+
+  <!-- ── 3. 중도 등록 ───────────────────────────── -->
+  <div class="panel hide" id="p-join">
+    <h2>중도 등록 수강료 계산</h2>
+    <div class="hint">시작일부터 그 달 말일까지 남은 회차로 계산합니다. 기준 회차를 넘겨도 정액을 넘지 않습니다(고등 국어 제외).</div>
+    <div class="grid">
+      <div class="f"><label>반</label><select id="jnCourse"></select></div>
+      <div class="f"><label>수강 시작일</label><input type="date" id="jnDate"></div>
+    </div>
+    <div id="jnOut"></div>
+  </div>
+
+  <div class="panel">
+    <h2 style="font-size:14px">적용 규칙</h2>
+    <table class="rule">
+      <tr><th style="width:14%">과목</th><th style="width:16%">기준 회차</th><th>회차 산정</th></tr>
+      <tr><td>수학</td><td>10회</td><td>기준 미달이면 회차당 비례 차감, <b>10회를 넘어도 정액</b></td></tr>
+      <tr><td>국어 (중등)</td><td>4회</td><td>5회차는 휴강 운영이라 <b>정액</b>. 미달이면 비례 차감</td></tr>
+      <tr><td>국어 (고등)</td><td>4회</td><td>기준 초과 시 <b>회차당 추가 청구(상한 없음)</b></td></tr>
+      <tr><td>영어 (중등)</td><td>8회</td><td>월수금반은 <b>월·수</b>, 화목토반은 <b>화·목</b>만 회차로 셈. 8회를 넘어도 정액</td></tr>
+      <tr><td>영어 (고등)</td><td>강좌별</td><td>회차당 정산. 고3 영어는 월 450,000원 상한</td></tr>
+    </table>
+    <table class="rule">
+      <tr><th style="width:60%">환불 시점 (총교습시간 기준)</th><th>반환액</th></tr>
+      <tr><td>교습 시작 전</td><td>이미 납부한 교습비 <b>전액</b></td></tr>
+      <tr><td>시작 후 ~ 총교습시간 1/3 경과 전</td><td><b>2/3</b>에 해당하는 금액</td></tr>
+      <tr><td>1/3 경과 후 ~ 1/2 경과 전</td><td><b>1/2</b>에 해당하는 금액</td></tr>
+      <tr><td>1/2 경과 후</td><td>없음</td></tr>
+    </table>
+    <div class="muted" style="margin-top:8px">「학원의 설립·운영 및 과외교습에 관한 법률 시행령」 [별표 4] · 교습기간 1개월 이내</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ===== 공통 ===== */
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const won=n=>(n==null||n==="")?"-":Number(n).toLocaleString("ko-KR");
+const DAYMAP={"일":0,"월":1,"화":2,"수":3,"목":4,"금":5,"토":6};
+let DATA=[];
+
+/* 시간 파싱 — 줄 단위. '클리닉/관리'가 있는 줄은 kind:"클리닉" */
+function parseDays(text){
+  const out=[];
+  String(text||"").split(/\n/).forEach(line=>{
+    const s=line.trim(); if(!s) return;
+    const kind=/클리닉|관리/.test(s)?"클리닉":"정규";
+    const days=new Set();
+    (s.match(/[월화수목금토일]/g)||[]).forEach(d=>days.add(d));
+    if(!days.size) return;
+    days.forEach(d=>out.push({day:d,kind}));
+  });
+  return out;
+}
+const regDays=c=>[...new Set(parseDays(c.schedule_text).filter(x=>x.kind==="정규").map(x=>x.day))];
+const allDays=c=>[...new Set(parseDays(c.schedule_text).map(x=>x.day))];
+
+/* 수강료 산정용 회차 요일 — 중등 영어는 수업일만(월수 / 화목) */
+function feeDays(c){
+  let d=regDays(c);
+  if(c.subject==="영어" && c.division==="중등"){
+    if(["월","수","금"].every(x=>d.includes(x))) return ["월","수"];
+    if(["화","목","토"].every(x=>d.includes(x))) return ["화","목"];
+    return d.filter(x=>x!=="금"&&x!=="토");
+  }
+  return d;
+}
+/* 기준 회차 */
+function baseSess(c){
+  if(c.subject==="수학") return 10;
+  if(c.subject==="국어") return 4;
+  if(c.subject==="영어") return c.division==="중등" ? 8 : (c.sessions||4);
+  return c.sessions||4;
+}
+/* 기준 초과 시 정액 상한이 있는가 */
+function hasCap(c){
+  if(c.subject==="국어" && c.division==="고등") return false;  // 고등 국어만 추가 청구
+  return true;
+}
+/* 기간 안에 해당 요일이 몇 번 있는지 */
+function countDays(y,m0,dayChars,from,to){
+  const want=new Set(dayChars.map(d=>DAYMAP[d]));
+  let n=0; const d=new Date(y,m0,1);
+  while(d.getMonth()===m0){
+    if(want.has(d.getDay()) && d>=from && d<=to) n++;
+    d.setDate(d.getDate()+1);
+  }
+  return n;
+}
+const monthEnd=(y,m0)=>new Date(y,m0+1,0);
+const parseDate=v=>{ if(!v) return null; const p=v.split("-").map(Number); return new Date(p[0],p[1]-1,p[2]); };
+
+/* ===== 반환 기준 [별표 4] ===== */
+function refundRule(ratio){
+  if(ratio<=0)      return {label:"교습 시작 전",              rate:1,   idx:0};
+  if(ratio<1/3)     return {label:"총교습시간 1/3 경과 전",     rate:2/3, idx:1};
+  if(ratio<1/2)     return {label:"1/3 경과 후 ~ 1/2 경과 전",  rate:1/2, idx:2};
+  return               {label:"총교습시간 1/2 경과 후",      rate:0,   idx:3};
+}
+function ruleTable(hit){
+  const rows=[["교습 시작 전","전액"],["시작 후 ~ 1/3 경과 전","2/3"],["1/3 ~ 1/2 경과 전","1/2"],["1/2 경과 후","없음"]];
+  return `<table class="rule">${rows.map((r,i)=>
+    `<tr class="${i===hit?'hit':''}"><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`;
+}
+
+/* ===== 1. 환불액 ===== */
+function calcRefund(){
+  const box=document.getElementById("rfOut");
+  const c=DATA.find(x=>x.id===document.getElementById("rfCourse").value);
+  const dt=parseDate(document.getElementById("rfDate").value);
+  if(!c||!dt){ box.innerHTML=`<div class="out"><div class="k">반과 환불 요청일을 고르세요.</div></div>`; return; }
+
+  const y=dt.getFullYear(), m0=dt.getMonth(), m=m0+1;
+  const days=allDays(c);                              // 정규+클리닉 모두
+  if(!days.length){ box.innerHTML=`<div class="out no"><div class="k">시간 정보 없음</div><div class="amt no">계산 불가</div>
+    <div class="steps">이 반은 <b>시간이 입력되어 있지 않아</b> 총교습시간을 셀 수 없습니다. 강좌 시간을 먼저 채워주세요.</div></div>`; return; }
+
+  const first=new Date(y,m0,1), last=monthEnd(y,m0);
+  const total=countDays(y,m0,days,first,last);                    // 그 달 총 교습일
+  const done =countDays(y,m0,days,first,new Date(y,m0,dt.getDate()-1)); // 요청일 전날까지 진행
+  const ratio=total?done/total:0;
+  const r=refundRule(ratio);
+
+  const paidRaw=document.getElementById("rfPaid").value.replace(/[^0-9]/g,"");
+  const paid=paidRaw?+paidRaw:(c.tuition||0);
+  const amount=Math.floor(paid*r.rate/10)*10;
+
+  const ok=amount>0;
+  box.innerHTML=`
+    <div class="out ${ok?'ok':'no'}">
+      <div class="k">${esc(c.course_name)} · ${m}월 ${dt.getDate()}일 환불 요청</div>
+      <div class="amt ${ok?'ok':'no'}">${ok?won(amount)+"원":"환불 불가"}</div>
+      <div class="steps">
+        납부액 <b>${won(paid)}원</b> × <b>${r.rate===1?"전액":r.rate===0?"0":(r.rate===2/3?"2/3":"1/2")}</b> = ${ok?won(amount)+"원":"0원"}<br>
+        총교습시간 <b>${total}회</b>(정규+클리닉, ${days.join("·")}요일) 중 <b>${done}회</b> 진행 →
+        경과율 <b>${(ratio*100).toFixed(1)}%</b> → <b>${r.label}</b>
+      </div>
+      ${!ok?`<div class="warn">총교습시간의 <b>1/2이 지나 반환액이 없습니다.</b> 학부모께는 "규정상 환불 대상이 아니다"가 아니라 <b>「학원법 시행령 별표4 기준으로 반환액이 발생하지 않는 시점」</b>이라고 안내하세요.</div>`:""}
+      ${ruleTable(r.idx)}
+    </div>`;
+}
+
+/* ===== 2. 관리형독서실 ===== */
+function calcStudy(){
+  const box=document.getElementById("stOut");
+  const n=+document.getElementById("stSubj").value;
+  const dt=parseDate(document.getElementById("stDate").value);
+  const paid=390000-50000*n;
+  if(!dt){ box.innerHTML=`<div class="out"><div class="k">퇴관일을 고르세요.</div>
+    <div class="steps">기본 390,000원 − 과목당 50,000원 × ${n}과목 = <b>${won(paid)}원</b></div></div>`; return; }
+
+  const y=dt.getFullYear(), m0=dt.getMonth(), m=m0+1;
+  const total=monthEnd(y,m0).getDate();               // 그 달 일수
+  const used=dt.getDate()-1;                          // 퇴관일 전날까지 이용
+  const ratio=used/total;
+  const r=refundRule(ratio);
+  const amount=Math.floor(paid*r.rate/10)*10;
+  const ok=amount>0;
+
+  box.innerHTML=`
+    <div class="out ${ok?'ok':'no'}">
+      <div class="k">관리형독서실 · ${n}과목 수강 · ${m}월 ${dt.getDate()}일 퇴관</div>
+      <div class="amt ${ok?'ok':'no'}">${ok?won(amount)+"원":"환불 불가"}</div>
+      <div class="steps">
+        납부액 <b>${won(paid)}원</b> (390,000 − 50,000 × ${n}과목) × <b>${r.rate===1?"전액":r.rate===0?"0":(r.rate===2/3?"2/3":"1/2")}</b><br>
+        ${m}월 <b>${total}일</b> 중 <b>${used}일</b> 이용 → 경과율 <b>${(ratio*100).toFixed(1)}%</b> → <b>${r.label}</b>
+      </div>
+      ${ruleTable(r.idx)}
+    </div>`;
+}
+
+/* ===== 3. 중도 등록 수강료 ===== */
+function calcJoin(){
+  const box=document.getElementById("jnOut");
+  const c=DATA.find(x=>x.id===document.getElementById("jnCourse").value);
+  const dt=parseDate(document.getElementById("jnDate").value);
+  if(!c||!dt){ box.innerHTML=`<div class="out"><div class="k">반과 시작일을 고르세요.</div></div>`; return; }
+  if(c.tuition==null){ box.innerHTML=`<div class="out no"><div class="k">${esc(c.course_name)}</div>
+    <div class="amt no">계산 불가</div><div class="steps">이 반은 <b>수강료가 설정되어 있지 않습니다.</b></div></div>`; return; }
+
+  const y=dt.getFullYear(), m0=dt.getMonth(), m=m0+1;
+  const days=feeDays(c);
+  if(!days.length){ box.innerHTML=`<div class="out no"><div class="k">${esc(c.course_name)}</div>
+    <div class="amt no">계산 불가</div><div class="steps">정규 수업 요일을 읽을 수 없습니다. 강좌 시간을 확인해주세요.</div></div>`; return; }
+
+  const base=c.tuition, bs=baseSess(c), cap=hasCap(c);
+  const left=countDays(y,m0,days,dt,monthEnd(y,m0));   // 시작일 포함 남은 회차
+  const per=Math.round(base/bs);
+  let amount = left>=bs ? (cap?base:per*left) : per*left;
+  amount=Math.floor(amount/10)*10;
+  if(c.subject==="영어" && c.division!=="중등" && /고3|수능/.test(c.grade||"")) amount=Math.min(amount,450000);
+
+  const note = left>=bs
+    ? (cap?`남은 회차가 기준(${bs}회) 이상이라 <b>정액</b>입니다.`
+          :`기준(${bs}회)을 넘어 <b>초과 ${left-bs}회분이 추가</b>됩니다(고등 국어는 상한 없음).`)
+    : `기준 ${bs}회 중 <b>${left}회</b>만 남아 회차당 ${won(per)}원으로 차감했습니다.`;
+
+  box.innerHTML=`
+    <div class="out ok">
+      <div class="k">${esc(c.course_name)} · ${m}월 ${dt.getDate()}일 시작</div>
+      <div class="amt ok">${won(amount)}원</div>
+      <div class="steps">
+        기준 수강료 <b>${won(base)}원</b> ÷ 기준 <b>${bs}회</b> = 회차당 <b>${won(per)}원</b><br>
+        남은 회차 <b>${left}회</b> (${days.join("·")}요일 기준, ${m}월 ${dt.getDate()}일~말일)<br>
+        ${note}
+      </div>
+      ${c.subject==="영어"&&c.division==="중등"?`<div class="warn">중등 영어는 <b>수업일(${days.join("·")})만 회차로 셉니다.</b> 관리일은 회차에 넣지 않습니다.</div>`:""}
+    </div>`;
+}
+
+/* ===== 부팅 ===== */
+function fillCourses(){
+  const opts=DATA.slice().sort((a,b)=>
+      String(a.division).localeCompare(String(b.division))||String(a.grade).localeCompare(String(b.grade))||
+      String(a.subject).localeCompare(String(b.subject)))
+    .map(c=>`<option value="${c.id}">[${esc(c.grade||c.division||"")}·${esc(c.subject||"")}] ${esc(c.course_name)} — ${won(c.tuition)}원</option>`).join("");
+  document.getElementById("rfCourse").innerHTML=opts;
+  document.getElementById("jnCourse").innerHTML=opts;
+}
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-t]"); if(!b) return;
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["refund","study","join"].forEach(t=>
+    document.getElementById("p-"+t).classList.toggle("hide", t!==b.dataset.t));
+});
+["rfCourse","rfDate","rfPaid"].forEach(id=>document.getElementById(id).addEventListener("input",calcRefund));
+["stSubj","stDate"].forEach(id=>document.getElementById(id).addEventListener("input",calcStudy));
+["jnCourse","jnDate"].forEach(id=>document.getElementById(id).addEventListener("input",calcJoin));
+
+(async function(){
+  const cfg=window.DAOL_CONFIG||{};
+  const today=new Date(), iso=d=>d.toISOString().slice(0,10);
+  document.getElementById("rfDate").value=iso(today);
+  document.getElementById("stDate").value=iso(today);
+  document.getElementById("jnDate").value=iso(today);
+  if(!(cfg.url&&cfg.anonKey&&window.supabase)){
+    document.getElementById("modeTag").textContent="연결 실패"; return;
+  }
+  const sb=window.supabase.createClient(cfg.url,cfg.anonKey);
+  const {data}=await sb.from("courses").select("*");
+  DATA=(data||[]).filter(c=>(c.course_name||"").trim());
+  document.getElementById("modeTag").textContent=`실시간 · ${DATA.length}개 강좌`;
+  fillCourses(); calcRefund(); calcStudy(); calcJoin();
+})();
+</script>
+</body>
+</html>
