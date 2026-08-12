@@ -227,7 +227,7 @@ function coursesForGrade(key,all){
     const wantG=key.endsWith("2")?"고2":"고1";
     if(g!==wantG) return false;
     if(sub==="수학") return true;
-    if(key==="하남고1") return sub==="영어"?(sch===null||sch==="미사고"):sch===null;
+    if(key==="하남고1") return sub==="영어"?(sch===null||sch==="하남고"):sch===null;
     const ws=key.startsWith("미사강변고")?"미사강변고":"미사고";
     return sch===null||sch===ws;
   });

@@ -462,7 +462,7 @@
     </div>
     <div id="guideSheet"></div>
     <div id="gradeUnparsed"></div>
-    <p class="muted noprint">요일·시간·수업/관리는 강좌의 ‘시간’ 칸에서 자동 인식합니다. <b>(내부 참고)</b> 고1 수학과 하남고1 영어는 같은 강좌가 해당 학교 시간표에 각각 표시되며, 출력물에는 선택한 학교·학년으로만 표기됩니다.</p>
+    <p class="muted noprint">요일·시간·수업/관리는 강좌의 ‘시간’ 칸에서 자동 인식합니다. <b>(내부 참고)</b> 고1 수학은 같은 강좌가 학교별 시간표에 각각 표시되며, 출력물에는 선택한 학교·학년으로만 표기됩니다.</p>
   </section>
 
   <!-- ===== 수강료 ===== -->
@@ -1378,8 +1378,8 @@ function coursesForGrade(key){
     const wantG = key.endsWith("2") ? "고2" : "고1";
     if(g!==wantG) return false;
     if(sub==="수학") return true;                       // 수학=합반/공통 → 학교 무관 표시
-    // 하남고1은 영어가 미사고1과 동일, 그 외 과목은 공통 강좌만
-    if(key==="하남고1") return sub==="영어" ? (sch===null||sch==="미사고") : sch===null;
+    // 하남고1은 자체 영어반(윤재영) 운영, 그 외 과목은 공통 강좌만
+    if(key==="하남고1") return sub==="영어" ? (sch===null||sch==="하남고") : sch===null;
     const wantSchool = key.startsWith("미사강변고") ? "미사강변고" : "미사고";
     return sch===null || sch===wantSchool;              // 그 외 과목: 공통 또는 해당 학교
   });
