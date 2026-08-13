@@ -134,6 +134,22 @@
     </div>
   </div>
 
+  <!-- 담당 학교 & 기출분석 설문 (기출분석은 시험 후 시즌에만 강조) -->
+  <div class="prof" id="dutyBox">
+    <div class="prof-head">
+      <div>
+        <div class="prof-t">🏫 담당 학교 &amp; 기출분석</div>
+        <div class="prof-d">담당하시는 학교를 적어주세요(작업현황 보드에 반영됩니다). 시험이 끝나면 아래에 <b>학교별 기출분석 설문</b>이 뜹니다.</div>
+      </div>
+      <span class="status" id="dutyStat"></span>
+    </div>
+    <div class="prof-grid">
+      <div class="f full"><label>담당 학교 (여러 개면 <b>/</b> 로 구분)</label>
+        <textarea id="schoolsInput" style="min-height:44px" placeholder="예: 미사고 / 미사강변고 / 하남고"></textarea></div>
+    </div>
+    <div id="gichulSeason"></div>
+  </div>
+
   <div class="savebar">
     <button class="btn primary sm" id="addTop">+ 강좌 추가</button>
     <span class="status" id="saveStatus">—</span>
@@ -292,6 +308,66 @@ function initProfile(){
     },600);
   });
 }
+
+/* ---------- 담당 학교 + 기출분석 시즌 ---------- */
+const GICHUL_PERIODS = [
+  {label:'2026 2학기 중간', start:'2026-10-19'},
+  {label:'2026 2학기 기말', start:'2026-12-14'},
+  {label:'2027 1학기 중간', start:'2027-05-03'},
+  {label:'2027 1학기 기말', start:'2027-07-05'},
+  {label:'2027 2학기 중간', start:'2027-10-18'},
+  {label:'2027 2학기 기말', start:'2027-12-13'}
+];
+const SURVEY_BASE = 'https://jayu0422-blip.github.io/daol105-console/기출분석_설문.html';
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function activeSeason(){
+  const t=todayStr(); let cur=null;
+  for(const p of GICHUL_PERIODS){ if(p.start<=t) cur=p; }
+  const next=GICHUL_PERIODS.find(p=>p.start>t)||null;
+  if(!cur) return {active:false, next:GICHUL_PERIODS[0]};
+  const end=new Date(new Date(cur.start+'T00:00:00').getTime()+45*86400000);
+  if(new Date(t+'T00:00:00')<=end) return {active:true, period:cur};
+  return {active:false, next:next};
+}
+function teacherSchools(){
+  const raw=(document.getElementById('schoolsInput')?document.getElementById('schoolsInput').value:'')||'';
+  return raw.split(/[\/,\n·]/).map(s=>s.trim()).filter(Boolean);
+}
+function renderGichul(){
+  const box=document.getElementById('gichulSeason'); if(!box) return;
+  const subj = (me&&me.subject)||'';
+  const sn=activeSeason(); const schools=teacherSchools();
+  const link=(school)=>SURVEY_BASE+'?teacher='+encodeURIComponent(TEACHER)+'&subject='+encodeURIComponent(subj)+'&school='+encodeURIComponent(school)+'&period='+encodeURIComponent(sn.active?sn.period.label:'');
+  if(sn.active){
+    const btns = schools.length
+      ? schools.map(s=>`<a class="btn sm primary" target="_blank" rel="noopener" href="${link(s)}" style="text-decoration:none">📝 [${s}] 기출분석 설문</a>`).join(' ')
+      : `<span class="muted2">위에 담당 학교를 먼저 적어주세요.</span> <a class="btn sm" target="_blank" rel="noopener" href="${link('')}" style="text-decoration:none">설문 열기</a>`;
+    box.innerHTML=`<div style="margin-top:12px;padding:14px;border-radius:12px;background:#fff7ed;border:1px solid #f59e0b">
+      <b style="color:#b45309">📊 지금은 [${sn.period.label}] 기출분석 시즌</b>
+      <div class="muted2" style="margin:4px 0 10px">담당 학교 시험이 끝났으면 학교별로 기출분석 설문을 작성해 주세요. (인포가 이어받아 홍보물 4종을 만듭니다)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${btns}</div></div>`;
+  }else{
+    const nx=sn.next?`다음 기출분석 시즌: <b>${sn.next.start}</b> (${sn.next.label})`:'예정된 기출분석 시즌 없음';
+    box.innerHTML=`<div style="margin-top:12px;padding:11px 13px;border-radius:10px;background:#f4f6f9;border:1px solid #e5e7eb;color:#6b7280;font-size:13px">
+      🗓 지금은 기출분석 시즌이 아닙니다. ${nx}. <a href="${link('')}" target="_blank" rel="noopener" style="color:#2563eb">미리 작성하기</a></div>`;
+  }
+}
+let schoolsTimer=null;
+function initDuty(){
+  const inp=document.getElementById('schoolsInput'); if(!inp) return;
+  if(me && me.schools!=null) inp.value = Array.isArray(me.schools) ? me.schools.join(' / ') : me.schools;
+  renderGichul();
+  inp.addEventListener('input', ()=>{
+    document.getElementById('dutyStat').textContent='입력 중…'; renderGichul();
+    clearTimeout(schoolsTimer);
+    schoolsTimer=setTimeout(async()=>{
+      if(!useSupa){ document.getElementById('dutyStat').textContent='저장됨 ✓ (데모)'; return; }
+      const {error}=await sb.from('teachers').update({schools:inp.value}).eq('name',TEACHER);
+      document.getElementById('dutyStat').textContent = error ? ('저장 오류: '+error.message) : '저장됨 ✓';
+      if(!error && me) me.schools=inp.value;
+    },600);
+  });
+}
 function updateCount(){ document.getElementById("countStat").textContent = `총 ${rows.length}개 강좌`; }
 
 /* ---------- 렌더 ---------- */
@@ -380,6 +456,7 @@ async function init(){
   document.getElementById("who").textContent = TEACHER + " 선생님";
   document.title = `[${TEACHER}] 시간표 입력`;
   initProfile();
+  initDuty();
   await load();
 }
 init();
