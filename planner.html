@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 — 학교 학사일정 플래너</title>
+<style>
+  :root{
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#059669; --danger:#dc2626; --info:#2563eb;
+    --shadow:0 1px 3px rgba(16,24,40,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px 14px 90px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .top h1{font-size:19px;font-weight:800;margin:0}
+  .tag{font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  a.nav{font-size:12.5px;color:var(--info);text-decoration:none}a.nav:hover{text-decoration:underline}
+  .sub{color:var(--muted);font-size:12.5px;margin:2px 0 14px}
+
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tabs button{font:inherit;font-size:13.5px;font-weight:700;border:1px solid var(--line);background:#fff;
+    color:var(--muted);border-radius:10px;padding:9px 16px;cursor:pointer}
+  .tabs button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+  .panel h2{font-size:15.5px;font-weight:800;margin:0 0 4px}
+  .panel .hint{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+
+  /* 학교 필터 */
+  .schools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+  .sc{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;
+      cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-weight:600;color:var(--muted)}
+  .sc .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .sc.on{color:#fff;border-color:transparent}
+  .sc.on .dot{background:#fff !important}
+  .lvl{font-size:11.5px;color:var(--muted);font-weight:700;align-self:center;margin-right:2px}
+
+  /* 월 이동 */
+  .navbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .navbar button{font:inherit;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:9px;
+    padding:7px 13px;cursor:pointer;font-size:13.5px}
+  .navbar button:hover{background:#f9fafb}
+  .navbar .ym{font-size:17px;font-weight:800;min-width:132px;text-align:center}
+
+  /* 달력 */
+  table.cal{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  table.cal th{font-size:12px;font-weight:700;color:var(--muted);padding:7px 0;text-align:center;
+    border-bottom:1px solid var(--line)}
+  table.cal th.sun{color:#dc2626}table.cal th.sat{color:#2563eb}
+  table.cal td{vertical-align:top;height:104px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+    padding:5px 5px 6px;position:relative}
+  table.cal td:first-child{border-left:1px solid var(--line)}
+  table.cal tr:first-child td{border-top:1px solid var(--line)}
+  td.out{background:#fbfcfd}
+  td.hol{background:#fef2f2}
+  td.today{box-shadow:inset 0 0 0 2px var(--brand)}
+  .dnum{font-size:12.5px;font-weight:700;color:var(--ink)}
+  td.out .dnum{color:#c9cfd8}
+  .dnum.sun{color:#dc2626}.dnum.sat{color:#2563eb}
+  .holname{font-size:10.5px;color:#dc2626;font-weight:700;margin-top:1px;line-height:1.3}
+  .ev{font-size:10.5px;font-weight:700;color:#fff;border-radius:4px;padding:2px 5px;margin-top:3px;
+    line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
+  .ev.mid{border-radius:0}
+  .ev.start{border-top-right-radius:0;border-bottom-right-radius:0}
+  .ev.end{border-top-left-radius:0;border-bottom-left-radius:0}
+
+  /* 연간 개요 */
+  .year{overflow-x:auto}
+  table.yr{border-collapse:collapse;width:100%;min-width:900px;font-size:12.5px}
+  table.yr th,table.yr td{border:1px solid var(--line);padding:7px 9px;text-align:left}
+  table.yr th{background:#f9fafb;font-weight:700;color:var(--muted);font-size:12px}
+  table.yr td.m{font-weight:800;background:#fcfcfd;white-space:nowrap;width:86px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;border-radius:5px;padding:2px 7px;margin:2px 3px 2px 0}
+
+  /* 편집기 */
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+  .f{display:flex;flex-direction:column;gap:5px}
+  .f label{font-size:12px;font-weight:700;color:var(--muted)}
+  .f select,.f input{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;width:100%}
+  .f select:focus,.f input:focus{outline:2px solid #fde68a;border-color:var(--brand)}
+  .btn{font:inherit;font-weight:800;border:0;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13.5px}
+  .btn.p{background:var(--brand);color:#fff}
+  .btn.g{background:#fff;color:var(--muted);border:1px solid var(--line)}
+  .btn.d{background:#fff;color:var(--danger);border:1px solid #fecaca}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  table.list{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px}
+  table.list th,table.list td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left}
+  table.list th{font-size:12px;color:var(--muted);font-weight:700}
+  textarea.exp{width:100%;height:250px;font:12px/1.5 ui-monospace,Consolas,monospace;border:1px solid var(--line);
+    border-radius:9px;padding:11px;background:#fbfcfd;margin-top:12px}
+  .empty{text-align:center;color:var(--muted);padding:34px 10px;font-size:13.5px;line-height:1.9}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:12.5px;
+    color:var(--brand-ink);line-height:1.7;margin-bottom:14px}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>학교 학사일정 플래너</h1>
+    <span class="tag">시험기간 · 행사</span>
+    <a class="nav" href="admin.html">← 운영자 대시보드</a>
+  </div>
+  <div class="sub">중간·기말고사 기간과 굵직한 학교 행사를 한 화면에서 봅니다. 공휴일은 자동으로 표시됩니다.</div>
+
+  <div class="tabs">
+    <button class="on" data-tab="month">월간</button>
+    <button data-tab="year">연간 개요</button>
+    <button data-tab="edit">일정 입력</button>
+  </div>
+
+  <!-- 학교 필터 -->
+  <div class="panel" style="padding:13px 16px">
+    <div class="schools" id="filter"></div>
+    <div class="legend">
+      <span><i style="background:#fecaca"></i>공휴일</span>
+      <span><i style="background:#9ca3af"></i>중간·기말고사</span>
+      <span><i style="background:#d1d5db"></i>행사</span>
+      <span style="margin-left:auto"><b id="cnt"></b></span>
+    </div>
+  </div>
+
+  <!-- 월간 -->
+  <section id="tab-month">
+    <div class="panel">
+      <div class="navbar">
+        <button id="prev">◀ 이전</button>
+        <div class="ym" id="ym"></div>
+        <button id="next">다음 ▶</button>
+        <button id="today" class="btn g" style="padding:7px 13px">이번 달</button>
+      </div>
+      <table class="cal">
+        <thead><tr>
+          <th class="sun">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th class="sat">토</th>
+        </tr></thead>
+        <tbody id="cal"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 연간 -->
+  <section id="tab-year" hidden>
+    <div class="panel">
+      <h2>연간 개요</h2>
+      <div class="hint">2026년 3월 ~ 2027년 2월. 학교별 시험기간과 행사를 월 단위로 모아 봅니다.</div>
+      <div class="year"><table class="yr" id="yr"></table></div>
+    </div>
+  </section>
+
+  <!-- 편집 -->
+  <section id="tab-edit" hidden>
+    <div class="panel">
+      <h2>일정 입력</h2>
+      <div class="hint">여기서 넣은 일정은 이 브라우저에만 저장됩니다.
+        강사 전원에게 보이게 하려면 아래 <b>파일 내보내기</b>로 만든 내용을 <code>academic.js</code> 에 덮어쓰고 배포해야 합니다.</div>
+      <div class="row">
+        <div class="f"><label>학교</label><select id="e-school"></select></div>
+        <div class="f"><label>구분</label><select id="e-type">
+          <option>중간고사</option><option>기말고사</option><option>행사</option><option>방학</option><option>기타</option>
+        </select></div>
+        <div class="f"><label>이름</label><input id="e-title" placeholder="2학기 중간고사"/></div>
+        <div class="f"><label>시작일</label><input id="e-start" type="date"/></div>
+        <div class="f"><label>종료일</label><input id="e-end" type="date"/></div>
+        <div class="f"><label>&nbsp;</label><button class="btn p" id="add">추가</button></div>
+      </div>
+      <table class="list" id="list"></table>
+      <div class="acts">
+        <button class="btn p" id="export">파일 내보내기 (academic.js)</button>
+        <button class="btn g" id="copyjson">JSON 복사</button>
+        <button class="btn g" id="importjson">JSON 붙여넣기</button>
+        <button class="btn d" id="reset">입력 내용 전체 삭제</button>
+      </div>
+      <textarea class="exp" id="out" hidden></textarea>
+    </div>
+  </section>
+</div>
+
+<script src="academic.js"></script>
+<script>
+(function(){
+  "use strict";
+  const SCHOOLS = window.DAOL_SCHOOLS || [];
+  const HOLIDAYS = new Map((window.DAOL_HOLIDAYS||[]).concat(window.DAOL_CLOSED||[]).map(h=>[h.date,h.name]));
+  const LS = "daol_academic_draft";
+
+  // 파일 데이터 + 로컬 초안 병합
+  function loadEvents(){
+    let draft = [];
+    try{ draft = JSON.parse(localStorage.getItem(LS) || "[]"); }catch(e){ draft = []; }
+    return (window.DAOL_ACADEMIC||[]).concat(draft);
+  }
+  function loadDraft(){
+    try{ return JSON.parse(localStorage.getItem(LS) || "[]"); }catch(e){ return []; }
+  }
+  function saveDraft(d){ localStorage.setItem(LS, JSON.stringify(d)); }
+
+  let EVENTS = loadEvents();
+  const on = new Set(SCHOOLS.map(s=>s.id));            // 기본 전체 선택
+  const school = id => SCHOOLS.find(s=>s.id===id) || {name:"?",color:"#9ca3af"};
+
+  const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const parse = s => { const [y,m,d] = String(s).split("-").map(Number); return new Date(y, m-1, d); };
+  const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+  let cur = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+
+  /* ── 학교 필터 ─────────────────────────────────── */
+  function drawFilter(){
+    const box = document.getElementById("filter");
+    box.innerHTML = "";
+    ["고","중"].forEach(lv=>{
+      const lab = document.createElement("span");
+      lab.className = "lvl"; lab.textContent = lv==="고" ? "고등" : "중등";
+      box.appendChild(lab);
+      SCHOOLS.filter(s=>s.level===lv).forEach(s=>{
+        const b = document.createElement("div");
+        b.className = "sc" + (on.has(s.id) ? " on" : "");
+        if(on.has(s.id)) b.style.background = s.color;
+        b.innerHTML = '<i class="dot" style="background:'+s.color+'"></i>' + s.name;
+        b.onclick = ()=>{ on.has(s.id) ? on.delete(s.id) : on.add(s.id); drawFilter(); render(); };
+        box.appendChild(b);
+      });
+    });
+    const all = document.createElement("div");
+    all.className = "sc"; all.style.marginLeft = "6px";
+    all.textContent = on.size === SCHOOLS.length ? "전체 해제" : "전체 선택";
+    all.onclick = ()=>{
+      if(on.size === SCHOOLS.length) on.clear(); else SCHOOLS.forEach(s=>on.add(s.id));
+      drawFilter(); render();
+    };
+    box.appendChild(all);
+  }
+
+  const visible = () => EVENTS.filter(e=>on.has(e.school));
+
+  /* ── 월간 달력 ─────────────────────────────────── */
+  function renderMonth(){
+    const y = cur.getFullYear(), m = cur.getMonth();
+    document.getElementById("ym").textContent = y + "년 " + (m+1) + "월";
+    const first = new Date(y, m, 1), last = new Date(y, m+1, 0);
+    const start = new Date(first); start.setDate(1 - first.getDay());
+    const evs = visible();
+
+    let html = "", d = new Date(start);
+    for(let w=0; w<6; w++){
+      if(d > last && w>0 && d.getDay()===0) break;
+      html += "<tr>";
+      for(let i=0; i<7; i++){
+        const key = iso(d), outside = d.getMonth() !== m;
+        const hol = HOLIDAYS.get(key);
+        const cls = [outside?"out":"", hol?"hol":"", (+d===+TODAY)?"today":""].filter(Boolean).join(" ");
+        const dc = d.getDay()===0 ? "sun" : (d.getDay()===6 ? "sat" : "");
+        html += '<td class="'+cls+'"><div class="dnum '+dc+'">'+d.getDate()+"</div>";
+        if(hol) html += '<div class="holname">'+esc(hol)+"</div>";
+        evs.forEach(e=>{
+          const s = e.start, en = e.end || e.start;
+          if(key < s || key > en) return;
+          const sc = school(e.school);
+          const pos = (s===en) ? "" : (key===s ? " start" : (key===en ? " end" : " mid"));
+          const label = key===s ? (sc.name+" "+(e.title||e.type)) : "&nbsp;";
+          html += '<div class="ev'+pos+'" style="background:'+sc.color+'" title="'+esc(sc.name+" · "+(e.title||e.type))+'">'+label+"</div>";
+        });
+        html += "</td>";
+        d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+      }
+      html += "</tr>";
+      if(d > last) break;
+    }
+    document.getElementById("cal").innerHTML = html;
+  }
+
+  /* ── 연간 개요 ─────────────────────────────────── */
+  function renderYear(){
+    const sel = SCHOOLS.filter(s=>on.has(s.id));
+    let html = "<thead><tr><th>월</th>" + sel.map(s=>"<th>"+esc(s.name)+"</th>").join("") + "</tr></thead><tbody>";
+    for(let k=0; k<12; k++){
+      const y = 2026 + Math.floor((2 + k) / 12), m = (2 + k) % 12;      // 3월 시작
+      const pre = y + "-" + String(m+1).padStart(2,"0");
+      html += '<tr><td class="m">' + y + "." + String(m+1).padStart(2,"0") + "</td>";
+      sel.forEach(s=>{
+        const list = EVENTS.filter(e=>e.school===s.id && String(e.start).startsWith(pre));
+        html += "<td>" + (list.length
+          ? list.map(e=>'<span class="pill" style="background:'+s.color+'">'
+              + esc(e.title||e.type) + " " + fmt(e) + "</span>").join("")
+          : '<span style="color:#c9cfd8">—</span>') + "</td>";
+      });
+      html += "</tr>";
+    }
+    document.getElementById("yr").innerHTML = html + "</tbody>";
+  }
+  const fmt = e => {
+    const a = String(e.start).slice(5).replace("-","/");
+    const b = e.end && e.end !== e.start ? "~" + String(e.end).slice(5).replace("-","/") : "";
+    return a + b;
+  };
+
+  /* ── 편집기 ───────────────────────────────────── */
+  function renderEdit(){
+    const sel = document.getElementById("e-school");
+    if(!sel.options.length){
+      SCHOOLS.forEach(s=>{
+        const o = document.createElement("option");
+        o.value = s.id; o.textContent = s.full || s.name;
+        sel.appendChild(o);
+      });
+    }
+    const draft = loadDraft();
+    const t = document.getElementById("list");
+    if(!draft.length){
+      t.innerHTML = '<tr><td class="empty">아직 입력한 일정이 없습니다.<br>위에서 학교·구분·기간을 넣고 추가를 누르세요.</td></tr>';
+      return;
+    }
+    let html = "<thead><tr><th>학교</th><th>구분</th><th>이름</th><th>기간</th><th></th></tr></thead><tbody>";
+    draft.slice().sort((a,b)=>String(a.start).localeCompare(String(b.start))).forEach(e=>{
+      const sc = school(e.school);
+      html += "<tr><td><span class='pill' style='background:"+sc.color+"'>"+esc(sc.name)+"</span></td>"
+            + "<td>"+esc(e.type)+"</td><td>"+esc(e.title||"")+"</td><td>"+fmt(e)+"</td>"
+            + "<td style='text-align:right'><button class='btn g' style='padding:4px 10px;font-size:12px' data-del='"
+            + esc(JSON.stringify(e)) + "'>삭제</button></td></tr>";
+    });
+    t.innerHTML = html + "</tbody>";
+    t.querySelectorAll("[data-del]").forEach(b=>{
+      b.onclick = ()=>{
+        const target = b.getAttribute("data-del");
+        saveDraft(loadDraft().filter(x=>JSON.stringify(x) !== target));
+        EVENTS = loadEvents(); renderEdit(); render();
+      };
+    });
+  }
+
+  document.getElementById("add").onclick = ()=>{
+    const s = document.getElementById("e-start").value;
+    if(!s){ alert("시작일을 넣어주세요."); return; }
+    const e = {
+      school: document.getElementById("e-school").value,
+      type:   document.getElementById("e-type").value,
+      title:  document.getElementById("e-title").value.trim() || document.getElementById("e-type").value,
+      start:  s,
+      end:    document.getElementById("e-end").value || s
+    };
+    if(e.end < e.start){ alert("종료일이 시작일보다 빠릅니다."); return; }
+    saveDraft(loadDraft().concat([e]));
+    document.getElementById("e-title").value = "";
+    EVENTS = loadEvents(); renderEdit(); render();
+  };
+
+  document.getElementById("export").onclick = ()=>{
+    const all = (window.DAOL_ACADEMIC||[]).concat(loadDraft())
+      .slice().sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    const body = all.map(e=>'  { school:"'+e.school+'", type:"'+e.type+'", title:"'+(e.title||"")
+      +'", start:"'+e.start+'", end:"'+e.end+'" }').join(",\n");
+    const ta = document.getElementById("out");
+    ta.hidden = false;
+    ta.value = "window.DAOL_ACADEMIC = [\n" + body + "\n];";
+    ta.select();
+    alert("academic.js 의 DAOL_ACADEMIC 부분을 이 내용으로 바꾸고 배포하면 강사 전원에게 반영됩니다.");
+  };
+  document.getElementById("copyjson").onclick = async ()=>{
+    const txt = JSON.stringify(loadDraft(), null, 2);
+    try{ await navigator.clipboard.writeText(txt); alert("복사했습니다."); }
+    catch(e){ const ta = document.getElementById("out"); ta.hidden = false; ta.value = txt; ta.select(); }
+  };
+  document.getElementById("importjson").onclick = ()=>{
+    const txt = prompt("JSON 을 붙여넣으세요 (기존 입력에 덧붙입니다)");
+    if(!txt) return;
+    try{
+      const arr = JSON.parse(txt);
+      if(!Array.isArray(arr)) throw new Error("배열이 아닙니다");
+      saveDraft(loadDraft().concat(arr));
+      EVENTS = loadEvents(); renderEdit(); render();
+      alert(arr.length + "건 추가했습니다.");
+    }catch(err){ alert("읽지 못했습니다: " + err.message); }
+  };
+  document.getElementById("reset").onclick = ()=>{
+    if(!confirm("이 브라우저에 입력한 일정을 전부 지웁니다. 계속할까요?")) return;
+    localStorage.removeItem(LS); EVENTS = loadEvents(); renderEdit(); render();
+  };
+
+  /* ── 공통 ─────────────────────────────────────── */
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+  function render(){
+    renderMonth(); renderYear();
+    const n = visible().length;
+    document.getElementById("cnt").textContent = n ? ("등록된 일정 " + n + "건") : "일정 미입력 — 「일정 입력」 탭에서 넣어주세요";
+  }
+
+  document.getElementById("prev").onclick  = ()=>{ cur = new Date(cur.getFullYear(), cur.getMonth()-1, 1); renderMonth(); };
+  document.getElementById("next").onclick  = ()=>{ cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1); renderMonth(); };
+  document.getElementById("today").onclick = ()=>{ cur = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); renderMonth(); };
+
+  document.querySelectorAll(".tabs button").forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      ["month","year","edit"].forEach(t=>{
+        document.getElementById("tab-"+t).hidden = (t !== b.dataset.tab);
+      });
+      if(b.dataset.tab === "edit") renderEdit();
+    };
+  });
+
+  drawFilter(); render(); renderEdit();
+})();
+</script>
+</body>
+</html>
