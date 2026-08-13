@@ -379,6 +379,7 @@
     <h1>🖥️ 다올105 시간표 — 운영자</h1>
     <span class="tag" id="modeTag">데모 모드</span>
     <span style="flex:1"></span>
+    <a class="btn sm noprint" href="planner.html" style="text-decoration:none;color:#1d4ed8;border-color:#93c5fd">📅 학사일정 플래너</a>
     <a class="btn sm noprint" href="calc.html" style="text-decoration:none;color:#166534;border-color:#86efac">🧮 환불·수강료 계산기</a>
     <a class="btn sm noprint" href="control.html" style="text-decoration:none;color:var(--brand-ink);border-color:var(--brand)">🛠️ 전체 관리</a>
     <a class="btn sm noprint" href="https://jayu0422-blip.github.io/daol105-console/" target="_blank" rel="noopener" style="text-decoration:none;color:#2563eb;border-color:#93c5fd">🖥 배포 콘솔</a>
@@ -625,14 +626,40 @@ let TEACHERS = {};  // 강사명 -> 프로필(photo_url, principle, strategy, in
 const COPY = window.DAOL_COPY || [];
 const copyFor = (subject, level) => COPY.find(c=>c.subject===subject && c.level===level) || null;
 
+/* ===== 강사 링크(토큰) 조회 =====
+   토큰은 teacher_tokens 표에 따로 있고 anon 키로는 못 읽는다.
+   관리자 키를 아는 사람만 admin_tokens 함수로 받아온다. 키는 이 브라우저에만 저장된다. */
+const ADMKEY = "daol_admin_key";
+async function loadTokens(){
+  if(!useSupa) return {};
+  const key = localStorage.getItem(ADMKEY);
+  if(!key) return {};
+  try{
+    const {data,error} = await sb.rpc("admin_tokens",{p_key:key});
+    if(error || !Array.isArray(data)) return {};
+    const m = {}; data.forEach(r=>{ if(r.active !== false) m[r.name] = r.token; });
+    return m;
+  }catch(e){ return {}; }
+}
+async function askAdminKey(){
+  const cur = localStorage.getItem(ADMKEY) || "";
+  const v = prompt("관리자 키를 입력하세요.\n(강사 링크를 발급할 때만 필요합니다. 이 브라우저에만 저장됩니다.)", cur);
+  if(v === null) return;
+  if(v.trim()) localStorage.setItem(ADMKEY, v.trim()); else localStorage.removeItem(ADMKEY);
+  await loadData();
+}
+
 /* ===== 데이터 로드 ===== */
 async function loadData(){
   if(useSupa){
     const {data} = await sb.from("courses").select("*");
     DATA = (data||[]);
-    const {data:tt} = await sb.from("teachers").select("*");
+    const {data:tt} = await sb.from("teachers").select("name,subject,photo_url,principle,strategy,intro,career");
     TEACHERS = {}; (tt||[]).forEach(t=>TEACHERS[t.name]=t);   // 프로필(사진·수업원칙·전략) 보관
-    ROSTER = (tt||[]).map(t=>({name:t.name,subject:t.subject,token:t.token}))
+    // 토큰은 teachers 에서 오지 않는다(공개 페이지가 이 표를 읽으므로).
+    // 관리자 키를 넣어 둔 경우에만 admin_tokens 함수로 따로 받아온다.
+    const TOK = await loadTokens();
+    ROSTER = (tt||[]).map(t=>({name:t.name,subject:t.subject,token:TOK[t.name] || t.token || null}))
       .sort((a,b)=>(SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))||a.name.localeCompare(b.name,"ko"));
     META = {}; (tt||[]).forEach(t=>META[t.name]={submitted_at:t.submitted_at});
   } else {
@@ -658,12 +685,14 @@ function renderDash(){
     let status = '<span class="badge none">미시작</span>';
     if(sub){ status='<span class="badge done">제출완료</span>'; done++; }
     else if(cnt>0){ status='<span class="badge wip">작성중</span>'; started++; }
-    const link = base+"?t="+t.token;
+    const linkBtn = t.token
+      ? `<button class="btn sm linkbtn" data-link="${base}?t=${t.token}">📋 링크 복사</button>`
+      : `<button class="btn sm" onclick="askAdminKey()" title="강사 링크를 보려면 관리자 키가 필요합니다">🔑 키 입력</button>`;
     return `<tr>
       <td><b>${t.name}</b></td><td>${t.subject}</td>
       <td>${cnt>0?cnt+"개":"—"}</td><td>${status}</td>
       <td class="muted">${sub?new Date(sub).toLocaleString("ko-KR"):"—"}</td>
-      <td class="noprint"><button class="btn sm linkbtn" data-link="${link}">📋 링크 복사</button></td>
+      <td class="noprint">${linkBtn}</td>
     </tr>`;
   }).join("");
   document.getElementById("dashBody").innerHTML = rowsHtml;

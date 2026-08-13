@@ -556,7 +556,7 @@ function render(courses,teachers){
   const cfg=window.DAOL_CONFIG||{};
   if(!(cfg.url&&cfg.anonKey&&window.supabase)){ document.getElementById("app").innerHTML=`<div class="empty">연결 설정이 필요합니다.</div>`; return; }
   const sb=window.supabase.createClient(cfg.url,cfg.anonKey);
-  const [{data:courses},{data:tt}]=await Promise.all([sb.from("courses").select("*"),sb.from("teachers").select("*")]);
+  const [{data:courses},{data:tt}]=await Promise.all([sb.from("courses").select("*"),sb.from("teachers").select("name,subject,photo_url,principle,strategy,intro,career")]);
   const teachers={}; (tt||[]).forEach(t=>teachers[t.name]=t);
   render(courses||[],teachers);
 })();

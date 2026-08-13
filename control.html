@@ -181,7 +181,7 @@ async function loadData(){
     const {data,error} = await sb.from("courses").select("*");
     if(error){ setStat("불러오기 오류: "+error.message,"err"); return; }
     DATA = data||[];
-    const {data:tt} = await sb.from("teachers").select("*");
+    const {data:tt} = await sb.from("teachers").select("name,subject,photo_url,principle,strategy,intro,career");
     ROSTER = (tt||[]).map(t=>({name:t.name,subject:t.subject}))
       .sort((a,b)=>(SUBJECT_ORDER.indexOf(a.subject)-SUBJECT_ORDER.indexOf(b.subject))||a.name.localeCompare(b.name,"ko"));
   } else {

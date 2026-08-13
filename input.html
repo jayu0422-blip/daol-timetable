@@ -189,6 +189,15 @@ function lskey(){ return "daol_courses_" + TEACHER; }
 async function resolveTeacher(){
   if(intendSupa && !window.supabase) return "error"; // supabase 라이브러리 로드 실패(네트워크 등)
   if(useSupa){
+    // ① 안전한 경로: 토큰을 서버 함수에 넘겨 본인 정보만 받는다. 토큰은 응답에 실리지 않는다.
+    try{
+      const {data,error} = await sb.rpc("resolve_teacher",{p_token:token});
+      if(!error && Array.isArray(data)){
+        if(data.length){ me = data[0]; return "ok"; }
+        return "invalid";                       // 함수는 있는데 토큰이 틀림
+      }
+    }catch(e){ /* 함수 미배포 → 아래 구 경로로 */ }
+    // ② 구 경로(호환): resolve_teacher 가 아직 DB에 없을 때만 탄다.
     try{
       const {data,error} = await sb.from("teachers").select("*").eq("token",token).limit(1);
       if(error) return "error";

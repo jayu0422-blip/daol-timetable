@@ -29,15 +29,12 @@ create table if not exists public.teachers (
   course_count int default 0
 );
 
--- 3) 강사 명부 시드 (config.js 와 동일 토큰)
-insert into public.teachers (name, subject, token) values
-  ('황웅','영어','a5e2a628'),
-  ('민귀홍','영어','464af7f0'),
-  ('김영하','국어','aff9ae35'),
-  ('이정관','국어','65b0e3ad'),
-  ('임결','수학','c211bc44'),
-  ('유용권','수학','f712867b'),
-  ('윤재영','영어','47276347')
+-- 3) 강사 명부 시드
+--    ⚠ 토큰은 이 파일에 적지 않습니다. 이 저장소는 공개돼 있습니다.
+--    토큰은 teacher_tokens 표에서 관리하고, 발급은 04_보안긴급_토큰분리.sql 을 참조하세요.
+insert into public.teachers (name, subject) values
+  ('황웅','영어'), ('민귀홍','영어'), ('김영하','국어'), ('이정관','국어'),
+  ('임결','수학'), ('유용권','수학'), ('윤재영','영어')
 on conflict (name) do nothing;
 
 -- 4) 접근 정책 (내부용 — anon 키로 읽기/쓰기 허용)

@@ -78,8 +78,19 @@ async function main(){
   if(!useSupa){ screen("📶","연결이 필요합니다","잠시 후 새로고침 해주세요."); return; }
   let me;
   try{
-    const {data,error} = await sb.from("teachers").select("name,subject").eq("token",token).limit(1);
-    if(error || !data || !data.length){ screen("🔒","유효하지 않은 링크","담당자에게 본인 전용 링크를 다시 요청해 주세요."); return; }
+    let data = null;
+    // ① 안전한 경로: 서버 함수가 토큰을 검증하고 본인 정보만 돌려준다.
+    try{
+      const r = await sb.rpc("resolve_teacher",{p_token:token});
+      if(!r.error && Array.isArray(r.data)) data = r.data;
+    }catch(e){ /* 함수 미배포 → 아래 구 경로로 */ }
+    // ② 구 경로(호환)
+    if(data === null){
+      const r = await sb.from("teachers").select("name,subject").eq("token",token).limit(1);
+      if(r.error){ screen("📶","연결이 불안정합니다","인터넷을 확인하고 새로고침 해주세요."); return; }
+      data = r.data;
+    }
+    if(!data || !data.length){ screen("🔒","유효하지 않은 링크","담당자에게 본인 전용 링크를 다시 요청해 주세요."); return; }
     me = data[0];
   }catch(e){ screen("📶","연결이 불안정합니다","인터넷을 확인하고 새로고침 해주세요."); return; }
 

@@ -244,8 +244,8 @@ grant execute on function
   to anon, authenticated;
 
 -- ── STEP 1 자가검증 (아래를 함께 Run 하면 결과가 보임) ──
--- select '토큰조회', * from public.resolve_teacher('47276347');        -- 윤재영 나와야 정상
--- select '내강좌', count(*) from public.get_my_courses('47276347');    -- 6 근처
+-- select '토큰조회', * from public.resolve_teacher('<토큰-여기에-직접-입력>');        -- 윤재영 나와야 정상
+-- select '내강좌', count(*) from public.get_my_courses('<토큰-여기에-직접-입력>');    -- 6 근처
 -- select '관리자키', public.admin_ok('다올105관리자');                  -- true (비번 바꿨으면 그 값)
 -- select '공개뷰', count(*) from public.board_public;                   -- 33 근처
 
