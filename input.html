@@ -150,6 +150,9 @@
     <div id="gichulSeason"></div>
   </div>
 
+  <!-- 월간 일정표 (공휴일 + 중·고 지필평가) -->
+  <div id="monthlyCal" style="margin:14px 0"></div>
+
   <div class="savebar">
     <button class="btn primary sm" id="addTop">+ 강좌 추가</button>
     <span class="status" id="saveStatus">—</span>
@@ -166,6 +169,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script src="config.js?v=12eefbb9"></script>
+<script src="schedule-cal.js?v=20260816"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
 const GRADES = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -361,13 +365,17 @@ function renderGichul(){
       🗓 지금은 기출분석 시즌이 아닙니다. ${nx}. <a href="${link('')}" target="_blank" rel="noopener" style="color:#2563eb">미리 작성하기</a></div>`;
   }
 }
-let schoolsTimer=null;
+let schoolsTimer=null, calApi=null;
 function initDuty(){
   const inp=document.getElementById('schoolsInput'); if(!inp) return;
   if(me && me.schools!=null) inp.value = Array.isArray(me.schools) ? me.schools.join(' / ') : me.schools;
   renderGichul();
+  if(window.DaolScheduleCal && document.getElementById('monthlyCal')){
+    calApi = window.DaolScheduleCal.render('#monthlyCal', {mySchools: teacherSchools()});
+  }
   inp.addEventListener('input', ()=>{
     document.getElementById('dutyStat').textContent='입력 중…'; renderGichul();
+    if(calApi) calApi.setSchools(teacherSchools());
     clearTimeout(schoolsTimer);
     schoolsTimer=setTimeout(async()=>{
       if(!useSupa){ document.getElementById('dutyStat').textContent='저장됨 ✓ (데모)'; return; }
