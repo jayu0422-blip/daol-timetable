@@ -58,14 +58,16 @@
     return plan;
   }
 
-  /* 요일 규칙 + 공휴일 → 초기 마킹 */
+  /* 요일 규칙 → 초기 마킹.
+     ⚠ 공휴일이라고 해서 자동으로 휴강 처리하지 않는다(원장 지시 2026-08-17).
+     공휴일에도 수업하는 강좌가 있고, 자동 휴강을 기본값으로 두면 회차가 말없이 깎여
+     학원 매출에 불리하게 기운다. 공휴일은 빨간 표시만 하고, 쉴지 말지는 강사가 직접 정한다. */
   function seed(scheduleText, y, m) {
-    const plan = weekdayPlan(scheduleText), H = holidays(), out = {};
+    const plan = weekdayPlan(scheduleText), out = {};
     for (let d = 1; d <= dim(y, m); d++) {
       const w = new Date(y, m - 1, d).getDay(), kind = plan[w];
       if (!kind) continue;
-      const key = iso(y, m, d);
-      out[key] = H[key] ? "휴" : kind;
+      out[iso(y, m, d)] = kind;
     }
     return out;
   }
@@ -126,6 +128,9 @@
 .cc-c.boost{background:#fdf2f8;border:2px solid #f9a8d4;color:#9d174d}
 .cc-c.cancel{background:#f3f4f6;border-color:#d1d5db;color:#9ca3af;text-decoration:line-through}
 .cc-c.sel{box-shadow:0 0 0 3px #f59e0b}
+/* 공휴일 표시 — 수업이 잡힌 날에도 빨간 점으로 "이 날 공휴일"만 알린다 */
+.cc-c .hd{position:absolute;top:3px;right:4px;width:7px;height:7px;border-radius:50%;background:#dc2626}
+.cc-c.holmark>span:not(.hd):not(.t){color:#dc2626}
 .cc-lg{display:flex;flex-wrap:wrap;gap:9px;padding:10px 6px 2px;font-size:11.5px;color:#6b7280;font-weight:700}
 .cc-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .cc-pick{border-top:1px solid #eef0f4;padding:10px 12px;flex:none;background:#fffbeb}
@@ -192,18 +197,26 @@
         else if (mk === "보") { cls += " boost"; tag = "직전보강"; }
         else if (mk === "휴") { cls += " cancel"; tag = "휴강"; }
         if (picked === key) cls += " sel";
+        /* 공휴일은 수업으로 두되 빨간 점으로 표시만 한다 — 쉴지는 강사가 정한다 */
+        const isHol = !!H[key];
+        if (isHol && mk) cls += " holmark";
         cells += `<button type="button" class="${cls}" data-d="${d}"
-          aria-label="${m}월 ${d}일 ${tag || "수업 없음"}"><span>${d}</span>${tag ? `<span class="t">${tag}</span>` : ""}</button>`;
+          aria-label="${m}월 ${d}일 ${tag || "수업 없음"}${isHol ? " (" + H[key] + ")" : ""}"
+          >${isHol ? '<span class="hd" aria-hidden="true"></span>' : ""}<span>${d}</span>${tag ? `<span class="t">${tag}</span>` : ""}</button>`;
       }
       const c = count(marks);
-      const holiHit = Object.keys(marks).filter(k => marks[k] === "휴" && H[k]).sort();
-      const note = holiHit.length ? ` · 공휴일로 ${holiHit.length}회 빠짐(${holiHit.map(k => +k.slice(8, 10) + "일").join(", ")})` : "";
+      /* 공휴일인데 아직 수업으로 잡혀 있는 날 — 쉬실 거면 직접 바꾸시라고 알린다(자동으로 빼지 않는다) */
+      const holOpen = Object.keys(marks).filter(k => H[k] && marks[k] !== "휴").sort();
+      const note = holOpen.length
+        ? `공휴일 ${holOpen.map(k => +k.slice(8, 10) + "일").join(", ")}에 수업으로 잡혀 있습니다 — 쉬시면 눌러서 휴강으로 바꿔주세요`
+        : "";
 
       pan.innerHTML = `
       <div class="cc-hd">
         <div class="cc-hdl"></div>
         <div class="cc-t">📅 ${esc(opts.title || "강좌")} — ${y}년 ${m}월 수업 진행표</div>
-        <div class="cc-s">실제 수업한 날을 눌러 표시해 주세요. 이 표가 <b>수강료 정산 근거</b>가 됩니다.</div>
+        <div class="cc-s">실제 수업일을 눌러 표시해 주세요. 이 표가 <b>수강료 정산 근거</b>가 됩니다.<br>
+          공휴일(🔴)도 <b>기본은 수업</b>입니다. 쉬시는 날만 <b>휴강</b>으로 바꿔주세요.</div>
       </div>
       <div class="cc-body">
         <div class="cc-mrow"><span class="m">${y}. ${m}</span>
@@ -218,7 +231,7 @@
           <span><i style="background:#a78bfa"></i>수업+클리닉</span>
           <span><i style="background:#f9a8d4"></i>직전보강</span>
           <span><i style="background:#d1d5db"></i>휴강</span>
-          <span><i style="background:#fbd5d1"></i>공휴일</span>
+          <span><i style="background:#dc2626;border-radius:50%"></i>공휴일(수업 여부는 직접 정합니다)</span>
         </div>
       </div>
       ${picked ? `<div class="cc-pick">
@@ -227,7 +240,7 @@
           `<button type="button" class="cc-chip ${marks[picked] === v || (v === null && !marks[picked]) ? "on" : ""}" data-k="${v === null ? "" : v}">${t}</button>`).join("")}</div>
       </div>` : ""}
       <div class="cc-ft">
-        <div class="cc-sum"><b>정규 ${c.정}회</b>${c.보 ? ` + 직전보강 ${c.보}` : ""}${c.클 ? `<br>조교 클리닉 ${c.클}일 (회차 제외)` : ""}${note ? `<br>${note.slice(3)}` : ""}</div>
+        <div class="cc-sum"><b>정규 ${c.정}회</b>${c.보 ? ` + 직전보강 ${c.보}` : ""}${c.클 ? ` · 조교 클리닉 ${c.클}일(회차 제외)` : ""}${c.휴 ? ` · 휴강 ${c.휴}` : ""}${note ? `<br><span style="color:#b45309">🔴 ${note}</span>` : ""}</div>
         <button type="button" class="cc-b gh" id="ccCancel">닫기</button>
         <button type="button" class="cc-b pri" id="ccSave">저장</button>
       </div>`;
