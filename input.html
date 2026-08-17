@@ -169,7 +169,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script src="config.js?v=12eefbb9"></script>
-<script src="schedule-cal.js?v=20260816"></script>
+<script src="schedule-cal.js?v=20260817"></script>
+<script src="course-cal.js?v=20260817"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
 const GRADES = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -235,6 +236,15 @@ async function load(){
     const {data,error} = await sb.from("courses").select("*").eq("teacher",TEACHER).order("sort_order");
     if(error){ setStatus("불러오기 오류: "+error.message); }
     rows = (data||[]).map(r=>({...r}));
+    /* session_dates 컬럼이 아직 없으면 서버 응답에 그 키가 없다 → 로컬 보관분을 얹는다 */
+    if(rows.length && !("session_dates" in rows[0])){
+      HAS_DATES=false;
+      try{
+        const keep=JSON.parse(localStorage.getItem("daol_dates_"+TEACHER)||"[]");
+        const map={}; keep.forEach(x=>{ if(x.d) map[x.id]=x.d; });
+        rows.forEach(r=>{ if(map[r.id]) r.session_dates=map[r.id]; });
+      }catch(e){}
+    }
   } else {
     try{ rows = JSON.parse(localStorage.getItem(lskey())||"[]"); }catch(e){ rows=[]; }
   }
@@ -248,12 +258,24 @@ function scheduleSave(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(save, 700);
 }
+/* session_dates 컬럼이 아직 없는 DB에서도 나머지 저장이 죽지 않게 한다.
+   컬럼이 없으면 그 필드만 빼고 다시 올리고, 실제 수업일은 이 브라우저에 남겨둔다. */
+let HAS_DATES = true;
 async function save(){
   rows.forEach((r,i)=>r.sort_order=i);
   if(useSupa){
-    const payload = rows.map(r=>({...r, teacher:TEACHER, division:divisionOf(r.grade||"중1"),
-      material_fee:(r.material_fee===''||r.material_fee==null)?null:(parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null)}));
-    const {error} = await sb.from("courses").upsert(payload,{onConflict:"id"});
+    const build = (withDates)=> rows.map(r=>{
+      const o={...r, teacher:TEACHER, division:divisionOf(r.grade||"중1"),
+        material_fee:(r.material_fee===''||r.material_fee==null)?null:(parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null)};
+      if(!withDates) delete o.session_dates;
+      return o;
+    });
+    let {error} = await sb.from("courses").upsert(build(HAS_DATES),{onConflict:"id"});
+    if(error && HAS_DATES && /session_dates/.test(error.message||"")){
+      HAS_DATES=false;                                   // 컬럼 없음 → 이후로는 빼고 올린다
+      ({error} = await sb.from("courses").upsert(build(false),{onConflict:"id"}));
+      localStorage.setItem("daol_dates_"+TEACHER, JSON.stringify(rows.map(r=>({id:r.id, d:r.session_dates||""}))));
+    }
     setStatus(error ? ("저장 오류: "+error.message) : "저장됨 ✓");
   } else {
     localStorage.setItem(lskey(), JSON.stringify(rows));
@@ -422,6 +444,10 @@ function render(){
           <div class="ask">가능하면 <b>시간대까지 나눠서</b> 적어주세요. (예: 18:00~18:30 단어테스트 / 18:30~20:00 독해)<br>
             <b>최초 상담에서 학부모가 가장 많이 묻는 부분</b>입니다. 이 정보가 없으면 상담 중에 “확인 후 다시 연락드리겠다”고 답해야 하고, 그 사이 등록이 미뤄지는 경우가 생깁니다.</div>
           <textarea data-k="session_notes" style="min-height:64px" placeholder="예)&#10;월: 18:00~18:30 단어테스트 2단원 / 18:30~20:00 어법·서술형&#10;수: 18:00~18:30 단어테스트 2단원 / 18:30~20:00 독해&#10;금: 18:00~19:00 단어 재테스트·듣기 / 19:00~20:00 워크북 복습·1:1 첨삭">${esc(r.session_notes)}</textarea></div>
+        <div class="f full"><label>📅 실제 수업일 (수강료 정산 기준)</label>
+          <div class="ask">요일만으로는 그 달 실제 횟수를 알 수 없습니다. <b>공휴일·시험기간·개강일</b>에 따라 매달 달라집니다.<br>
+            아래 버튼을 눌러 <b>월간 수업 진행표</b>에서 실제 수업일을 표시해 주세요. 클리닉은 조교가 보는 날이라 정규 회차에 넣지 않습니다.</div>
+          ${calBtnHTML(r)}</div>
       </div>
       <div class="row-actions">
         <button class="btn sm" data-act="dup">⧉ 복제</button>
@@ -431,6 +457,42 @@ function render(){
   updateCount();
 }
 function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
+
+/* ---------- 강좌별 실제 수업일 ----------
+   session_dates 는 월별로 쌓는다: {"2026-09":{"2026-09-01":"정", ...}, "2026-10":{...}}
+   지난달 기록을 덮어쓰지 않아야 정산 근거가 남는다. */
+const TARGET = (window.DaolCourseCal ? window.DaolCourseCal.targetYM() : {y:new Date().getFullYear(), m:new Date().getMonth()+1, key:""});
+function datesOf(r){
+  try{ const o = typeof r.session_dates==="string" ? JSON.parse(r.session_dates||"{}") : (r.session_dates||{}); return o||{}; }
+  catch(e){ return {}; }
+}
+function marksOf(r){ return datesOf(r)[TARGET.key] || null; }
+function calBtnHTML(r){
+  if(!window.DaolCourseCal) return `<span class="hint">달력을 불러오지 못했습니다.</span>`;
+  const saved = marksOf(r);
+  const marks = saved || window.DaolCourseCal.seed(r.schedule_text, TARGET.y, TARGET.m);
+  const c = window.DaolCourseCal.count(marks);
+  const done = !!saved;
+  return `<button type="button" class="btn sm ${done?"":"primary"}" data-act="cal" style="width:100%;justify-content:flex-start;min-height:48px">
+      📅 ${TARGET.m}월 수업 진행표 ${done?"수정":"확인"} — 정규 <b>${c.정}회</b>${c.클?` · 클리닉 ${c.클}일`:""}${c.보?` · 직전보강 ${c.보}`:""}
+    </button>
+    <div class="hint" style="margin-top:4px;color:${done?"#059669":"#b45309"};font-weight:700">
+      ${done?"확인 완료 ✓ (저장됨)":"아직 확인하지 않았습니다 — 요일 규칙으로 임시 계산한 값입니다"}</div>`;
+}
+function openCal(r, card){
+  const saved = marksOf(r);
+  window.DaolCourseCal.open({
+    title: r.course_name || "강좌",
+    scheduleText: r.schedule_text,
+    ym: {y:TARGET.y, m:TARGET.m},
+    marks: saved || undefined,
+    onSave: (marks)=>{
+      const all = datesOf(r); all[TARGET.key] = marks;
+      r.session_dates = JSON.stringify(all);
+      render(); save();
+    }
+  });
+}
 
 /* ---------- 이벤트 (위임) ---------- */
 document.getElementById("list").addEventListener("input", e=>{
@@ -450,6 +512,7 @@ document.getElementById("list").addEventListener("click", e=>{
   const card = e.target.closest(".card"); const id = card.dataset.id;
   const idx = rows.findIndex(x=>x.id===id);
   if(btn.dataset.act==="dup"){ const c={...rows[idx], id:uid()}; rows.splice(idx+1,0,c); render(); save(); }
+  if(btn.dataset.act==="cal"){ openCal(rows[idx], btn.closest(".card")); return; }
   if(btn.dataset.act==="del"){ if(rows.length<=1 || confirm("이 강좌를 삭제할까요?")){ const removed=rows.splice(idx,1)[0]; if(useSupa&&removed) sb.from("courses").delete().eq("id",removed.id); if(!rows.length) rows=[blankRow()]; render(); save(); } }
 });
 function addRow(){ rows.push(blankRow()); render(); document.querySelector(".card:last-child")?.scrollIntoView({behavior:"smooth",block:"center"}); save(); }
