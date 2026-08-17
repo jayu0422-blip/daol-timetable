@@ -1,0 +1,83 @@
+/* ===== 다올105 공용 모바일 보정 =====
+   전 페이지 실측(375x812)에서 반복적으로 나온 결함만 좁게 고친다.
+   페이지별 디자인은 건드리지 않는다 — 크기·넘침·확대만 바로잡는다.
+
+   실측 근거(2026-08-17, 16개 페이지):
+   - 입력칸 글씨가 13~15px → iOS가 포커스할 때 화면을 확대해버린다(booking 10개, control 281개 등)
+   - 탭 가능한 요소가 19~41px → 손가락으로 정확히 못 누른다("← 운영자 대시보드" 19px, 동의 체크 18px)
+   - 표가 화면 밖으로 넘친다(guide-desk 427>375)
+   ※ 이 파일은 <head>에서 페이지 자체 <style> 보다 먼저 읽히지만,
+     아래 규칙은 모바일 한정이며 필요한 곳만 !important 를 쓴다. */
+
+@media (max-width: 700px) {
+
+  /* 1) iOS 자동 확대 차단 — 입력칸 16px 미만이면 포커스 시 화면이 확대되고 되돌아오지 않는다 */
+  input:not([type=checkbox]):not([type=radio]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* 2) 탭 타깃 최소 44px (Apple HIG / Google 48dp 기준의 하한) */
+  button,
+  .btn,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  select,
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]),
+  textarea {
+    min-height: 44px;
+  }
+
+  /* 텍스트 링크형 내비게이션 — "← 운영자 대시보드"류가 19px였다 */
+  a.nav,
+  .top a,
+  .toc a,
+  .navlink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* 3) 체크박스·라디오 — 18px는 오탭이 잦다 */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 22px;
+    height: 22px;
+    min-height: 22px;
+  }
+  /* 라벨까지 탭 영역으로 (체크박스 옆 글씨를 눌러도 켜지게) */
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+  }
+
+  /* 4) 표가 화면 밖으로 나가지 않게 — 표 자체가 가로 스크롤되도록 */
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* 5) 문서 전체가 좌우로 흔들리지 않게 */
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  /* 6) 긴 한글 단어가 좁은 칸에서 한 글자씩 세로로 쪼개지는 것 완화 */
+  td, th, .meta, .ttl { word-break: keep-all; overflow-wrap: anywhere; }
+}
+
+/* 인쇄는 원래대로 — 설명서·시간표·상담자료 인쇄가 깨지면 안 된다.
+   (모바일 쿼리 안에 중첩하면 'print AND max-width' 가 되어 적용되지 않는다) */
+@media print {
+  table { display: table !important; overflow: visible !important; }
+  html, body { overflow-x: visible !important; }
+}
+
+/* 손가락 조작 기기 전반 — 마우스 hover가 없는 환경 */
+@media (hover: none) and (pointer: coarse) {
+  a, button { -webkit-tap-highlight-color: rgba(245, 158, 11, .18); }
+}
