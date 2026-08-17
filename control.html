@@ -305,6 +305,9 @@ function fullPayload(c){
     audience:c.audience||"", content:c.content||"", course_type:c.course_type||"정규",
     sessions:(c.sessions??null), tuition:(c.tuition??null),
     tuition_note:c.tuition_note||"", material_fee:(c.material_fee??null),
+    /* handout_fee 가 빠져 있어서 새 강좌·복제가 저장될 때 유인물비 9,000원이 사라졌다.
+       고지 교습비 = 수강료 + 교재비 + 유인물비 이므로 청구액이 조용히 줄어든다. */
+    handout_fee:(c.handout_fee??null),
     session_notes:c.session_notes||"", textbook:c.textbook||"",
     sort_order:(c.sort_order??0)
   };

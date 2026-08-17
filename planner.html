@@ -262,8 +262,10 @@
           if(key < s || key > en) return;
           const sc = school(e.school);
           const pos = (s===en) ? "" : (key===s ? " start" : (key===en ? " end" : " mid"));
-          const label = key===s ? (sc.name+" "+(e.title||e.type)) : "&nbsp;";
-          html += '<div class="ev'+pos+'" style="background:'+sc.color+'" title="'+esc(sc.name+" · "+(e.title||e.type))+'">'+label+"</div>";
+          /* 일정 제목은 사람이 직접 입력하거나 JSON으로 붙여넣는 값이라 그대로 innerHTML 에
+             넣으면 안 된다(title 속성만 이스케이프되어 있었다). */
+          const label = key===s ? esc(sc.name+" "+(e.title||e.type)) : "&nbsp;";
+          html += '<div class="ev'+pos+'" style="background:'+esc(sc.color)+'" title="'+esc(sc.name+" · "+(e.title||e.type))+'">'+label+"</div>";
         });
         html += "</td>";
         d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
@@ -352,8 +354,11 @@
   document.getElementById("export").onclick = ()=>{
     const all = (window.DAOL_ACADEMIC||[]).concat(loadDraft())
       .slice().sort((a,b)=>String(a.start).localeCompare(String(b.start)));
-    const body = all.map(e=>'  { school:"'+e.school+'", type:"'+e.type+'", title:"'+(e.title||"")
-      +'", start:"'+e.start+'", end:"'+e.end+'" }').join(",\n");
+    /* 제목에 따옴표가 하나만 있어도 배포될 academic.js 가 문법 오류가 되어 달력이 통째로
+       백지가 된다. JSON.stringify 로 안전하게 감싼다. */
+    const q = v => JSON.stringify(String(v==null?"":v));
+    const body = all.map(e=>'  { school:'+q(e.school)+', type:'+q(e.type)+', title:'+q(e.title||"")
+      +', start:'+q(e.start)+', end:'+q(e.end)+' }').join(",\n");
     const ta = document.getElementById("out");
     ta.hidden = false;
     ta.value = "window.DAOL_ACADEMIC = [\n" + body + "\n];";

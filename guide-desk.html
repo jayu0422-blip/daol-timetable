@@ -74,6 +74,11 @@
     .toc{display:none}
     h2{page-break-after:avoid} .card{page-break-inside:avoid}
     @page{size:A4;margin:12mm}
+    /* 브라우저는 기본적으로 배경색을 인쇄하지 않는다. .tab 은 주황 배경에 흰 글씨라
+       그대로 두면 흰 종이에 흰 글씨가 되어 탭 이름이 전부 공백으로 나온다(21곳). */
+    .tab,kbd,.cover,.link,th,td.k,.tip,.warn,.note,.when,.msg{
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
   }
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=851ed8e3"/>

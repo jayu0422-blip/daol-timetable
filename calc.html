@@ -402,7 +402,10 @@ document.getElementById("tabs").addEventListener("click",e=>{
 
 (async function(){
   const cfg=window.DAOL_CONFIG||{};
-  const today=new Date(), iso=d=>d.toISOString().slice(0,10);
+  /* toISOString 은 UTC 기준이라 한국시간 오전 9시 이전에는 어제 날짜가 나온다.
+     환불 계산의 기준일이 하루 밀리면 금액이 달라진다. 현지 시간으로 조립한다. */
+  const today=new Date();
+  const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   document.getElementById("rfDate").value=iso(today);
   document.getElementById("stDate").value=iso(today);
   document.getElementById("jnDate").value=iso(today);

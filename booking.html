@@ -318,6 +318,11 @@ function updateBtn(){
 $("agree").addEventListener("change",updateBtn);
 
 /* 예약 가능여부(이미 잡힌 슬롯) 로드 */
+/* 시간이 마감됐을 때 페이지를 새로고침하면 입력 13칸과 서명이 전부 날아간다.
+   예약 슬롯만 다시 불러 그리고, 입력한 내용은 그대로 둔다. */
+async function refreshSlots(){
+  try{ await loadTaken(); buildDays(); }catch(e){ console.warn(e); }
+}
 async function loadTaken(){
   if(!useSupa) return;
   try{
@@ -338,12 +343,19 @@ $("submit").addEventListener("click",async()=>{
     target_school:$("target").value.trim(), consent:true,
     signature:$("sig").toDataURL("image/png") };
   try{
-    if(useSupa){
-      // 막판 중복 확인
-      const {data:dup}=await sb.from("booked_slots").select("slot_date").eq("slot_date",rec.slot_date).eq("slot_time",rec.slot_time).limit(1);
-      if(dup&&dup.length){ alert("방금 다른 분이 그 시간을 예약했어요. 다른 시간을 선택해 주세요."); location.reload(); return; }
-      const {error}=await sb.from("bookings").insert(rec);
-      if(error) throw error;
+    /* 서버에 실제로 저장된 뒤에만 성공 화면을 보여준다.
+       예전에는 성공 화면이 이 블록 밖에 있어서, 연결이 안 되면 저장 0건인데도
+       학부모에게는 "정상 접수되었습니다"가 떴다 — 예약이 통째로 유실되는 경로였다. */
+    if(!useSupa) throw new Error("서버에 연결되지 않았습니다");
+    // 막판 중복 확인
+    const {data:dup}=await sb.from("booked_slots").select("slot_date").eq("slot_date",rec.slot_date).eq("slot_time",rec.slot_time).limit(1);
+    if(dup&&dup.length){ alert("방금 다른 분이 그 시간을 예약했어요. 다른 시간을 선택해 주세요."); await refreshSlots(); return; }
+    const {error}=await sb.from("bookings").insert(rec);
+    if(error){
+      /* 같은 시간대를 동시에 눌렀을 때 DB 유니크 제약(23505)이 걸린다.
+         "잠시 후 다시" 라고 안내하면 몇 번을 눌러도 계속 실패한다. */
+      if(error.code==="23505"){ alert("방금 그 시간이 마감됐어요. 다른 시간을 선택해 주세요."); await refreshSlots(); return; }
+      throw error;
     }
     const arr=arriveTime(), tm=rec.level_test_min;
     document.getElementById("app").innerHTML =

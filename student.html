@@ -208,10 +208,11 @@ $("submit").addEventListener("click",async()=>{
     elective_science:($("electSci")?$("electSci").value.trim():""),
     consent:true };
   try{
-    if(useSupa){
-      const {error}=await sb.from("student_info").insert(rec);
-      if(error) throw error;
-    }
+    /* 성공 화면은 서버 저장이 확인된 뒤에만. 예전에는 이 블록 밖이라
+       연결이 끊겨도 "제출되었습니다"가 떠서 정보가 조용히 사라졌다. */
+    if(!useSupa) throw new Error("서버에 연결되지 않았습니다");
+    const {error}=await sb.from("student_info").insert(rec);
+    if(error) throw error;
     document.getElementById("app").innerHTML =
       `<div class="center"><div class="ic">✅</div><h2>${esc(rec.student_name)} 학생의 정보가 제출되었습니다</h2>
        <p style="color:#4f5967">소중한 정보를 기입해주셔서 감사합니다.<br>기재해주신 성적·학원 이력은 학생에게 맞는 <b>시간표·커리큘럼 구성</b>에 소중한 자료가 됩니다.</p>

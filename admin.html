@@ -484,7 +484,7 @@
     </div>
     <div class="panel noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#fffaf0">
       <span class="muted" style="font-weight:700">📅 청구 월</span>
-      <input type="month" id="feeMonth" value="2026-08" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 10px">
+      <input type="month" id="feeMonth" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 10px">
       <span class="muted">선택 월의 <b>정규 회차를 달력으로 자동 계산</b>(휴강 없음 기준) → 청구액 산정. 특강은 전체(미납분).</span>
       <span style="flex:1"></span>
       <span id="feeMonthTotal" style="font-weight:800;color:var(--brand-ink)"></span>
@@ -1019,7 +1019,12 @@ function feeSave(id,patch){
   },500);
 }
 let feeTeacher="전체";
-function feeMonthYM(){ const v=(document.getElementById("feeMonth")||{}).value||"2026-08"; const p=v.split("-").map(Number); return {y:p[0], m0:p[1]-1, m:p[1]}; }
+/* 이번 달을 기본값으로. 예전엔 "2026-08"이 박혀 있어서 9월이 되면 수강료 탭이
+   지난달 기준으로 열렸고, 아무도 눈치채지 못한 채 지난달 회차로 청구액을 봤다. */
+function thisYM(){ const n=new Date(); return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0"); }
+function feeMonthYM(){ const el=document.getElementById("feeMonth");
+  if(el && !el.value) el.value=thisYM();
+  const v=(el||{}).value||thisYM(); const p=v.split("-").map(Number); return {y:p[0], m0:p[1]-1, m:p[1]}; }
 function countInMonth(y,m0,dayChars){ const map={"일":0,"월":1,"화":2,"수":3,"목":4,"금":5,"토":6}; const want=new Set(dayChars.map(d=>map[d])); let n=0; const d=new Date(y,m0,1); while(d.getMonth()===m0){ if(want.has(d.getDay())) n++; d.setDate(d.getDate()+1); } return n; }
 function regularDays(c){ const p=parseDayTimes(c.schedule_text); const s=new Set(); p.sessions.forEach(x=>{ if(x.type==="정규"||x.type==="직보") s.add(x.day); }); return [...s]; }
 function monthlyBill(c,y,m0){
