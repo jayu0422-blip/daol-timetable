@@ -81,3 +81,64 @@
 @media (hover: none) and (pointer: coarse) {
   a, button { -webkit-tap-highlight-color: rgba(245, 158, 11, .18); }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   가독성 — "어디에 입력하는지" 가 한눈에 보이게
+   ──────────────────────────────────────────────────────────────
+   문제(실측): 흰 카드(#fff) 위에 흰 입력칸(#fff), 테두리 #e5e7eb.
+     · 테두리 대비 1.24:1  (UI 경계 기준 3:1의 절반도 안 됨)
+     · 채움 대비 1.00:1    (카드와 색이 같아 구분 자체가 없음)
+   해결: 테두리를 #7e8b9b(3.47:1)로 올리고, 칸 안쪽에 옅은 색을 깔아
+        "빈 칸"이 종이 위의 빈칸처럼 보이게 한다. 모바일·PC 모두 적용.
+   ══════════════════════════════════════════════════════════════ */
+
+:root{
+  --fill:#eef2f7;        /* 입력칸 안쪽 — 흰 카드 위에서 확실히 구분됨 */
+  --fill-line:#7e8b9b;   /* 입력칸 테두리 — 흰색 대비 3.47:1 (WCAG 1.4.11 통과) */
+  --fill-focus:#f59e0b;  /* 지금 쓰고 있는 칸 */
+}
+
+/* 입력칸 — 비활성·경고 상태는 페이지 쪽 색을 존중해 건드리지 않는다.
+   ⚠ :not() 을 여러 개 쓰면 특이도가 올라간다. 아래 상태 규칙들은 반드시
+   같은 :not() 체인을 그대로 붙여야 기본 규칙에 눌리지 않는다(한 번 이 실수를 했다). */
+input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([disabled]):not(.legacy):not(.err),
+select:not([disabled]):not(.legacy):not(.off):not(.hand),
+textarea:not([disabled]):not(.legacy):not(.err){
+  background: var(--fill);
+  border: 1.5px solid var(--fill-line);
+  color: #1b2330;
+}
+
+/* 지금 쓰고 있는 칸 — 하얗게 밝아지고 주황 테두리 + 링. 커서 위치가 멀리서도 보인다 */
+input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([disabled]):not(.legacy):not(.err):focus,
+select:not([disabled]):not(.legacy):not(.off):not(.hand):focus,
+textarea:not([disabled]):not(.legacy):not(.err):focus{
+  background:#fff;
+  border-color: var(--fill-focus);
+  box-shadow: 0 0 0 3px rgba(245,158,11,.30);
+  outline: none;
+}
+
+/* 이미 채운 칸은 흰색 — 아직 빈 칸(회색)과 눈으로 구별된다 */
+input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([disabled]):not(.legacy):not(.err):not(:placeholder-shown),
+textarea:not([disabled]):not(.legacy):not(.err):not(:placeholder-shown){ background:#fff; }
+
+/* 아직 못 쓴 필수 칸은 왼쪽에 주황 띠 */
+input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([disabled]):not(.legacy):not(.err):required:placeholder-shown,
+textarea:not([disabled]):not(.legacy):not(.err):required:placeholder-shown{
+  border-left: 4px solid var(--fill-focus);
+  background: #fffdf3;
+}
+
+/* 칸 이름(라벨)을 진하게 — 기존 #6b7280(4.83:1) → 10.4:1 */
+label, .f label, .prof-grid label, .fl, .lbl, label.q{ color:#39404e; }
+
+/* 카드가 배경에서 떠 보이게 — 흰 카드와 배경이 거의 같은 색이라 경계가 흐렸다 */
+:root{ --bg:#eaeff5; }
+.card, .panel, .box, .prof, .sec{ border-color:#dbe1ea; }
+
+/* 비활성 칸은 '쓸 수 없다'가 분명해야 오조작이 없다 */
+input[disabled], select[disabled], textarea[disabled], select.off{
+  background:#eceff3 !important; color:#8b93a1 !important;
+  border-style:dashed !important; border-color:#c2c9d4 !important;
+}
