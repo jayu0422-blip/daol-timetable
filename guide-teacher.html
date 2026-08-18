@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>다올105 — 9월 강의계획 쓰는 법 (선생님용)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<style>
+  :root{
+    --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#eaeff5;
+    --brand:#f59e0b; --brand-ink:#b45309; --ok:#059669; --danger:#dc2626;
+    --font:"Pretendard","Malgun Gothic",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);
+    line-height:1.75;font-size:16px;word-break:keep-all}
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px 90px}
+
+  .cover{background:linear-gradient(150deg,#7c2d12,#b45309 60%,#f59e0b);color:#fff;
+    padding:32px 22px 30px;border-radius:0 0 20px 20px;margin-bottom:8px}
+  .cover .b{font-size:12px;font-weight:800;letter-spacing:.25em;opacity:.9}
+  .cover h1{font-size:27px;font-weight:800;margin:10px 0 8px;line-height:1.35}
+  .cover p{margin:0;font-size:15px;opacity:.96}
+  .cover .time{display:inline-block;margin-top:14px;background:rgba(255,255,255,.18);
+    border-radius:999px;padding:6px 15px;font-size:13.5px;font-weight:700}
+
+  .lead{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:18px 0}
+  .lead b{color:var(--brand-ink)}
+
+  .step{background:#fff;border:1px solid var(--line);border-radius:16px;margin:22px 0;
+    overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .step-h{display:flex;gap:12px;align-items:flex-start;padding:18px 20px 14px;background:#fffaf0;
+    border-bottom:1px solid var(--line)}
+  .step-n{flex:none;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;
+    font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .step-t{font-size:19px;font-weight:800;line-height:1.4;padding-top:3px}
+  .step-b{padding:16px 20px 20px}
+  .step-b p{margin:0 0 10px}
+
+  figure{margin:14px 0 6px}
+  figure img{width:100%;height:auto;display:block;border:1px solid #cfd6e0;border-radius:12px;background:#fff}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.65}
+  figcaption b{color:var(--brand-ink)}
+
+  .key{background:#fff7ed;border:1px solid #fcd9a4;border-left:5px solid var(--brand);
+    border-radius:10px;padding:13px 16px;margin:14px 0;font-size:15px;line-height:1.75}
+  .key b{color:var(--brand-ink)}
+  .warn{background:#fef2f2;border:1px solid #fecaca;border-left:5px solid var(--danger);
+    border-radius:10px;padding:13px 16px;margin:14px 0;font-size:15px;color:#991b1b}
+  .warn b{color:var(--danger)}
+  .okbox{background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid var(--ok);
+    border-radius:10px;padding:13px 16px;margin:14px 0;font-size:15px;color:#065f46}
+
+  .colors{display:grid;gap:8px;margin:14px 0}
+  .crow{display:flex;align-items:center;gap:11px;background:#fbfcfd;border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px;font-size:14.5px}
+  .sw{flex:none;width:38px;height:38px;border-radius:9px;display:grid;place-items:center;
+    font-size:10.5px;font-weight:800;text-align:center;line-height:1.15}
+  .sw.j{background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46}
+  .sw.c{background:#f5f3ff;border:2px dashed #c4b5fd;color:#5b21b6}
+  .sw.b{background:#ecfdf5;border:2px dashed #a78bfa;color:#065f46}
+  .sw.bo{background:#fdf2f8;border:2px solid #f9a8d4;color:#9d174d}
+  .sw.x{background:#f3f4f6;border:1px solid #d1d5db;color:#9ca3af}
+
+  h2{font-size:21px;font-weight:800;margin:34px 0 10px;padding-left:12px;border-left:5px solid var(--brand)}
+  .qa{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:11px}
+  .qa .q{font-weight:800;margin-bottom:5px}
+  .qa .a{font-size:15px;color:#374151}
+
+  .end{background:#111827;color:#fff;border-radius:14px;padding:20px 22px;margin-top:28px;font-size:15px;line-height:1.9}
+  .end b{color:#fbbf24}
+  code{background:#f1f5f9;border:1px solid var(--line);border-radius:5px;padding:2px 7px;
+    font-size:13.5px;word-break:break-all}
+  @media (max-width:520px){
+    .cover h1{font-size:23px} .step-t{font-size:17px} body{font-size:15.5px}
+  }
+</style>
+<link rel="stylesheet" href="mobile-fix.css"/>
+</head>
+<body>
+
+<div class="cover">
+  <div class="wrap" style="padding-bottom:0">
+    <div class="b">D A O L 1 0 5 &nbsp;·&nbsp; 선생님용</div>
+    <h1>9월 강의계획<br>이렇게 쓰시면 됩니다</h1>
+    <p>실제 화면을 그대로 캡처해 순서대로 담았습니다. 처음이셔도 따라오시면 됩니다.</p>
+    <div class="time">⏱ 반이 5개면 약 3분</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="lead">
+  <b>이번에 새로 생긴 것은 딱 하나입니다.</b><br>
+  강좌마다 <b>“실제 수업일”</b>을 달력에 표시하는 칸이 생겼습니다.<br><br>
+  요일만으로는 그 달에 몇 번 수업하는지 알 수 없기 때문입니다.
+  추석·공휴일·시험기간·개강일에 따라 매달 달라지고, 이 숫자가 <b>수강료 정산의 근거</b>가 됩니다.
+</div>
+
+<div class="step">
+  <div class="step-h"><div class="step-n">1</div><div class="step-t">내 링크로 들어갑니다</div></div>
+  <div class="step-b">
+    <p>카톡으로 받으신 <b>내 이름 전용 링크</b>를 누르시면 됩니다. 로그인은 없습니다.</p>
+    <figure>
+      <img src="shots/01_첫화면.png" alt="강사 입력 페이지 첫 화면. 오른쪽 위에 선생님 이름이 표시됨"/>
+      <figcaption>오른쪽 위에 <b>내 이름</b>이 떠 있으면 제대로 들어오신 겁니다.
+        다른 선생님 정보는 보이지 않습니다.</figcaption>
+    </figure>
+    <div class="key">💡 <b>저장 버튼이 없습니다.</b> 입력하시면 자동으로 저장됩니다.
+      화면에 <b>“저장됨 ✓”</b>이 뜨면 끝난 것입니다.</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-h"><div class="step-n">2</div><div class="step-t">담당 학교를 적습니다</div></div>
+  <div class="step-b">
+    <p>맡고 계신 학교를 적어주세요. 여러 곳이면 <code>/</code> 로 구분합니다. (예: 미사고 / 하남고)</p>
+    <figure>
+      <img src="shots/02_담당학교.png" alt="담당 학교 입력칸과 기출분석 안내"/>
+      <figcaption>여기에 적으시면 <b>월간 일정표에서 그 학교 시험에 ★</b>가 붙고,
+        시험이 끝난 뒤에는 <b>기출분석 설문</b>이 이 자리에 열립니다.</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-h"><div class="step-n">3</div><div class="step-t">이번 달 일정을 한번 봅니다</div></div>
+  <div class="step-b">
+    <p>담당 학교 아래에 <b>월간 일정표</b>가 있습니다. 이번 달 지필평가와 공휴일이 함께 보입니다.</p>
+    <figure>
+      <img src="shots/03_월간일정표.png" alt="월간 일정표. 지필평가와 공휴일이 표시됨"/>
+      <figcaption>접속하면 <b>이번 달이 자동으로</b> 열립니다. 달이 바뀌면 저절로 넘어갑니다.
+        중등은 청록, 고등은 주황, 공휴일은 빨강입니다.</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-h"><div class="step-n">4</div><div class="step-t">강좌 내용을 확인합니다</div></div>
+  <div class="step-b">
+    <p>지난달 내용이 <b>이미 채워져 있습니다.</b> 바뀐 것만 고치시면 됩니다.</p>
+    <figure>
+      <img src="shots/04_강좌카드.png" alt="강좌 카드. 요일·시간대별 진행 내용과 실제 수업일 버튼"/>
+      <figcaption>교재가 바뀌었으면 <b>사용 교재</b>를, 진도가 바뀌었으면
+        <b>요일·시간대별 진행 내용</b>을 고쳐주세요.
+        그 아래 주황색 버튼이 이번에 새로 생긴 <b>실제 수업일</b>입니다.</figcaption>
+    </figure>
+    <div class="key">📌 <b>요일·시간대별 진행 내용</b>은 상담에서 학부모가 가장 많이 묻는 부분입니다.
+      이게 없으면 인포가 “확인 후 연락드리겠다”고 답해야 하고, 그 사이 등록이 미뤄집니다.</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-h"><div class="step-n">5</div><div class="step-t">⭐ 실제 수업일을 표시합니다 (제일 중요)</div></div>
+  <div class="step-b">
+    <p>주황색 버튼을 누르면 <b>그 강좌 전용 달력</b>이 열립니다.
+      요일 규칙대로 이미 칠해져 있으니, <b>다른 날만</b> 고쳐주시면 됩니다.</p>
+    <figure>
+      <img src="shots/05_수업진행표.png" alt="월간 수업 진행표. 수업일이 초록으로 표시되고 공휴일에 빨간 점"/>
+      <figcaption>맨 아래에 <b>정규 8회</b>처럼 이번 달 횟수가 나옵니다.
+        빨간 점(🔴)이 붙은 날은 <b>공휴일</b>입니다.</figcaption>
+    </figure>
+    <div class="warn">🔴 <b>공휴일도 기본은 “수업”입니다.</b>
+      학원이 마음대로 빼지 않습니다. <b>쉬시는 날만</b> 눌러서 휴강으로 바꿔주세요.</div>
+    <p>날짜를 누르면 아래에 선택지가 나옵니다.</p>
+    <figure>
+      <img src="shots/06_날짜선택.png" alt="날짜를 누르면 나오는 6가지 선택지"/>
+      <figcaption>고른 즉시 위 달력과 아래 횟수가 함께 바뀝니다.
+        잘못 누르셨으면 다시 눌러 바꾸시면 됩니다.</figcaption>
+    </figure>
+
+    <div class="colors">
+      <div class="crow"><span class="sw j">수업</span>
+        <span><b>수업</b> — 정규 수업입니다. <b>회차로 셉니다.</b></span></div>
+      <div class="crow"><span class="sw c">클리닉</span>
+        <span><b>클리닉</b> — 조교가 보는 보충·질의 시간입니다. <b>정규 회차에 넣지 않습니다.</b></span></div>
+      <div class="crow"><span class="sw b">수업<br>+클</span>
+        <span><b>수업 + 클리닉</b> — 같은 날 둘 다 있을 때 (예: 14~17 수업, 17~18 클리닉)</span></div>
+      <div class="crow"><span class="sw bo">보강</span>
+        <span><b>직전보강</b> — 시험 직전에 따로 하는 추가 수업</span></div>
+      <div class="crow"><span class="sw x">휴강</span>
+        <span><b>휴강</b> — 이 날은 수업하지 않습니다</span></div>
+    </div>
+
+    <div class="okbox">✅ 다 하셨으면 <b>저장</b>을 눌러주세요.
+      버튼 글씨가 <b>“확인”에서 “수정”으로</b> 바뀌고, 아래 안내가 <b>초록색</b>으로 바뀝니다.</div>
+  </div>
+</div>
+
+<h2>자주 묻는 것</h2>
+
+<div class="qa"><div class="q">Q. 지난달이랑 똑같으면요?</div>
+  <div class="a">내용(교재·진도)은 이미 채워져 있으니 그냥 두시면 됩니다.
+    다만 <b>수업 횟수는 매달 달라지기 때문에</b> 달력은 강좌마다 한 번씩 봐주셔야 합니다.</div></div>
+
+<div class="qa"><div class="q">Q. 일요일이나 공휴일에 수업하는데요?</div>
+  <div class="a">그대로 두시면 됩니다. <b>공휴일도 기본이 수업</b>이라 따로 하실 일이 없습니다.
+    반대로 쉬시는 날만 <b>휴강</b>으로 바꿔주세요. 과목마다 다르니 선생님이 직접 정하시면 됩니다.</div></div>
+
+<div class="qa"><div class="q">Q. 클리닉도 회차에 넣나요?</div>
+  <div class="a">넣지 않습니다. 클리닉은 조교가 보는 시간이라 <b>정규 회차와 따로</b> 셉니다.
+    화면에도 “조교 클리닉 N일 (회차 제외)”로 따로 표시됩니다.</div></div>
+
+<div class="qa"><div class="q">Q. 잘못 눌렀어요.</div>
+  <div class="a">그 날짜를 다시 눌러 바꾸시면 됩니다.
+    처음부터 다시 하고 싶으시면 <b>“요일대로 다시 깔기”</b>를 누르시면 원래대로 돌아갑니다.
+    (직접 고치신 게 있으면 한 번 더 물어봅니다.)</div></div>
+
+<div class="qa"><div class="q">Q. 폰으로 해도 되나요?</div>
+  <div class="a">네. 폰에 맞춰 만들어져 있습니다. 컴퓨터로 하시면 달력이 더 크게 보입니다.</div></div>
+
+<div class="qa"><div class="q">Q. 링크를 잃어버렸어요.</div>
+  <div class="a">원장님이나 인포데스크에 말씀해 주세요. 다시 보내드립니다.
+    <b>내 링크는 나만</b> 쓰시고, 다른 분께 전달하지 말아주세요.</div></div>
+
+<div class="end">
+  <b>정리하면 이렇습니다</b><br>
+  ① 내 링크 열기 → ② 담당 학교 확인 → ③ 바뀐 내용만 고치기 →
+  <b>④ 강좌마다 실제 수업일 표시하고 저장</b><br><br>
+  ④번만 해주시면 나머지는 자동입니다.<br>
+  막히시면 <b>원장님이나 인포데스크</b>에 편하게 말씀해 주세요.
+</div>
+
+</div>
+</body>
+</html>
