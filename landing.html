@@ -215,7 +215,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=12eefbb9"></script>
-<script src="copy.js?v=ba9da420"></script>
+<script src="copy.js?v=8965f11f"></script>
 <script src="consulting.js?v=e095804b"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script>
@@ -347,7 +347,9 @@ function coursesForGrade(key,all){
   });
 }
 const COPY=window.DAOL_COPY||[];
-const copyFor=(s,l)=>COPY.find(c=>c.subject===s&&c.level===l)||null;
+const copyFor=(s,l,g)=>window.DAOL_COPY_FOR
+  ? window.DAOL_COPY_FOR(s,l,g===undefined?GRADE:g)
+  : (COPY.find(c=>c.subject===s&&c.level===l)||null);
 // 중등에서는 고등학교 실명 대신 ‘고등 대비·내신 대비’ 버전을 쓴다
 function profFor(t,name,level){
   if(level!=="중등") return t;

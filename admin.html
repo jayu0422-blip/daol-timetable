@@ -600,7 +600,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=12eefbb9"></script>
-<script src="copy.js?v=ba9da420"></script>
+<script src="copy.js?v=8965f11f"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script src="consulting.js?v=e095804b"></script>
 <script src="scholars_all.js?v=32243876"></script>
@@ -637,7 +637,9 @@ let DATA = [];   // 전체 강좌
 let META = {};   // teacher -> {submitted_at, last}
 let TEACHERS = {};  // 강사명 -> 프로필(photo_url, principle, strategy, intro, career)
 const COPY = window.DAOL_COPY || [];
-const copyFor = (subject, level) => COPY.find(c=>c.subject===subject && c.level===level) || null;
+const copyFor = (subject, level, grade) => window.DAOL_COPY_FOR
+  ? window.DAOL_COPY_FOR(subject, level, grade)
+  : (COPY.find(c=>c.subject===subject && c.level===level) || null);
 
 /* ===== 강사 링크(토큰) 조회 =====
    토큰은 teacher_tokens 표에 따로 있고 anon 키로는 못 읽는다.
@@ -1714,7 +1716,7 @@ function subjectCardsHtml(){
     }).join("");
     // 과목 서사 + 담당 강사의 수업 원칙·전략으로 감싸 설득력을 높인다
     const level = /^중/.test(selGrade) ? "중등" : "고등";
-    const cp = copyFor(sub, level);
+    const cp = copyFor(sub, level, selGrade);
     // 중등은 비유 유지, 고등은 비유 대신 강사 프로필·성적 우수자로 설득
     const intro = cp ? `<div class="gu-intro">
         <div class="gu-intro-h">${esc(cp.problem.title)}</div>
