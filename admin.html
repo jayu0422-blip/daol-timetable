@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>다올105 시간표 — 운영자</title>
 <style>
+.mbar{display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap}
+.mbar b{font-size:16px;color:var(--brand-ink);min-width:104px;text-align:center}
+.mbar .muted{font-size:12px}
+
   :root{
     --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
     --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
@@ -403,10 +407,17 @@
 
   <!-- ===== 대시보드 ===== -->
   <section id="tab-dash">
+    <div class="mbar noprint" id="mbar">
+      <button class="btn sm" id="mPrev" title="이전 달">‹</button>
+      <b id="mLabel">—</b>
+      <button class="btn sm" id="mNext" title="다음 달">›</button>
+      <button class="btn sm" id="mNow">이번 계획 달</button>
+      <span class="muted" id="mHint"></span>
+    </div>
     <div class="summary" id="summary"></div>
     <div class="panel" style="padding:0;overflow:hidden">
       <table class="dash">
-        <thead><tr><th>강사</th><th>과목</th><th>입력 강좌수</th><th>상태</th><th>최근 저장</th><th class="noprint">전용 입력 링크</th></tr></thead>
+        <thead><tr><th>강사</th><th>과목</th><th>강좌</th><th id="thPlan">진행표</th><th id="thSess">정규 회차</th><th>상태</th><th>최근 저장</th><th class="noprint">전용 입력 링크</th></tr></thead>
         <tbody id="dashBody"></tbody>
       </table>
     </div>
@@ -590,10 +601,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=12eefbb9"></script>
 <script src="copy.js?v=ba9da420"></script>
-<script src="scholars.js?v=c4d7a4a3"></script>
-<script src="consulting.js?v=6442c949"></script>
-<script src="scholars_all.js?v=14cacc5b"></script>
-<script src="manual.js?v=f85b3973"></script>
+<script src="scholars.js?v=d8eb2fc6"></script>
+<script src="consulting.js?v=e095804b"></script>
+<script src="scholars_all.js?v=32243876"></script>
+<script src="manual.js?v=9fea3143"></script>
+<script src="course-cal.js?v=844af431"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -655,7 +667,7 @@ async function loadData(){
   if(useSupa){
     const {data} = await sb.from("courses").select("*");
     DATA = (data||[]);
-    const {data:tt} = await sb.from("teachers").select("name,subject,photo_url,principle,strategy,intro,career");
+    const {data:tt} = await sb.from("teachers").select("name,subject,submitted_at,photo_url,principle,strategy,intro,career");
     TEACHERS = {}; (tt||[]).forEach(t=>TEACHERS[t.name]=t);   // 프로필(사진·수업원칙·전략) 보관
     // 토큰은 teachers 에서 오지 않는다(공개 페이지가 이 표를 읽으므로).
     // 관리자 키를 넣어 둔 경우에만 admin_tokens 함수로 따로 받아온다.
@@ -675,34 +687,99 @@ async function loadData(){
   buildTeacherChips();
 }
 
-/* ===== 대시보드 ===== */
+/* ===== 대시보드 — 달마다 따로 본다 =====
+   "제출 완료"는 그 달 강좌 진행표(실제 수업일)를 전부 확정했는지로 판단한다.
+   강사가 8월 계획을 냈다고 9월도 낸 것이 아니므로, 달을 고르지 않으면 현황이 의미가 없다. */
+let VIEW_YM = (window.DaolCourseCal && DaolCourseCal.targetYM)
+  ? DaolCourseCal.targetYM()
+  : (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })();
+const ymKey = o => `${o.y}-${String(o.m).padStart(2,"0")}`;
+function shiftYM(delta){
+  let y=VIEW_YM.y, m=VIEW_YM.m+delta;
+  while(m<1){ m+=12; y--; } while(m>12){ m-=12; y++; }
+  VIEW_YM={y,m}; renderDash();
+}
+function marksOf(c, key){
+  let o = c.session_dates;
+  if(typeof o === "string"){ try{ o = JSON.parse(o||"{}"); }catch(e){ o = {}; } }
+  const v = o && o[key];
+  return (v && Object.keys(v).length) ? v : null;
+}
+function regCount(marks){
+  if(window.DaolCourseCal && DaolCourseCal.count) return DaolCourseCal.count(marks).정 || 0;
+  return Object.values(marks||{}).filter(v=>v==="정"||v==="정클").length;
+}
+
 function renderDash(){
   const base = location.href.replace(/admin\.html.*$/, "input.html");
-  let done=0, started=0;
+  const key = ymKey(VIEW_YM);
+  // session_dates 컬럼이 아직 없으면 월별 판단이 불가능하다 → 옛 방식으로 낮춰 보여준다
+  const HAS_SD = DATA.some(c => c.session_dates !== undefined);
+  let done=0, wip=0, totalSess=0;
+
   const rowsHtml = ROSTER.map(t=>{
     const courses = DATA.filter(c=>c.teacher===t.name);
     const cnt = courses.length;
     const sub = META[t.name] && META[t.name].submitted_at;
-    let status = '<span class="badge none">미시작</span>';
-    if(sub){ status='<span class="badge done">제출완료</span>'; done++; }
-    else if(cnt>0){ status='<span class="badge wip">작성중</span>'; started++; }
+    const conf = HAS_SD ? courses.filter(c=>marksOf(c,key)) : [];
+    const sess = conf.reduce((a,c)=>a+regCount(marksOf(c,key)), 0);
+    totalSess += sess;
+
+    let status, planCell;
+    if(!cnt){
+      status='<span class="badge none">미시작</span>';
+      planCell='<span class="muted">—</span>';
+    } else if(!HAS_SD){
+      status = sub ? '<span class="badge done">제출완료</span>' : '<span class="badge wip">작성중</span>';
+      if(sub) done++; else wip++;
+      planCell='<span class="muted">진행표 미도입</span>';
+    } else if(conf.length===cnt){
+      status='<span class="badge done">'+(sub?"제출완료":"확정완료")+'</span>'; done++;
+      planCell=`<b style="color:var(--ok)">${cnt}/${cnt}</b>`;
+    } else if(conf.length){
+      status='<span class="badge wip">작성중</span>'; wip++;
+      planCell=`<b style="color:var(--brand-ink)">${conf.length}/${cnt}</b>`;
+    } else {
+      status='<span class="badge none">미작성</span>';
+      planCell=`<span class="muted">0/${cnt}</span>`;
+    }
+
     const linkBtn = t.token
       ? `<button class="btn sm linkbtn" data-link="${base}?t=${t.token}">📋 링크 복사</button>`
       : `<button class="btn sm" onclick="askAdminKey()" title="강사 링크를 보려면 관리자 키가 필요합니다">🔑 키 입력</button>`;
     return `<tr>
       <td><b>${t.name}</b></td><td>${t.subject}</td>
-      <td>${cnt>0?cnt+"개":"—"}</td><td>${status}</td>
+      <td>${cnt>0?cnt+"개":"—"}</td>
+      <td>${planCell}</td>
+      <td>${sess?`<b>${sess}회</b>`:'<span class="muted">—</span>'}</td>
+      <td>${status}</td>
       <td class="muted">${sub?new Date(sub).toLocaleString("ko-KR"):"—"}</td>
       <td class="noprint">${linkBtn}</td>
     </tr>`;
   }).join("");
+
   document.getElementById("dashBody").innerHTML = rowsHtml;
+  document.getElementById("mLabel").textContent = `${VIEW_YM.y}년 ${VIEW_YM.m}월`;
+  document.getElementById("thPlan").innerHTML = `${VIEW_YM.m}월 진행표`;
+  document.getElementById("thSess").innerHTML = `${VIEW_YM.m}월 정규 회차`;
+  document.getElementById("mHint").textContent = HAS_SD
+    ? "‘진행표’는 그 달 실제 수업일을 확정한 강좌 수입니다. 전부 확정되면 확정완료로 바뀝니다."
+    : "⚠ courses.session_dates 컬럼이 없어 달별 확정 현황을 표시할 수 없습니다 (전체 기준으로 보여 주는 중).";
   document.getElementById("summary").innerHTML = `
     <div class="stat"><div class="n">${ROSTER.length}</div><div class="l">전체 강사</div></div>
-    <div class="stat"><div class="n" style="color:var(--ok)">${done}</div><div class="l">제출 완료</div></div>
-    <div class="stat"><div class="n" style="color:var(--brand-ink)">${started}</div><div class="l">작성 중</div></div>
-    <div class="stat"><div class="n">${DATA.length}</div><div class="l">총 강좌</div></div>`;
+    <div class="stat"><div class="n" style="color:var(--ok)">${done}</div><div class="l">${VIEW_YM.m}월 완료</div></div>
+    <div class="stat"><div class="n" style="color:var(--brand-ink)">${wip}</div><div class="l">${VIEW_YM.m}월 작성 중</div></div>
+    <div class="stat"><div class="n">${DATA.length}</div><div class="l">총 강좌</div></div>
+    <div class="stat"><div class="n">${totalSess||"—"}</div><div class="l">${VIEW_YM.m}월 정규 회차 합</div></div>`;
 }
+document.getElementById("mPrev").addEventListener("click", ()=>shiftYM(-1));
+document.getElementById("mNext").addEventListener("click", ()=>shiftYM(1));
+document.getElementById("mNow").addEventListener("click", ()=>{
+  VIEW_YM = (window.DaolCourseCal && DaolCourseCal.targetYM)
+    ? DaolCourseCal.targetYM()
+    : (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })();
+  renderDash();
+});
 document.getElementById("dashBody").addEventListener("click", e=>{
   const b=e.target.closest("[data-link]"); if(!b) return;
   navigator.clipboard.writeText(b.dataset.link).then(()=>{ b.textContent="✓ 복사됨"; setTimeout(()=>b.textContent="📋 링크 복사",1500); });
