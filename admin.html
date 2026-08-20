@@ -688,16 +688,32 @@ async function loadData(){
 }
 
 /* ===== 대시보드 — 달마다 따로 본다 =====
-   "제출 완료"는 그 달 강좌 진행표(실제 수업일)를 전부 확정했는지로 판단한다.
-   강사가 8월 계획을 냈다고 9월도 낸 것이 아니므로, 달을 고르지 않으면 현황이 의미가 없다. */
+   강사가 8월 계획을 냈다고 9월도 낸 것이 아니다. 달을 고르지 않으면 현황이 의미가 없다.
+
+   어느 달 계획인지 어떻게 아나 (원장 확정 2026-08-20)
+     강의계획은 그 전 달에 낸다. 7월에 낸 것 = 8월 수업, 8월에 낸 것 = 9월 수업.
+     그래서 [제출 시각의 달 + 1] 이 그 제출이 가리키는 계획 달이다.
+
+   주의: teachers.submitted_at 은 칸이 하나뿐이라 마지막 제출만 남는다.
+     그래서 그 한 달만 판정할 수 있고, 다른 달은 "기록 없음"으로 정직하게 둔다.
+     courses.session_dates 가 들어오면 그쪽이 달별 정답이 되므로 우선한다. */
 let VIEW_YM = (window.DaolCourseCal && DaolCourseCal.targetYM)
   ? DaolCourseCal.targetYM()
   : (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })();
 const ymKey = o => `${o.y}-${String(o.m).padStart(2,"0")}`;
+const ymNum = o => o.y*12 + o.m;
 function shiftYM(delta){
   let y=VIEW_YM.y, m=VIEW_YM.m+delta;
   while(m<1){ m+=12; y--; } while(m>12){ m-=12; y++; }
   VIEW_YM={y,m}; renderDash();
+}
+/* 제출 시각 → 그 제출이 가리키는 계획 달 (제출 다음 달) */
+function planMonthOf(iso){
+  if(!iso) return null;
+  const d = new Date(iso); if(isNaN(d)) return null;
+  let y=d.getFullYear(), m=d.getMonth()+2;
+  if(m>12){ m-=12; y++; }
+  return {y,m};
 }
 function marksOf(c, key){
   let o = c.session_dates;
@@ -713,37 +729,44 @@ function regCount(marks){
 function renderDash(){
   const base = location.href.replace(/admin\.html.*$/, "input.html");
   const key = ymKey(VIEW_YM);
-  // session_dates 컬럼이 아직 없으면 월별 판단이 불가능하다 → 옛 방식으로 낮춰 보여준다
-  const HAS_SD = DATA.some(c => c.session_dates !== undefined);
-  let done=0, wip=0, totalSess=0;
+  const HAS_SD = DATA.some(c => c.session_dates !== undefined);   // 진행표 컬럼 도입 여부
+  let done=0, waiting=0, totalSess=0;
 
   const rowsHtml = ROSTER.map(t=>{
     const courses = DATA.filter(c=>c.teacher===t.name);
     const cnt = courses.length;
     const sub = META[t.name] && META[t.name].submitted_at;
+    const pm  = planMonthOf(sub);                       // 그 제출이 가리키는 계획 달
     const conf = HAS_SD ? courses.filter(c=>marksOf(c,key)) : [];
     const sess = conf.reduce((a,c)=>a+regCount(marksOf(c,key)), 0);
     totalSess += sess;
 
+    // ── 상태 판정 ────────────────────────────────────
     let status, planCell;
     if(!cnt){
       status='<span class="badge none">미시작</span>';
       planCell='<span class="muted">—</span>';
-    } else if(!HAS_SD){
-      status = sub ? '<span class="badge done">제출완료</span>' : '<span class="badge wip">작성중</span>';
-      if(sub) done++; else wip++;
-      planCell='<span class="muted">진행표 미도입</span>';
-    } else if(conf.length===cnt){
-      status='<span class="badge done">'+(sub?"제출완료":"확정완료")+'</span>'; done++;
-      planCell=`<b style="color:var(--ok)">${cnt}/${cnt}</b>`;
-    } else if(conf.length){
-      status='<span class="badge wip">작성중</span>'; wip++;
-      planCell=`<b style="color:var(--brand-ink)">${conf.length}/${cnt}</b>`;
+    } else if(HAS_SD && conf.length){
+      // 진행표가 있으면 그쪽이 달별 정답
+      if(conf.length===cnt){ status='<span class="badge done">확정완료</span>'; done++; }
+      else { status='<span class="badge wip">작성중</span>'; waiting++; }
+      planCell = `<b style="color:${conf.length===cnt?"var(--ok)":"var(--brand-ink)"}">${conf.length}/${cnt}</b>`;
+    } else if(pm && ymNum(pm)===ymNum(VIEW_YM)){
+      status='<span class="badge done">제출완료</span>'; done++;
+      planCell = HAS_SD ? `<span class="muted">0/${cnt}</span>` : '<span class="muted">—</span>';
+    } else if(pm && ymNum(VIEW_YM) < ymNum(pm)){
+      // 보고 있는 달이 마지막 제출보다 과거 — 이력이 한 칸뿐이라 알 수 없다
+      status='<span class="badge none">기록 없음</span>';
+      planCell='<span class="muted">—</span>';
     } else {
-      status='<span class="badge none">미작성</span>';
-      planCell=`<span class="muted">0/${cnt}</span>`;
+      status='<span class="badge wip" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca">미제출</span>';
+      waiting++;
+      planCell = HAS_SD ? `<span class="muted">0/${cnt}</span>` : '<span class="muted">—</span>';
     }
 
+    const subCell = sub
+      ? `${new Date(sub).toLocaleDateString("ko-KR")} <span class="muted">(${pm.m}월분)</span>`
+      : "—";
     const linkBtn = t.token
       ? `<button class="btn sm linkbtn" data-link="${base}?t=${t.token}">📋 링크 복사</button>`
       : `<button class="btn sm" onclick="askAdminKey()" title="강사 링크를 보려면 관리자 키가 필요합니다">🔑 키 입력</button>`;
@@ -753,7 +776,7 @@ function renderDash(){
       <td>${planCell}</td>
       <td>${sess?`<b>${sess}회</b>`:'<span class="muted">—</span>'}</td>
       <td>${status}</td>
-      <td class="muted">${sub?new Date(sub).toLocaleString("ko-KR"):"—"}</td>
+      <td class="muted">${subCell}</td>
       <td class="noprint">${linkBtn}</td>
     </tr>`;
   }).join("");
@@ -762,13 +785,14 @@ function renderDash(){
   document.getElementById("mLabel").textContent = `${VIEW_YM.y}년 ${VIEW_YM.m}월`;
   document.getElementById("thPlan").innerHTML = `${VIEW_YM.m}월 진행표`;
   document.getElementById("thSess").innerHTML = `${VIEW_YM.m}월 정규 회차`;
-  document.getElementById("mHint").textContent = HAS_SD
-    ? "‘진행표’는 그 달 실제 수업일을 확정한 강좌 수입니다. 전부 확정되면 확정완료로 바뀝니다."
-    : "⚠ courses.session_dates 컬럼이 없어 달별 확정 현황을 표시할 수 없습니다 (전체 기준으로 보여 주는 중).";
+  document.getElementById("mHint").innerHTML = HAS_SD
+    ? `강의계획은 <b>전 달에</b> 냅니다 — 8월에 낸 것이 9월 계획입니다. ‘진행표’는 그 달 실제 수업일을 확정한 강좌 수입니다.`
+    : `강의계획은 <b>전 달에</b> 냅니다 — 8월에 낸 것이 9월 계획입니다. `
+      + `⚠ courses.session_dates 컬럼이 없어 ‘진행표’ 칸은 아직 비어 있습니다.`;
   document.getElementById("summary").innerHTML = `
     <div class="stat"><div class="n">${ROSTER.length}</div><div class="l">전체 강사</div></div>
     <div class="stat"><div class="n" style="color:var(--ok)">${done}</div><div class="l">${VIEW_YM.m}월 완료</div></div>
-    <div class="stat"><div class="n" style="color:var(--brand-ink)">${wip}</div><div class="l">${VIEW_YM.m}월 작성 중</div></div>
+    <div class="stat"><div class="n" style="color:#b91c1c">${waiting}</div><div class="l">${VIEW_YM.m}월 미제출</div></div>
     <div class="stat"><div class="n">${DATA.length}</div><div class="l">총 강좌</div></div>
     <div class="stat"><div class="n">${totalSess||"—"}</div><div class="l">${VIEW_YM.m}월 정규 회차 합</div></div>`;
 }
