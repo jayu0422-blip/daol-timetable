@@ -214,7 +214,7 @@
 <div id="app"><div class="empty">불러오는 중…</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=12eefbb9"></script>
+<script src="config.js?v=d46c8eeb"></script>
 <script src="copy.js?v=8965f11f"></script>
 <script src="consulting.js?v=e095804b"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
@@ -595,7 +595,8 @@ function render(courses,teachers){
   const sb=window.supabase.createClient(cfg.url,cfg.anonKey);
   const [{data:courses},{data:tt}]=await Promise.all([sb.from("courses").select("*"),sb.from("teachers").select("name,subject,photo_url,principle,strategy,intro,career")]);
   const teachers={}; (tt||[]).forEach(t=>teachers[t.name]=t);
-  render(courses||[],teachers);
+  // 상담자료·과목안내는 항상 '가장 최근 달' 강의계획 기준으로 나간다
+  render(window.DaolPlan ? DaolPlan.applyAll(courses||[]) : (courses||[]), teachers);
 })();
 </script>
 </body>

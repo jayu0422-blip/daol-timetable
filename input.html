@@ -176,7 +176,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
-<script src="config.js?v=12eefbb9"></script>
+<script src="config.js?v=d46c8eeb"></script>
 <script src="schedule-cal.js?v=88737a8b"></script>
 <script src="course-cal.js?v=844af431"></script>
 <script>
@@ -266,22 +266,37 @@ function scheduleSave(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(save, 700);
 }
-/* session_dates 컬럼이 아직 없는 DB에서도 나머지 저장이 죽지 않게 한다.
-   컬럼이 없으면 그 필드만 빼고 다시 올리고, 실제 수업일은 이 브라우저에 남겨둔다. */
-let HAS_DATES = true;
+/* session_dates·monthly_plans 컬럼이 아직 없는 DB에서도 나머지 저장이 죽지 않게 한다.
+   컬럼이 없으면 그 필드만 빼고 다시 올린다. */
+let HAS_DATES = true, HAS_PLANS = true;
 async function save(){
   rows.forEach((r,i)=>r.sort_order=i);
   if(useSupa){
-    const build = (withDates)=> rows.map(r=>{
+    /* 이번 계획 달 스냅샷을 함께 남긴다.
+       강좌 카드는 칸이 하나뿐이라 다음 달 계획을 저장하면 이번 달 내용이 덮인다.
+       월별로 쌓아 두어야 상담자료·과목안내가 "가장 최근 달" 기준으로 나갈 수 있다. */
+    if(window.DaolPlan && TARGET && TARGET.key){
+      rows.forEach(r=>{
+        let mp = r.monthly_plans;
+        if(typeof mp === "string"){ try{ mp = JSON.parse(mp||"{}"); }catch(e){ mp = {}; } }
+        r.monthly_plans = Object.assign({}, mp||{}, {[TARGET.key]: DaolPlan.snapshot(r)});
+      });
+    }
+    const build = (withDates, withPlans)=> rows.map(r=>{
       const o={...r, teacher:TEACHER, division:divisionOf(r.grade||"중1"),
         material_fee:(r.material_fee===''||r.material_fee==null)?null:(parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null)};
       if(!withDates) delete o.session_dates;
+      if(!withPlans) delete o.monthly_plans;
       return o;
     });
-    let {error} = await sb.from("courses").upsert(build(HAS_DATES),{onConflict:"id"});
+    let {error} = await sb.from("courses").upsert(build(HAS_DATES,HAS_PLANS),{onConflict:"id"});
+    if(error && HAS_PLANS && /monthly_plans/.test(error.message||"")){
+      HAS_PLANS=false;                                   // 컬럼 없음 → 이후로는 빼고 올린다
+      ({error} = await sb.from("courses").upsert(build(HAS_DATES,false),{onConflict:"id"}));
+    }
     if(error && HAS_DATES && /session_dates/.test(error.message||"")){
-      HAS_DATES=false;                                   // 컬럼 없음 → 이후로는 빼고 올린다
-      ({error} = await sb.from("courses").upsert(build(false),{onConflict:"id"}));
+      HAS_DATES=false;
+      ({error} = await sb.from("courses").upsert(build(false,HAS_PLANS),{onConflict:"id"}));
       localStorage.setItem("daol_dates_"+TEACHER, JSON.stringify(rows.map(r=>({id:r.id, d:r.session_dates||""}))));
     }
     setStatus(error ? ("저장 오류: "+error.message) : "저장됨 ✓");

@@ -62,3 +62,51 @@ window.daolIsLegacyMaterial = function (v) {
   const n = (v === "" || v == null) ? null : (Number(String(v).replace(/[^0-9]/g, "")) || null);
   return n != null && !window.DAOL_MATERIAL_TIERS.includes(n);
 };
+
+
+/* ===== 월간 강의계획 스냅샷 =====
+   courses.monthly_plans = {"2026-09":{audience,content,textbook,session_notes}, "2026-10":{...}}
+
+   왜 필요한가
+     강좌 카드(대상·수업 내용·교재)는 칸이 하나뿐이라 강사가 다음 달 계획을 저장하면
+     지난달 내용이 사라진다. 그러면 상담용 자료와 과목 안내 페이지가 "지금 무슨 달 기준인지"
+     알 수 없다. 월별로 스냅샷을 쌓아 두고, 학부모에게 나가는 화면은 항상 가장 최근 달을 쓴다.
+     10월 계획이 올라오면 그 순간부터 10월 내용이 나간다 — 따로 손댈 것이 없다.
+
+   컬럼이 아직 없는 DB에서도 그냥 통과한다(스냅샷이 없으면 강좌의 현재 값을 그대로 쓴다). */
+window.DaolPlan = (function () {
+  var FIELDS = ["audience", "content", "textbook", "session_notes"];
+  function parse(v) {
+    if (!v) return null;
+    if (typeof v === "string") { try { return JSON.parse(v || "{}"); } catch (e) { return null; } }
+    return v;
+  }
+  function latestKey(mp) {
+    var ks = Object.keys(mp || {}).filter(function (k) { return /^\d{4}-\d{2}$/.test(k); });
+    if (!ks.length) return null;
+    ks.sort();
+    return ks[ks.length - 1];
+  }
+  function snapshot(c) {
+    var o = {};
+    FIELDS.forEach(function (f) { o[f] = (c && c[f] != null) ? c[f] : ""; });
+    return o;
+  }
+  function apply(c) {
+    var mp = parse(c && c.monthly_plans);
+    var k = latestKey(mp);
+    if (!k) return c;
+    var snap = mp[k] || {}, out = {}, used = false;
+    for (var p in c) out[p] = c[p];
+    FIELDS.forEach(function (f) {
+      if (snap[f] != null && String(snap[f]).trim() !== "") { out[f] = snap[f]; used = true; }
+    });
+    if (used) out._plan_month = k;
+    return out;
+  }
+  return {
+    FIELDS: FIELDS, latestKey: latestKey, snapshot: snapshot, apply: apply,
+    applyAll: function (rows) { return (rows || []).map(apply); },
+    keyOf: function (y, m) { return y + "-" + (m < 10 ? "0" + m : "" + m); }
+  };
+})();
