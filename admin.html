@@ -22,9 +22,6 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
   .wrap{max-width:1280px;margin:0 auto;padding:16px 14px 100px}
-  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .top h1{font-size:19px;font-weight:800;margin:0}
-  .tag{font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
   .tabbar{display:flex;gap:5px;margin:14px 0;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:var(--shadow)}
   .tab{border:1px solid transparent;background:transparent;border-radius:8px;padding:9px 14px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;color:#4b5563;white-space:nowrap;transition:background .12s}
   .tab:hover{background:#f8fafc;color:var(--ink)}
@@ -40,16 +37,11 @@
   .muted{color:var(--muted);font-size:12.5px}
 
   /* ===== 대시보드 ===== */
-  .summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:120px}
-  .stat .n{font-size:26px;font-weight:800}
-  .stat .l{font-size:12px;color:var(--muted)}
   table.dash{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
   table.dash th,table.dash td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px}
   table.dash th{background:#f8fafc;font-size:12px;color:var(--muted)}
   .badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 9px}
   .badge.done{background:#dcfce7;color:#166534}.badge.wip{background:#fef9c3;color:#854d0e}.badge.none{background:#fee2e2;color:#991b1b}
-  .linkbtn{font-size:12px}
 
   /* ===== 생성기 ===== */
   .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
@@ -354,7 +346,7 @@
   .pk-card li{font-size:11.8px;line-height:1.5;color:#374151}
   @media print{
     body{background:#fff}
-    .noprint,.tabbar,.top{display:none!important}
+    .noprint,.tabbar{display:none!important}
     .wrap{max-width:none;padding:0}
     .pk-doc{border:none;box-shadow:none;border-radius:0;margin:0;page-break-after:always;break-after:page}
     .pk-doc:last-child{page-break-after:auto;break-after:auto}
@@ -392,8 +384,6 @@ body{background:
   radial-gradient(1200px 420px at 50% -160px, #e8eef6 0%, transparent 70%),
   var(--bg);
   -webkit-font-smoothing:antialiased}
-.top h1{font-family:var(--serif);font-weight:900;letter-spacing:-.5px;color:var(--navy)}
-.tag{background:#fff;border-color:var(--line);color:var(--muted);font-weight:600}
 
 /* 버튼 */
 .btn{border-color:var(--line);border-radius:10px;font-weight:700;color:#31405a;
@@ -426,12 +416,6 @@ input,select,textarea{border-radius:9px}
 input:focus,select:focus,textarea:focus{outline:2px solid rgba(168,135,60,.35);outline-offset:1px;
   border-color:var(--brand)!important}
 
-/* 대시보드 — 숫자·표 */
-.summary{gap:12px}
-.stat{border-radius:14px;padding:14px 18px;min-width:132px;box-shadow:var(--shadow);
-  background:#fbfcfe;border-color:var(--line)}
-.stat .n{font-family:var(--serif);font-size:29px;font-weight:900;color:var(--navy);line-height:1.08}
-.stat .l{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.2px;margin-top:3px}
 
 table.dash{border-radius:14px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
 table.dash th{background:#f7f9fc;font-size:11.5px;font-weight:800;letter-spacing:.2px;
@@ -446,67 +430,199 @@ table.dash td b{color:var(--navy)}
 .badge.wip{background:var(--brand-soft);color:var(--brand-ink)}
 .badge.none{background:#f1f4f9;color:var(--muted)}
 
-/* 월 선택 바 */
-.mbar{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;
-  box-shadow:var(--shadow);margin-bottom:12px}
-.mbar b{font-family:var(--serif);font-size:17px;font-weight:900;color:var(--navy)}
-.mbar .muted{color:var(--muted)}
 
 
-/* 마감 폴리시 */
-/* 상단 이동 버튼 — 색이 제각각이라 정돈 (인라인 style 을 덮음) */
-.top a.btn.sm{color:#31405a!important;border-color:var(--line)!important;background:#fff}
-.top a.btn.sm:hover{background:#f7f9fc;border-color:#cfd8e5!important}
-.top a.btn.sm[href="control.html"]{color:var(--brand-ink)!important;
-  border-color:var(--brand-line)!important;background:var(--brand-soft)}
-.top a.btn.sm[href="control.html"]:hover{background:#f8f3e6}
+
+/* ══════════ 시안A — 운영 대시보드 (2026-08-21) ══════════ */
+/* 상단 브랜드 바 */
+.topbar{background:var(--navy);color:#fff}
+.topbar .in{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:14px;min-height:58px;padding:6px 14px;flex-wrap:wrap}
+.logo{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+.logo .m{font-family:var(--serif);font-weight:900;font-size:20px;letter-spacing:-.5px}
+.logo .s{font-family:Georgia,serif;font-style:italic;font-size:10px;letter-spacing:3px;color:#c9b57f}
+.live{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#c9d4e6;background:rgba(255,255,255,.09);padding:4px 10px;border-radius:99px;white-space:nowrap}
+.live::before{content:"";width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.22)}
+.topbar nav{margin-left:auto;display:flex;gap:2px;flex-wrap:wrap}
+.topbar nav a,.topbar nav button{color:#c9d4e6;text-decoration:none;font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;background:transparent;border:0;cursor:pointer;white-space:nowrap}
+.topbar nav a:hover,.topbar nav button:hover{background:rgba(255,255,255,.1);color:#fff}
+.topbar nav .hi{background:var(--brand);color:#fff}
+.topbar nav .hi:hover{background:#8c6d1f;color:#fff}
+
+/* 탭 — 카드 위 시트 스타일 */
+.tabbar{background:transparent;border:0;box-shadow:none;border-radius:0;padding:12px 0 0;margin:0;gap:2px}
+.tab{border-radius:10px 10px 0 0;padding:11px 15px;font-size:13px}
+.tab:hover{background:rgba(255,255,255,.65)}
+.tab.on{background:#fff;color:var(--navy);box-shadow:0 -1px 0 var(--line) inset}
+.tab.on::after{left:15px;right:15px;bottom:0;border-radius:2px 2px 0 0}
+.tabsep{width:1px;background:var(--line);margin:8px 6px;align-self:stretch;flex:0 0 auto}
+
+/* 헤더 카드 + KPI */
+.head{background:#fff;border-radius:0 14px 14px 14px;box-shadow:var(--shadow);padding:18px 22px;margin-bottom:14px}
+.hrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hrow h1{font-family:var(--serif);font-size:20px;font-weight:900;color:var(--navy);margin:0}
+.mnav{display:flex;align-items:center;gap:2px;background:#f1f4f9;border-radius:10px;padding:3px}
+.mnav button{border:0;background:transparent;font:inherit;font-weight:800;font-size:13px;color:var(--navy);padding:6px 11px;border-radius:7px;cursor:pointer}
+.mnav button:hover{background:#fff}
+.mnav .cur{background:var(--navy);color:#fff;min-width:104px;text-align:center;font-weight:800;font-size:13px;padding:6px 11px;border-radius:7px}
+.mnav .now{background:#fff;color:var(--brand-ink);border:1px solid var(--brand-line);font-size:12px;margin-left:6px}
+.hint{font-size:12.5px;color:var(--muted)} .hint b{color:var(--navy)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.kpi{background:#fbfcfe;border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi .lbx{font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.2px}
+.kpi .v{font-family:var(--serif);font-size:30px;font-weight:900;color:var(--navy);line-height:1.05;margin-top:5px}
+.kpi .v small{font-size:13px;font-weight:700;color:var(--muted);margin-left:3px}
+.kpi .sub{font-size:11.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi.acc{background:var(--brand-soft);border-color:var(--brand-line)} .kpi.acc .v{color:var(--brand)}
+.kpi.bad{background:var(--danger-bg);border-color:#fecaca} .kpi.bad .v{color:var(--danger)}
+.kpi.hero{background:var(--navy);border-color:var(--navy-d)}
+.kpi.hero .lbx{color:#c9b57f} .kpi.hero .v{color:#fff} .kpi.hero .sub{color:#c9d4e6}
+
+/* 본문 2단 + 테이블 */
+.cols{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+.ph{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.ph h2{font-family:var(--serif);font-size:15px;font-weight:900;color:var(--navy);margin:0}
+.ph .cnt{font-size:11.5px;color:var(--muted);background:#f1f4f9;padding:2px 8px;border-radius:99px;font-weight:700}
+.ph .rtx{margin-left:auto;font-size:12px;color:var(--muted)}
+#tab-dash table.dash{border-radius:0;box-shadow:none;border:0}
+#tab-dash table.dash thead th{font-size:11.5px;font-weight:800;color:var(--muted);text-align:left;padding:9px 14px;background:#f8fafc;border-bottom:1px solid var(--line);white-space:nowrap}
+#tab-dash table.dash tbody td{padding:11px 14px;border-bottom:1px solid #f1f4f9;vertical-align:middle}
+#tab-dash table.dash tbody tr:last-child td{border-bottom:0}
+#tab-dash table.dash tbody tr.bad td:first-child{box-shadow:inset 3px 0 0 var(--danger)}
+#tab-dash table.dash tbody tr.ok td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+#tab-dash table.dash tbody tr.wip td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
+#tab-dash table.dash .nm{font-weight:800;color:var(--navy);font-size:14px}
+#tab-dash table.dash .nm .sj{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}
+#tab-dash table.dash .bar{width:104px;height:7px;background:#eef2f7;border-radius:99px;overflow:hidden}
+#tab-dash table.dash .bar i{display:block;height:100%;border-radius:99px;background:var(--ok)}
+#tab-dash table.dash .bar.z i{background:#cbd5e1}
+#tab-dash table.dash .pg{font-size:12px;font-weight:800;color:var(--navy);margin-top:4px}
+#tab-dash table.dash .pg.z{color:var(--muted)}
+#tab-dash table.dash .ses{font-family:var(--serif);font-weight:900;font-size:16px;color:var(--navy)}
+#tab-dash table.dash .ses.z{color:#cbd5e1;font-family:var(--font);font-weight:400}
+#tab-dash table.dash .when{font-size:12px;color:var(--muted)}
+#tab-dash table.dash .when b{color:var(--ink)}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.bad{background:var(--danger-bg);color:var(--danger)}
+.badge.wip{background:var(--brand-soft);color:var(--brand-ink)}
+.act{border:1px solid var(--line);background:#fff;font:inherit;font-size:12px;font-weight:700;color:var(--navy);padding:6px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.act:hover{background:#f7f9fc}
+.act.p{background:var(--brand);border-color:var(--brand);color:#fff}
+.act.p:hover{background:#8c6d1f;border-color:#8c6d1f}
+
+/* 우측 패널 */
+.side .panel + .panel{margin-top:12px}
+.todo{padding:6px 0;margin:0}
+.todo li{list-style:none;display:flex;gap:9px;padding:9px 16px;align-items:flex-start;font-size:12.5px;line-height:1.5}
+.todo li + li{border-top:1px solid #f1f4f9}
+.todo .dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+.todo .dot.r{background:var(--danger)} .todo .dot.g{background:var(--brand)} .todo .dot.b{background:var(--navy-l)}
+.todo b{color:var(--navy)}
+.mini{padding:8px 16px}
+.mini .row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:12.5px}
+.mini .row + .row{border-top:1px dashed #eef2f7}
+.mini .row span{color:var(--muted)}
+.mini .row b{font-family:var(--serif);font-size:15px;color:var(--navy)}
+.note{margin:4px 16px 14px;background:var(--brand-soft);border:1px solid var(--brand-line);border-radius:10px;padding:10px 12px;font-size:12px;color:#5c4f23;line-height:1.55}
+.note b{color:var(--navy)}
+.foot{text-align:center;color:#9aa2ad;font-size:11px;margin:26px 0 0;letter-spacing:1.5px;font-family:Georgia,serif;font-style:italic}
+
+@media (max-width:1020px){
+  .cols{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi.hero{grid-column:1/-1}
+  .ph .rtx{display:none}
+}
+@media (max-width:640px){
+  .topbar .in{gap:8px}
+  .topbar nav{margin-left:0}
+  .head{border-radius:14px;padding:14px}
+  .hrow h1{font-size:17px}
+}
+@media (max-width:700px){
+  .topbar nav a,.topbar nav button{min-height:44px;display:inline-flex;align-items:center}
+  .mnav .cur{display:inline-flex;align-items:center;justify-content:center}
+}
+@media print{
+  .topbar,.tabbar,.hint,.mnav button{display:none!important}
+  .cols{display:block}
+  .head{box-shadow:none;border-radius:0;padding:0 0 12px}
+  .mnav{background:transparent;padding:0}
+  .mnav .cur{background:#fff;color:#000;border:1px solid #999}
+  .kpi.hero{background:#fff;border-color:#bbb}
+  .kpi.hero .lbx,.kpi.hero .v,.kpi.hero .sub{color:#000}
+  .tblwrap{overflow:visible!important}
+}
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>
 <body>
+<div class="topbar noprint"><div class="in">
+  <div class="logo"><span class="m">다올105</span><span class="s">A C A D E M Y</span></div>
+  <span class="live" id="modeTag">데모 모드</span>
+  <nav>
+    <a href="planner.html">학사일정</a>
+    <a href="calc.html">환불·수강료</a>
+    <a href="control.html">전체 관리</a>
+    <a href="https://jayu0422-blip.github.io/daol105-console/" target="_blank" rel="noopener">배포 콘솔</a>
+    <a href="https://jayu0422-blip.github.io/daol105-console/작업현황.html" target="_blank" rel="noopener">작업 현황</a>
+    <button class="hi" id="refresh">새로고침</button>
+  </nav>
+</div></div>
 <div class="wrap">
-  <div class="top">
-    <h1>🖥️ 다올105 시간표 — 운영자</h1>
-    <span class="tag" id="modeTag">데모 모드</span>
-    <span style="flex:1"></span>
-    <a class="btn sm noprint" href="planner.html" style="text-decoration:none;color:#1d4ed8;border-color:#93c5fd">📅 학사일정 플래너</a>
-    <a class="btn sm noprint" href="calc.html" style="text-decoration:none;color:#166534;border-color:#86efac">🧮 환불·수강료 계산기</a>
-    <a class="btn sm noprint" href="control.html" style="text-decoration:none;color:var(--brand-ink);border-color:var(--brand)">🛠️ 전체 관리</a>
-    <a class="btn sm noprint" href="https://jayu0422-blip.github.io/daol105-console/" target="_blank" rel="noopener" style="text-decoration:none;color:#2563eb;border-color:#93c5fd">🖥 배포 콘솔</a>
-    <a class="btn sm noprint" href="https://jayu0422-blip.github.io/daol105-console/작업현황.html" target="_blank" rel="noopener" style="text-decoration:none;color:#2563eb;border-color:#93c5fd">📋 작업 현황</a>
-    <button class="btn sm noprint" id="refresh">🔄 새로고침</button>
-  </div>
 
   <div class="tabbar noprint">
-    <button class="tab on" data-tab="dash">📊 대시보드</button>
-    <button class="tab" data-tab="gen">🎨 시간표 생성</button>
-    <button class="tab" data-tab="grade">🎓 학년별 시간표</button>
-    <button class="tab" data-tab="fee">💰 수강료</button>
-    <button class="tab" data-tab="day">📅 요일별·강의실</button>
+    <button class="tab on" data-tab="dash">대시보드</button>
+    <button class="tab" data-tab="gen">시간표 생성</button>
+    <button class="tab" data-tab="grade">학년별 시간표</button>
+    <button class="tab" data-tab="fee">수강료</button>
+    <button class="tab" data-tab="day">요일별·강의실</button>
     <span class="tabsep"></span>
-    <button class="tab" data-tab="edit">✏️ 강좌 수정·추가·삭제</button>
+    <button class="tab" data-tab="edit">강좌 수정</button>
     <span class="tabsep"></span>
-    <button class="tab" data-tab="pack">🖨️ 상담용 자료</button>
-    <button class="tab" data-tab="lp">🔗 과목 안내 페이지</button>
+    <button class="tab" data-tab="pack">상담용 자료</button>
+    <button class="tab" data-tab="lp">과목 안내</button>
   </div>
 
   <!-- ===== 대시보드 ===== -->
   <section id="tab-dash">
-    <div class="mbar noprint" id="mbar">
-      <button class="btn sm" id="mPrev" title="이전 달">‹</button>
-      <b id="mLabel">—</b>
-      <button class="btn sm" id="mNext" title="다음 달">›</button>
-      <button class="btn sm" id="mNow">이번 계획 달</button>
-      <span class="muted" id="mHint"></span>
+    <div class="head">
+      <div class="hrow">
+        <h1>강의계획 제출 현황</h1>
+        <div class="mnav" id="mbar">
+          <button id="mPrev" title="이전 달">‹</button>
+          <span class="cur" id="mLabel">—</span>
+          <button id="mNext" title="다음 달">›</button>
+          <button class="now" id="mNow">이번 계획 달</button>
+        </div>
+        <div class="hint" id="mHint"></div>
+      </div>
+      <div class="kpis" id="summary"></div>
     </div>
-    <div class="summary" id="summary"></div>
-    <div class="panel" style="padding:0;overflow:hidden">
-      <table class="dash">
-        <thead><tr><th>강사</th><th>과목</th><th>강좌</th><th id="thPlan">진행표</th><th id="thSess">정규 회차</th><th>상태</th><th>최근 저장</th><th class="noprint">전용 입력 링크</th></tr></thead>
-        <tbody id="dashBody"></tbody>
-      </table>
+
+    <div class="cols">
+      <div class="panel" style="padding:0;overflow:hidden">
+        <div class="ph"><h2>강사별 현황</h2><span class="cnt" id="dashCnt">—</span>
+          <span class="rtx">진행표 = 그 달 실제 수업일을 확정한 강좌 수</span></div>
+        <div class="tblwrap" style="overflow-x:auto"><table class="dash">
+          <thead><tr><th>강사</th><th>강좌</th><th id="thPlan">진행표</th><th id="thSess">정규 회차</th><th>상태</th><th>최근 제출</th><th class="noprint"></th></tr></thead>
+          <tbody id="dashBody"></tbody>
+        </table></div>
+        <p class="muted" style="padding:10px 18px;margin:0;border-top:1px solid var(--line);font-size:12px">강사에게는 “링크 복사”로 나온 <b>전용 입력 링크</b>만 전달하세요. 링크에는 토큰만 있어 다른 강사 명단·내용은 보이지 않습니다.</p>
+      </div>
+
+      <div class="side noprint">
+        <div class="panel">
+          <div class="ph"><h2>오늘 할 일</h2><span class="cnt" id="todoCnt">0</span></div>
+          <ul class="todo" id="todoList"></ul>
+        </div>
+        <div class="panel">
+          <div class="ph"><h2 id="glanceTitle">한눈에</h2></div>
+          <div class="mini" id="glanceRows"></div>
+          <div class="note" id="glanceNote"></div>
+        </div>
+      </div>
     </div>
-    <p class="muted">강사에게는 위 “전용 입력 링크”만 전달하세요. 링크에는 토큰만 있어 다른 강사 명단·내용은 보이지 않습니다.</p>
+    <div class="foot noprint">D A O L &nbsp; 1 0 5 &nbsp;·&nbsp; O P E R A T I O N &nbsp; D A S H B O A R D</div>
   </section>
 
   <!-- ===== 생성 ===== -->
@@ -716,7 +832,7 @@ const cfg = window.DAOL_CONFIG||{};
 let ROSTER = window.DAOL_TEACHERS||[];
 const useSupa = !!(cfg.url && cfg.anonKey && window.supabase);
 let sb = useSupa ? window.supabase.createClient(cfg.url,cfg.anonKey) : null;
-if(useSupa) document.getElementById("modeTag").textContent = "실시간 (Supabase)";
+if(useSupa) document.getElementById("modeTag").textContent = "실시간 연결됨";
 
 let DATA = [];   // 전체 강좌
 let META = {};   // teacher -> {submitted_at, last}
@@ -818,7 +934,8 @@ function renderDash(){
   const base = location.href.replace(/admin\.html.*$/, "input.html");
   const key = ymKey(VIEW_YM);
   const HAS_SD = DATA.some(c => c.session_dates !== undefined);   // 진행표 컬럼 도입 여부
-  let done=0, waiting=0, totalSess=0;
+  let done=0, totalSess=0, confCourses=0, rosterCnt=0, totBo=0, totHyu=0;
+  const doneNames=[], badNames=[], wipNames=[], zeroConf=[];
 
   const rowsHtml = ROSTER.map(t=>{
     const courses = DATA.filter(c=>c.teacher===t.name);
@@ -827,62 +944,101 @@ function renderDash(){
     const pm  = planMonthOf(sub);                       // 그 제출이 가리키는 계획 달
     const conf = HAS_SD ? courses.filter(c=>marksOf(c,key)) : [];
     const sess = conf.reduce((a,c)=>a+regCount(marksOf(c,key)), 0);
-    totalSess += sess;
+    if(HAS_SD && window.DaolCourseCal && DaolCourseCal.count)
+      conf.forEach(c=>{ const n=DaolCourseCal.count(marksOf(c,key)); totBo+=n.보||0; totHyu+=n.휴||0; });
+    totalSess += sess; confCourses += conf.length; rosterCnt += cnt;
 
-    // ── 상태 판정 ────────────────────────────────────
-    let status, planCell;
+    // ── 상태 판정 (기존 로직 그대로) ─────────────────
+    const pct = cnt ? Math.round(conf.length/cnt*100) : 0;
+    const barHtml = `<div class="bar${conf.length?"":" z"}"><i style="width:${pct}%"></i></div>
+      <div class="pg${conf.length?"":" z"}">${conf.length} / ${cnt}${cnt&&conf.length===cnt?" 확정":""}</div>`;
+    let rowCls="", status, planCell;
     if(!cnt){
       status='<span class="badge none">미시작</span>';
       planCell='<span class="muted">—</span>';
     } else if(HAS_SD && conf.length){
-      // 진행표가 있으면 그쪽이 달별 정답
-      if(conf.length===cnt){ status='<span class="badge done">확정완료</span>'; done++; }
-      else { status='<span class="badge wip">작성중</span>'; waiting++; }
-      planCell = `<b style="color:${conf.length===cnt?"var(--ok)":"var(--brand-ink)"}">${conf.length}/${cnt}</b>`;
+      if(conf.length===cnt){ status='<span class="badge ok">확정완료</span>'; done++; doneNames.push(t.name); rowCls="ok"; }
+      else { status='<span class="badge wip">작성중</span>'; wipNames.push({name:t.name, conf:conf.length, cnt}); rowCls="wip"; }
+      planCell = barHtml;
     } else if(pm && ymNum(pm)===ymNum(VIEW_YM)){
-      status='<span class="badge done">제출완료</span>'; done++;
-      planCell = HAS_SD ? `<span class="muted">0/${cnt}</span>` : '<span class="muted">—</span>';
+      status='<span class="badge ok">제출완료</span>'; done++; doneNames.push(t.name); rowCls="ok";
+      if(HAS_SD && cnt) zeroConf.push({name:t.name, cnt});
+      planCell = HAS_SD ? barHtml : '<span class="muted">—</span>';
     } else if(pm && ymNum(VIEW_YM) < ymNum(pm)){
       // 보고 있는 달이 마지막 제출보다 과거 — 이력이 한 칸뿐이라 알 수 없다
       status='<span class="badge none">기록 없음</span>';
       planCell='<span class="muted">—</span>';
     } else {
-      status='<span class="badge wip" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca">미제출</span>';
-      waiting++;
-      planCell = HAS_SD ? `<span class="muted">0/${cnt}</span>` : '<span class="muted">—</span>';
+      status='<span class="badge bad">미제출</span>'; badNames.push(t.name); rowCls="bad";
+      planCell = HAS_SD ? barHtml : '<span class="muted">—</span>';
     }
 
     const subCell = sub
-      ? `${new Date(sub).toLocaleDateString("ko-KR")} <span class="muted">(${pm.m}월분)</span>`
+      ? `<b>${new Date(sub).toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})}</b><br>${pm.m}월분`
       : "—";
-    const linkBtn = t.token
-      ? `<button class="btn sm linkbtn" data-link="${base}?t=${t.token}">📋 링크 복사</button>`
-      : `<button class="btn sm" onclick="askAdminKey()" title="강사 링크를 보려면 관리자 키가 필요합니다">🔑 키 입력</button>`;
-    return `<tr>
-      <td><b>${t.name}</b></td><td>${t.subject}</td>
+    let actBtn;
+    if(!t.token){
+      actBtn = `<button class="act" onclick="askAdminKey()" title="강사 링크를 보려면 관리자 키가 필요합니다">키 입력</button>`;
+    } else if(rowCls==="bad"){
+      const msg = `[다올105] ${t.name} 선생님, ${VIEW_YM.m}월 수업 계획 입력이 아직 접수되지 않았습니다. 아래 전용 링크에서 입력 부탁드립니다 🙏\n${base}?t=${t.token}`;
+      actBtn = `<button class="act p" data-copy="${encodeURIComponent(msg)}" data-done="✓ 문자 원고 복사됨" title="독촉 문자 원고 + 전용 링크가 복사됩니다">독촉 보내기</button>`;
+    } else {
+      actBtn = `<button class="act" data-copy="${encodeURIComponent(base+"?t="+t.token)}" data-done="✓ 복사됨">링크 복사</button>`;
+    }
+    return `<tr class="${rowCls}">
+      <td><span class="nm">${t.name}<span class="sj">${t.subject}</span></span></td>
       <td>${cnt>0?cnt+"개":"—"}</td>
       <td>${planCell}</td>
-      <td>${sess?`<b>${sess}회</b>`:'<span class="muted">—</span>'}</td>
+      <td>${sess?`<span class="ses">${sess}회</span>`:'<span class="ses z">—</span>'}</td>
       <td>${status}</td>
-      <td class="muted">${subCell}</td>
-      <td class="noprint">${linkBtn}</td>
+      <td class="when">${subCell}</td>
+      <td class="noprint">${actBtn}</td>
     </tr>`;
   }).join("");
 
   document.getElementById("dashBody").innerHTML = rowsHtml;
+  document.getElementById("dashCnt").textContent = ROSTER.length + "명";
   document.getElementById("mLabel").textContent = `${VIEW_YM.y}년 ${VIEW_YM.m}월`;
-  document.getElementById("thPlan").innerHTML = `${VIEW_YM.m}월 진행표`;
-  document.getElementById("thSess").innerHTML = `${VIEW_YM.m}월 정규 회차`;
+  document.getElementById("thPlan").textContent = `${VIEW_YM.m}월 진행표`;
+  document.getElementById("thSess").textContent = `${VIEW_YM.m}월 정규 회차`;
   document.getElementById("mHint").innerHTML = HAS_SD
-    ? `강의계획은 <b>전 달에</b> 냅니다 — 8월에 낸 것이 9월 계획입니다. ‘진행표’는 그 달 실제 수업일을 확정한 강좌 수입니다.`
-    : `강의계획은 <b>전 달에</b> 냅니다 — 8월에 낸 것이 9월 계획입니다. `
-      + `⚠ courses.session_dates 컬럼이 없어 ‘진행표’ 칸은 아직 비어 있습니다.`;
+    ? `계획은 <b>전 달에</b> 냅니다 — 8월에 낸 것이 9월 계획입니다.`
+    : `계획은 <b>전 달에</b> 냅니다. ⚠ courses.session_dates 컬럼이 없어 ‘진행표’ 칸은 아직 비어 있습니다.`;
+
+  // ── KPI 카드 ──
+  const subjCnt = {};
+  ROSTER.forEach(t=>{ subjCnt[t.subject]=(subjCnt[t.subject]||0)+1; });
+  const subjTxt = Object.entries(subjCnt).map(([k,n])=>`${k} ${n}`).join(" · ");
+  const mid = DATA.filter(c=>c.division==="중등").length, high = DATA.length - mid;
+  const nameList = a => !a.length ? "" : (a.length<=3 ? a.join(" · ") : a.slice(0,2).join(" · ")+` 외 ${a.length-2}명`);
   document.getElementById("summary").innerHTML = `
-    <div class="stat"><div class="n">${ROSTER.length}</div><div class="l">전체 강사</div></div>
-    <div class="stat"><div class="n" style="color:var(--ok)">${done}</div><div class="l">${VIEW_YM.m}월 완료</div></div>
-    <div class="stat"><div class="n" style="color:#b91c1c">${waiting}</div><div class="l">${VIEW_YM.m}월 미제출</div></div>
-    <div class="stat"><div class="n">${DATA.length}</div><div class="l">총 강좌</div></div>
-    <div class="stat"><div class="n">${totalSess||"—"}</div><div class="l">${VIEW_YM.m}월 정규 회차 합</div></div>`;
+    <div class="kpi"><div class="lbx">전체 강사</div><div class="v">${ROSTER.length}<small>명</small></div><div class="sub">${subjTxt||"—"}</div></div>
+    <div class="kpi acc"><div class="lbx">${VIEW_YM.m}월 제출 완료</div><div class="v">${done}<small>/${ROSTER.length}</small></div><div class="sub">${nameList(doneNames)||"아직 없음"}</div></div>
+    <div class="kpi bad"><div class="lbx">${VIEW_YM.m}월 미제출</div><div class="v">${badNames.length}<small>명</small></div><div class="sub">${nameList(badNames)||"모두 제출 완료"}</div></div>
+    <div class="kpi"><div class="lbx">총 강좌</div><div class="v">${DATA.length}<small>개</small></div><div class="sub">중등 ${mid} · 고등 ${high}</div></div>
+    <div class="kpi hero"><div class="lbx">${VIEW_YM.m}월 정규 회차 합</div><div class="v">${totalSess||"—"}${totalSess?"<small>회</small>":""}</div><div class="sub">정산 근거 · 확정분만</div></div>`;
+
+  // ── 오늘 할 일 ──
+  const todo = [];
+  if(badNames.length) todo.push({c:"r", h:`<b>미제출 ${badNames.length}명</b>에게 전용 링크 보내기 — ${badNames.join(" · ")}`});
+  wipNames.forEach(w=> todo.push({c:"g", h:`${w.name} 선생님 <b>작성중 ${w.conf}/${w.cnt}</b> — 진행표 마저 확정 필요`}));
+  zeroConf.forEach(z=> todo.push({c:"g", h:`${z.name} 선생님 <b>진행표 0/${z.cnt}</b> — 제출은 됐지만 실제 수업일 미확정`}));
+  if(!todo.length) todo.push({c:"b", h:`${VIEW_YM.m}월 계획 관련 남은 일이 없습니다 👍`});
+  document.getElementById("todoList").innerHTML = todo.map(t=>`<li><span class="dot ${t.c}"></span><div>${t.h}</div></li>`).join("");
+  document.getElementById("todoCnt").textContent = todo.length;
+
+  // ── 한눈에 ──
+  document.getElementById("glanceTitle").textContent = `${VIEW_YM.m}월 한눈에`;
+  const gRows = [
+    ["제출 완료", `${done} / ${ROSTER.length}명`],
+    ["진행표 확정 강좌", HAS_SD ? `${confCourses} / ${rosterCnt}개` : "—"],
+    ["확정 정규 회차", totalSess ? `${totalSess}회` : "—"],
+  ];
+  if(totBo)  gRows.push(["직전보강 마킹", `${totBo}회`]);
+  if(totHyu) gRows.push(["휴강 마킹", `${totHyu}일`]);
+  document.getElementById("glanceRows").innerHTML = gRows.map(([k,v])=>`<div class="row"><span>${k}</span><b>${v}</b></div>`).join("");
+  document.getElementById("glanceNote").innerHTML =
+    `강의계획은 <b>전 달에</b> 냅니다. ‘진행표’는 선생님이 달력에서 실제 수업일을 확정한 것이고, <b>정규 회차 합이 정산 근거</b>가 됩니다.`;
 }
 document.getElementById("mPrev").addEventListener("click", ()=>shiftYM(-1));
 document.getElementById("mNext").addEventListener("click", ()=>shiftYM(1));
@@ -893,8 +1049,13 @@ document.getElementById("mNow").addEventListener("click", ()=>{
   renderDash();
 });
 document.getElementById("dashBody").addEventListener("click", e=>{
-  const b=e.target.closest("[data-link]"); if(!b) return;
-  navigator.clipboard.writeText(b.dataset.link).then(()=>{ b.textContent="✓ 복사됨"; setTimeout(()=>b.textContent="📋 링크 복사",1500); });
+  const b=e.target.closest("[data-copy]"); if(!b) return;
+  navigator.clipboard.writeText(decodeURIComponent(b.dataset.copy)).then(()=>{
+    if(!b.dataset.orig) b.dataset.orig=b.textContent;   // 원래 라벨 1회 캡처
+    clearTimeout(b._copyT);
+    b.textContent=b.dataset.done||"✓ 복사됨";
+    b._copyT=setTimeout(()=>{ b.textContent=b.dataset.orig; }, 1600);
+  });
 });
 
 /* ===== 탭 ===== */
