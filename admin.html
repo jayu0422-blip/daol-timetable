@@ -376,6 +376,82 @@
   .mg-grouphead td{background:#fff7ed;font-weight:800;color:var(--brand-ink);font-size:12.5px}
   @media(max-width:900px){ .mg-grid{grid-template-columns:repeat(2,1fr)} }
   @media print{ #guideSheet{box-shadow:none;border:none} }
+/* ══════════ 디자인 디벨롭 (2026-08-20) — 스타일만, 기능·마크업 무관 ══════════ */
+
+/* 브랜드 토큰 재정의 — 네이비 + 골드 (학원 인쇄물과 동일) */
+:root{
+  --serif:"Noto Serif KR",Georgia,serif;
+  --ink:#1a1f28; --muted:#78849a; --line:#e4e9f0; --bg:#f2f5f9; --card:#fff;
+  --navy:#1e3a5f; --navy-d:#16304f; --navy-l:#2f5586;
+  --brand:#a8873c; --brand-ink:#8c6d1f; --brand-soft:#fdfbf5; --brand-line:#e3d7b4;
+  --ok:#0f766e; --ok-bg:#ecfdf5; --danger:#b91c1c; --danger-bg:#fef2f2;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 26px -18px rgba(16,24,40,.35);
+  --shadow-lg:0 1px 2px rgba(16,24,40,.06),0 18px 40px -22px rgba(19,46,79,.4);
+}
+body{background:
+  radial-gradient(1200px 420px at 50% -160px, #e8eef6 0%, transparent 70%),
+  var(--bg);
+  -webkit-font-smoothing:antialiased}
+.top h1{font-family:var(--serif);font-weight:900;letter-spacing:-.5px;color:var(--navy)}
+.tag{background:#fff;border-color:var(--line);color:var(--muted);font-weight:600}
+
+/* 버튼 */
+.btn{border-color:var(--line);border-radius:10px;font-weight:700;color:#31405a;
+  transition:background .14s,border-color .14s,box-shadow .14s}
+.btn:hover{background:#f7f9fc;border-color:#d3dbe6}
+.btn.primary{background:linear-gradient(180deg,#c2a04a,#a8873c);border-color:#96793f;color:#fff;
+  box-shadow:0 8px 18px -10px rgba(168,135,60,.75)}
+.btn.primary:hover{background:linear-gradient(180deg,#b3963f,#8c6d1f);border-color:#8c6d1f}
+.btn.danger{color:var(--danger);border-color:#f0c9c9}
+.btn.danger:hover{background:var(--danger-bg,#fef2f2)}
+
+/* 패널 */
+.panel{border-radius:14px;border-color:var(--line);box-shadow:var(--shadow)}
+
+/* 탭 — 알약 대신 골드 밑줄 */
+.tabbar{background:#fff;border-radius:14px;box-shadow:var(--shadow)}
+.tab{border-radius:9px;font-weight:700;color:var(--muted);position:relative}
+.tab:hover{background:#f5f8fc;color:var(--navy)}
+.tab.on{background:transparent;color:var(--navy);border-color:transparent;box-shadow:none}
+.tab.on::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:3px;
+  background:var(--brand);border-radius:3px}
+
+/* 칩 · 프리셋 */
+.chip.on{background:var(--brand-soft);border-color:var(--brand-line);color:var(--brand-ink);font-weight:800}
+.preset:hover{border-color:var(--brand-line);color:var(--brand-ink)}
+.preset.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* 입력 */
+input,select,textarea{border-radius:9px}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(168,135,60,.35);outline-offset:1px;
+  border-color:var(--brand)!important}
+
+/* 대시보드 — 숫자·표 */
+.summary{gap:12px}
+.stat{border-radius:14px;padding:14px 18px;min-width:132px;box-shadow:var(--shadow);
+  background:#fbfcfe;border-color:var(--line)}
+.stat .n{font-family:var(--serif);font-size:29px;font-weight:900;color:var(--navy);line-height:1.08}
+.stat .l{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.2px;margin-top:3px}
+
+table.dash{border-radius:14px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
+table.dash th{background:#f7f9fc;font-size:11.5px;font-weight:800;letter-spacing:.2px;
+  color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line)}
+table.dash td{padding:13px 14px;border-bottom:1px solid #f1f4f9}
+table.dash tbody tr:last-child td{border-bottom:0}
+table.dash tbody tr:hover{background:#fafcff}
+table.dash td b{color:var(--navy)}
+
+.badge{border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:800}
+.badge.done{background:var(--ok-bg);color:var(--ok)}
+.badge.wip{background:var(--brand-soft);color:var(--brand-ink)}
+.badge.none{background:#f1f4f9;color:var(--muted)}
+
+/* 월 선택 바 */
+.mbar{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;
+  box-shadow:var(--shadow);margin-bottom:12px}
+.mbar b{font-family:var(--serif);font-size:17px;font-weight:900;color:var(--navy)}
+.mbar .muted{color:var(--muted)}
+
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>
@@ -1893,82 +1969,6 @@ document.getElementById("allPrint").addEventListener("click", async ()=>{
       @media screen{ body{background:#e9edf3;padding:16px} .p{background:#fff;margin:0 auto 16px;max-width:1000px;box-shadow:0 2px 10px rgba(0,0,0,.15)} }
       @media print{ .p{margin:0;box-shadow:none;max-width:none} }
     
-
-/* ══════════ 디자인 디벨롭 (2026-08-20) — 스타일만, 기능·마크업 무관 ══════════ */
-
-/* 브랜드 토큰 재정의 — 네이비 + 골드 (학원 인쇄물과 동일) */
-:root{
-  --serif:"Noto Serif KR",Georgia,serif;
-  --ink:#1a1f28; --muted:#78849a; --line:#e4e9f0; --bg:#f2f5f9; --card:#fff;
-  --navy:#1e3a5f; --navy-d:#16304f; --navy-l:#2f5586;
-  --brand:#a8873c; --brand-ink:#8c6d1f; --brand-soft:#fdfbf5; --brand-line:#e3d7b4;
-  --ok:#0f766e; --ok-bg:#ecfdf5; --danger:#b91c1c; --danger-bg:#fef2f2;
-  --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 26px -18px rgba(16,24,40,.35);
-  --shadow-lg:0 1px 2px rgba(16,24,40,.06),0 18px 40px -22px rgba(19,46,79,.4);
-}
-body{background:
-  radial-gradient(1200px 420px at 50% -160px, #e8eef6 0%, transparent 70%),
-  var(--bg);
-  -webkit-font-smoothing:antialiased}
-.top h1{font-family:var(--serif);font-weight:900;letter-spacing:-.5px;color:var(--navy)}
-.tag{background:#fff;border-color:var(--line);color:var(--muted);font-weight:600}
-
-/* 버튼 */
-.btn{border-color:var(--line);border-radius:10px;font-weight:700;color:#31405a;
-  transition:background .14s,border-color .14s,box-shadow .14s}
-.btn:hover{background:#f7f9fc;border-color:#d3dbe6}
-.btn.primary{background:linear-gradient(180deg,#c2a04a,#a8873c);border-color:#96793f;color:#fff;
-  box-shadow:0 8px 18px -10px rgba(168,135,60,.75)}
-.btn.primary:hover{background:linear-gradient(180deg,#b3963f,#8c6d1f);border-color:#8c6d1f}
-.btn.danger{color:var(--danger);border-color:#f0c9c9}
-.btn.danger:hover{background:var(--danger-bg,#fef2f2)}
-
-/* 패널 */
-.panel{border-radius:14px;border-color:var(--line);box-shadow:var(--shadow)}
-
-/* 탭 — 알약 대신 골드 밑줄 */
-.tabbar{background:#fff;border-radius:14px;box-shadow:var(--shadow)}
-.tab{border-radius:9px;font-weight:700;color:var(--muted);position:relative}
-.tab:hover{background:#f5f8fc;color:var(--navy)}
-.tab.on{background:transparent;color:var(--navy);border-color:transparent;box-shadow:none}
-.tab.on::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:3px;
-  background:var(--brand);border-radius:3px}
-
-/* 칩 · 프리셋 */
-.chip.on{background:var(--brand-soft);border-color:var(--brand-line);color:var(--brand-ink);font-weight:800}
-.preset:hover{border-color:var(--brand-line);color:var(--brand-ink)}
-.preset.on{background:var(--navy);border-color:var(--navy);color:#fff}
-
-/* 입력 */
-input,select,textarea{border-radius:9px}
-input:focus,select:focus,textarea:focus{outline:2px solid rgba(168,135,60,.35);outline-offset:1px;
-  border-color:var(--brand)!important}
-
-/* 대시보드 — 숫자·표 */
-.summary{gap:12px}
-.stat{border-radius:14px;padding:14px 18px;min-width:132px;box-shadow:var(--shadow);
-  background:#fbfcfe;border-color:var(--line)}
-.stat .n{font-family:var(--serif);font-size:29px;font-weight:900;color:var(--navy);line-height:1.08}
-.stat .l{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.2px;margin-top:3px}
-
-table.dash{border-radius:14px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
-table.dash th{background:#f7f9fc;font-size:11.5px;font-weight:800;letter-spacing:.2px;
-  color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line)}
-table.dash td{padding:13px 14px;border-bottom:1px solid #f1f4f9}
-table.dash tbody tr:last-child td{border-bottom:0}
-table.dash tbody tr:hover{background:#fafcff}
-table.dash td b{color:var(--navy)}
-
-.badge{border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:800}
-.badge.done{background:var(--ok-bg);color:var(--ok)}
-.badge.wip{background:var(--brand-soft);color:var(--brand-ink)}
-.badge.none{background:#f1f4f9;color:var(--muted)}
-
-/* 월 선택 바 */
-.mbar{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;
-  box-shadow:var(--shadow);margin-bottom:12px}
-.mbar b{font-family:var(--serif);font-size:17px;font-weight:900;color:var(--navy)}
-.mbar .muted{color:var(--muted)}
 
 </style></head><body>
       <div class="p tt"><img src="${tt.toDataURL("image/png")}"></div>
