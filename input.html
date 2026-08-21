@@ -9,7 +9,7 @@
   :root{
     --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
     --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
-    --brand:#f59e0b; --brand-ink:#b45309; --ok:#10b981; --danger:#ef4444;
+    --brand:#a8873c; --brand-ink:#8c6d1f; --ok:#10b981; --danger:#ef4444;
     --shadow:0 1px 3px rgba(16,24,40,.08);
   }
   *{box-sizing:border-box}
@@ -30,7 +30,7 @@
   .status b{color:var(--ok)}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin:14px 0;overflow:hidden}
-  .card-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffaf0;border-bottom:1px solid var(--line);cursor:pointer}
+  .card-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fdfbf5;border-bottom:1px solid var(--line);cursor:pointer}
   .card-head .grip{color:#cbd5e1}
   .card-head .ttl{font-weight:800;font-size:14px;flex:1;min-width:0}
   .card-head .meta{font-size:12px;color:var(--muted);min-width:0}
@@ -66,10 +66,10 @@
     .card-head .meta{flex:1 1 100%;line-height:1.45}
   }
   /* 안내 말풍선 */
-  .ask{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;font-size:12px;color:#78350f;line-height:1.55;margin-bottom:5px}
-  .ask b{color:#b45309}
+  .ask{background:#fdfbf5;border:1px solid #e3d7b4;border-radius:8px;padding:7px 10px;font-size:12px;color:#6b5a2a;line-height:1.55;margin-bottom:5px}
+  .ask b{color:#8c6d1f}
   /* 강사 프로필 */
-  .prof{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #f59e0b;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .prof{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #a8873c;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
   .prof-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
   .prof-head img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#f3f4f6;flex:0 0 auto}
   .prof-head img[src=""]{display:none}
@@ -96,7 +96,7 @@
   .prev .pv-b ul{margin:0;padding-left:18px}
   .prev .pv-b li{font-size:12.8px;line-height:1.7;color:#374151;margin-bottom:2px}
   .prev .pv-sch{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-  .prev .pv-sch span{font-size:11px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:5px;padding:1px 7px}
+  .prev .pv-sch span{font-size:11px;font-weight:700;color:#6b5a2a;background:#f4eeda;border-radius:5px;padding:1px 7px}
   .prev .pv-empty{color:var(--danger);font-size:12.5px;background:#fef2f2;border:1px dashed #fecaca;border-radius:7px;padding:8px 11px}
   .prev .pv-where{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--muted);line-height:1.6}
 
@@ -159,6 +159,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(168,135,60,.35);o
 .card .ttl{font-family:var(--serif);font-weight:900;color:var(--navy);letter-spacing:-.3px}
 label{font-weight:700;color:#5c6a80}
 
+
+/* 마감 폴리시 */
+/* 강사 페이지 마감 */
+.prof{border-left-color:var(--navy)}
+.prof-t{font-family:var(--serif);font-weight:900;color:var(--navy);letter-spacing:-.3px}
+.card-head{background:#fbfcfe}
+.card-head .ttl{font-family:var(--serif);font-weight:900;color:var(--navy);font-size:14.5px}
+.ask{border-radius:9px}
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>

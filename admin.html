@@ -13,7 +13,7 @@
   :root{
     --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
     --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f6f9; --card:#fff;
-    --brand:#f59e0b; --brand-ink:#b45309; --ok:#10b981; --danger:#ef4444; --info:#2563eb;
+    --brand:#a8873c; --brand-ink:#8c6d1f; --ok:#10b981; --danger:#ef4444; --info:#2563eb;
     --shadow:0 1px 3px rgba(16,24,40,.08);
     /* 학년 색띠 */
     --g-중1:#ffe8cc; --g-중2:#ffd8a8; --g-중3:#ffc078; --g-중등공통:#ffec99;
@@ -107,7 +107,7 @@
   .rblk .rteam{font-size:10px;opacity:.85}
   .rblk .rtype{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 3px;background:rgba(255,255,255,.55)}
   .rblk.conflict{outline:2px solid var(--danger);outline-offset:-2px}
-  .unparsed{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin:12px 0;font-size:12.5px}
+  .unparsed{background:#fdfbf5;border:1px solid #e3d7b4;border-radius:10px;padding:10px 12px;margin:12px 0;font-size:12.5px}
   .unparsed:empty{display:none}
   /* 교재비는 교육청 고지 구간만 — 구 단가가 남아 있으면 빨갛게 */
   select.matsel{width:100%;font-family:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff}
@@ -124,8 +124,8 @@
   .gg-title{text-align:center;flex:1}
   .gg-title .tt{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--brand-ink)}
   .gg-title .gn{font-size:26px;font-weight:800;color:#7c2d12;margin-top:2px}
-  .gg-note{max-width:300px;background:#fffbe8;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#78350f;line-height:1.45}
-  .gg-note b{color:#b45309}
+  .gg-note{max-width:300px;background:#fdfbf5;border:1px solid #e3d7b4;border-radius:8px;padding:8px 10px;font-size:11px;color:#6b5a2a;line-height:1.45}
+  .gg-note b{color:#8c6d1f}
   .ggrid{display:grid;grid-template-columns:64px repeat(7,1fr);min-width:900px;padding:0 10px 12px}
   .gg-h{font-weight:800;font-size:13px;text-align:center;padding:9px 4px;border-bottom:2px solid #374151;background:#fdf6ec}
   .gg-h.wk{color:#2563eb}.gg-h.sat{color:#2563eb}.gg-h.sun{color:#dc2626}
@@ -141,7 +141,7 @@
   .gblk .gsub{font-weight:800;font-size:12px}
   .gblk .gtag{display:inline-block;font-size:9px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:middle}
   .gblk .gtag.reg{background:#1d4ed8;color:#fff}
-  .gblk .gtag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
+  .gblk .gtag.cli{background:#fff;color:#8c6d1f;border:1px solid #a8873c}
   .gblk .gtm{font-size:10px;color:#4b5563;margin-top:1px}
   .gblk .gdet{font-size:9.5px;color:#374151;margin-top:2px;line-height:1.3;border-top:1px dotted rgba(0,0,0,.18);padding-top:2px}
   .gblk .gbadges{margin-top:2px;display:flex;gap:3px;flex-wrap:wrap}
@@ -167,7 +167,7 @@
   .acell .ateach{font-weight:700;color:#374151;font-size:10px}
   .acell .atag{display:inline-block;font-size:8.5px;font-weight:800;border-radius:3px;padding:0 4px;margin-left:2px;vertical-align:1px}
   .acell .atag.reg{background:#1d4ed8;color:#fff}
-  .acell .atag.cli{background:#fff;color:#b45309;border:1px solid #f59e0b}
+  .acell .atag.cli{background:#fff;color:#8c6d1f;border:1px solid #a8873c}
   @media print{ #gradeSheet{box-shadow:none;border:none} .atbl{min-width:0} }
 
   /* ===== 2페이지: 수업 방식·안내 ===== */
@@ -191,25 +191,25 @@
   .gu-card.a .tagline{background:#0369a1;color:#fff}
   .gu-card.b .tagline{background:#c2410c;color:#fff}
   .gu-warn{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px 13px;font-size:12px;color:#7f1d1d;line-height:1.6}
-  .gu-key{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#78350f;line-height:1.6;font-weight:600}
-  .gu-intro{background:#fffdf7;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;margin-bottom:10px}
+  .gu-key{background:#fdfbf5;border:1px solid #e3d7b4;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#6b5a2a;line-height:1.6;font-weight:600}
+  .gu-intro{background:#fdfbf5;border:1px solid #e3d7b4;border-radius:10px;padding:11px 14px;margin-bottom:10px}
   .gu-intro-h{font-size:13.5px;font-weight:800;color:#7c2d12;margin-bottom:5px}
   .gu-intro p{font-size:12.5px;line-height:1.7;color:#374151;margin:0 0 7px}
   .gu-intro-a{font-size:12.5px;line-height:1.7;color:#374151;background:#fff;border-left:3px solid var(--brand);border-radius:6px;padding:8px 11px}
-  .gu-intro-a b{display:block;color:#b45309;margin-bottom:3px}
+  .gu-intro-a b{display:block;color:#8c6d1f;margin-bottom:3px}
   .gu-prof{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:9px;background:#fff}
   .gu-prof img{width:58px;height:74px;object-fit:contain;object-position:bottom;flex:0 0 auto;background:transparent}
   .gu-prof-b{flex:1}
   .gu-prof-n{font-size:13.5px;font-weight:800;color:#1f2430}
   .gu-prof-n span{font-size:11px;font-weight:600;color:var(--muted)}
   .gu-prof-c{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}
-  .gu-prof-i{font-size:12.5px;color:#b45309;font-weight:700;margin:3px 0 5px}
-  .gu-sch{margin-top:7px;background:#fffdf5;border:1px solid #fde68a;border-radius:8px;padding:7px 10px}
+  .gu-prof-i{font-size:12.5px;color:#8c6d1f;font-weight:700;margin:3px 0 5px}
+  .gu-sch{margin-top:7px;background:#fdfbf5;border:1px solid #e3d7b4;border-radius:8px;padding:7px 10px}
   .gu-sch.up{background:#f0f9ff;border-color:#bae6fd}
   .gu-sch>b{display:block;font-size:11px;color:#92400e;margin-bottom:3px}
   .gu-sch.up>b{color:#0369a1}
   .gu-sch-l{display:flex;flex-wrap:wrap;gap:4px}
-  .gu-sch-l span{font-size:11px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:5px;padding:1px 7px}
+  .gu-sch-l span{font-size:11px;font-weight:700;color:#6b5a2a;background:#f4eeda;border-radius:5px;padding:1px 7px}
   .gu-sch.up .gu-sch-l span{color:#075985;background:#e0f2fe}
   .gu-prof-s{margin-top:5px}
   .gu-prof-s>b{display:block;font-size:11px;color:var(--brand-ink);margin-bottom:2px}
@@ -223,7 +223,7 @@
   .gu-block>b{display:block;font-size:11px;color:var(--brand-ink);margin-bottom:2px}
   .gu-block ul{margin:0;padding-left:17px}
   .gu-block li{font-size:12px;line-height:1.5;color:#374151}
-  .gu-fee{margin-top:6px;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 10px;font-size:11.5px;color:#78350f;line-height:1.55}
+  .gu-fee{margin-top:6px;background:#fdfbf5;border:1px solid #e3d7b4;border-radius:7px;padding:6px 10px;font-size:11.5px;color:#6b5a2a;line-height:1.55}
   .gu-divider{margin:18px 0 10px;padding:7px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;font-weight:800;color:#1e40af}
   .gu-pact{margin-top:12px;border:1.5px solid #fdba74;border-radius:11px;background:#fffaf3;padding:12px 15px}
   .gu-pact-h{font-size:13.5px;font-weight:800;color:#9a3412;margin-bottom:6px}
@@ -256,7 +256,7 @@
   .cs-pt{background:#fff;border:1px solid #dbe5f3;border-radius:9px;padding:9px 11px}
   .cs-pt b{display:block;font-size:12.5px;color:#1e3a68;margin-bottom:3px}
   .cs-pt span{font-size:11.5px;line-height:1.6;color:#4b5563}
-  .cs-tip{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 13px;font-size:12.5px;color:#78350f;margin-top:10px}
+  .cs-tip{background:#fdfbf5;border:1px solid #e3d7b4;border-radius:9px;padding:9px 13px;font-size:12.5px;color:#6b5a2a;margin-top:10px}
   .cs-tbl{width:100%;border-collapse:collapse;margin-top:11px;font-size:12.2px}
   .cs-tbl th,.cs-tbl td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
   .cs-tbl thead th{background:#1e3a68;color:#fff;font-size:11.5px;font-weight:800}
@@ -347,7 +347,7 @@
   .pk-card b.lb{display:block;font-size:10.5px;color:var(--brand-ink);margin-top:5px}
   .pk-career{font-size:11px;color:var(--muted);line-height:1.5;margin-top:2px}
   .pk-sch{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
-  .pk-sch span{font-size:10.5px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:4px;padding:1px 6px}
+  .pk-sch span{font-size:10.5px;font-weight:700;color:#6b5a2a;background:#f4eeda;border-radius:4px;padding:1px 6px}
   .pk-sch.up span{color:#075985;background:#e0f2fe}
   .pk-todo{margin-top:6px;font-size:10.5px;color:#b91c1c;background:#fef2f2;border:1px dashed #fecaca;border-radius:6px;padding:4px 7px}
   .pk-card ul{margin:1px 0 0;padding-left:16px}
@@ -452,6 +452,14 @@ table.dash td b{color:var(--navy)}
 .mbar b{font-family:var(--serif);font-size:17px;font-weight:900;color:var(--navy)}
 .mbar .muted{color:var(--muted)}
 
+
+/* 마감 폴리시 */
+/* 상단 이동 버튼 — 색이 제각각이라 정돈 (인라인 style 을 덮음) */
+.top a.btn.sm{color:#31405a!important;border-color:var(--line)!important;background:#fff}
+.top a.btn.sm:hover{background:#f7f9fc;border-color:#cfd8e5!important}
+.top a.btn.sm[href="control.html"]{color:var(--brand-ink)!important;
+  border-color:var(--brand-line)!important;background:var(--brand-soft)}
+.top a.btn.sm[href="control.html"]:hover{background:#f8f3e6}
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>
