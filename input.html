@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>다올105 시간표 입력 (강사용)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -98,6 +99,66 @@
   .prev .pv-sch span{font-size:11px;font-weight:700;color:#78350f;background:#fef3c7;border-radius:5px;padding:1px 7px}
   .prev .pv-empty{color:var(--danger);font-size:12.5px;background:#fef2f2;border:1px dashed #fecaca;border-radius:7px;padding:8px 11px}
   .prev .pv-where{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--muted);line-height:1.6}
+
+
+/* ══════════ 디자인 디벨롭 (2026-08-20) — 스타일만, 기능·마크업 무관 ══════════ */
+
+/* 브랜드 토큰 재정의 — 네이비 + 골드 (학원 인쇄물과 동일) */
+:root{
+  --serif:"Noto Serif KR",Georgia,serif;
+  --ink:#1a1f28; --muted:#78849a; --line:#e4e9f0; --bg:#f2f5f9; --card:#fff;
+  --navy:#1e3a5f; --navy-d:#16304f; --navy-l:#2f5586;
+  --brand:#a8873c; --brand-ink:#8c6d1f; --brand-soft:#fdfbf5; --brand-line:#e3d7b4;
+  --ok:#0f766e; --ok-bg:#ecfdf5; --danger:#b91c1c; --danger-bg:#fef2f2;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 26px -18px rgba(16,24,40,.35);
+  --shadow-lg:0 1px 2px rgba(16,24,40,.06),0 18px 40px -22px rgba(19,46,79,.4);
+}
+body{background:
+  radial-gradient(1200px 420px at 50% -160px, #e8eef6 0%, transparent 70%),
+  var(--bg);
+  -webkit-font-smoothing:antialiased}
+.top h1{font-family:var(--serif);font-weight:900;letter-spacing:-.5px;color:var(--navy)}
+.tag{background:#fff;border-color:var(--line);color:var(--muted);font-weight:600}
+
+/* 버튼 */
+.btn{border-color:var(--line);border-radius:10px;font-weight:700;color:#31405a;
+  transition:background .14s,border-color .14s,box-shadow .14s}
+.btn:hover{background:#f7f9fc;border-color:#d3dbe6}
+.btn.primary{background:linear-gradient(180deg,#c2a04a,#a8873c);border-color:#96793f;color:#fff;
+  box-shadow:0 8px 18px -10px rgba(168,135,60,.75)}
+.btn.primary:hover{background:linear-gradient(180deg,#b3963f,#8c6d1f);border-color:#8c6d1f}
+.btn.danger{color:var(--danger);border-color:#f0c9c9}
+.btn.danger:hover{background:var(--danger-bg,#fef2f2)}
+
+/* 패널 */
+.panel{border-radius:14px;border-color:var(--line);box-shadow:var(--shadow)}
+
+/* 탭 — 알약 대신 골드 밑줄 */
+.tabbar{background:#fff;border-radius:14px;box-shadow:var(--shadow)}
+.tab{border-radius:9px;font-weight:700;color:var(--muted);position:relative}
+.tab:hover{background:#f5f8fc;color:var(--navy)}
+.tab.on{background:transparent;color:var(--navy);border-color:transparent;box-shadow:none}
+.tab.on::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:3px;
+  background:var(--brand);border-radius:3px}
+
+/* 칩 · 프리셋 */
+.chip.on{background:var(--brand-soft);border-color:var(--brand-line);color:var(--brand-ink);font-weight:800}
+.preset:hover{border-color:var(--brand-line);color:var(--brand-ink)}
+.preset.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* 입력 */
+input,select,textarea{border-radius:9px}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(168,135,60,.35);outline-offset:1px;
+  border-color:var(--brand)!important}
+
+/* 강사 입력 — 헤더·저장바·카드 */
+.top .who{background:var(--navy);color:#fff;font-weight:800;letter-spacing:-.2px}
+.savebar{background:rgba(242,245,249,.86);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:10px 0}
+.card{border-radius:14px;box-shadow:var(--shadow)}
+.card .ttl{font-family:var(--serif);font-weight:900;color:var(--navy);letter-spacing:-.3px}
+label{font-weight:700;color:#5c6a80}
+
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>
