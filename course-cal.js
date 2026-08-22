@@ -26,6 +26,22 @@
     return H;
   }
 
+  /* 그 달의 지필평가 — {일: "학교 학년 기간"} (mySchools 있으면 담당학교만) */
+  function examsOf(y, m, mySchools) {
+    const SC = window.DaolScheduleCal;
+    if (!SC || !SC.EXAMS) return {};
+    const E = {};
+    SC.EXAMS.forEach(e => {
+      if (e.month !== m) return;
+      if (mySchools && mySchools.length && SC.schoolMatch && !SC.schoolMatch(e.school, mySchools)) return;
+      e.days.forEach(d => {
+        const t = `${e.school} ${e.grade === "전체" ? "" : e.grade + " "}${e.term}`;
+        E[d] = E[d] ? E[d] + " · " + t : t;
+      });
+    });
+    return E;
+  }
+
   /* ── 요일 파싱 — admin.html extractDays 이식 ──
      "화요일"의 '일'을 일요일로 오인하면 회차가 2배가 된다. 세 규칙을 모두 쓴다. */
   function extractDays(seg) {
@@ -130,6 +146,8 @@
 .cc-c.sel{box-shadow:0 0 0 3px #f59e0b}
 /* 공휴일 표시 — 수업이 잡힌 날에도 빨간 점으로 "이 날 공휴일"만 알린다 */
 .cc-c .hd{position:absolute;top:3px;right:4px;width:7px;height:7px;border-radius:50%;background:#dc2626}
+/* 지필평가 표시 — 담당학교 시험날. 보강·휴강 판단의 핵심 참조 */
+.cc-c .ed{position:absolute;top:3px;left:4px;width:7px;height:7px;border-radius:50%;background:#d97706}
 .cc-c.holmark>span:not(.hd):not(.t){color:#dc2626}
 .cc-lg{display:flex;flex-wrap:wrap;gap:9px;padding:10px 6px 2px;font-size:11.5px;color:#6b7280;font-weight:700}
 .cc-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
@@ -159,20 +177,28 @@
 
   /* ── 열기 ── */
   let el = null;
+  let dirtyFn = null;   // 열려 있는 동안의 미저장 여부
+  function guardClose() {
+    if (dirtyFn && dirtyFn() && !confirm("저장하지 않고 닫을까요? 표시한 내용이 사라집니다.")) return;
+    dirtyFn = null;
+    close();
+  }
   function open(opts) {
     css();
     const { y, m } = opts.ym || targetYM();
     const H = holidays();
+    const EX = examsOf(y, m, opts.mySchools);
     let marks = Object.assign({}, opts.marks || seed(opts.scheduleText, y, m));
     const original = JSON.stringify(marks);
     let picked = null;
+    dirtyFn = () => JSON.stringify(marks) !== original;
 
     if (!el) {
       el = document.createElement("div");
       el.className = "cc-back";
       el.innerHTML = `<div class="cc-dim" data-x="1"></div><div class="cc-pan"></div>`;
       document.body.appendChild(el);
-      el.addEventListener("click", e => { if (e.target.dataset.x) close(); });
+      el.addEventListener("click", e => { if (e.target.dataset.x) guardClose(); });
     }
     const pan = el.querySelector(".cc-pan");
     el.classList.add("on");
@@ -200,9 +226,10 @@
         /* 공휴일은 수업으로 두되 빨간 점으로 표시만 한다 — 쉴지는 강사가 정한다 */
         const isHol = !!H[key];
         if (isHol && mk) cls += " holmark";
+        const isEx = !!EX[d];
         cells += `<button type="button" class="${cls}" data-d="${d}"
-          aria-label="${m}월 ${d}일 ${tag || "수업 없음"}${isHol ? " (" + H[key] + ")" : ""}"
-          >${isHol ? '<span class="hd" aria-hidden="true"></span>' : ""}<span>${d}</span>${tag ? `<span class="t">${tag}</span>` : ""}</button>`;
+          aria-label="${m}월 ${d}일 ${tag || "수업 없음"}${isHol ? " (" + H[key] + ")" : ""}${isEx ? " (지필: " + EX[d] + ")" : ""}"
+          >${isHol ? '<span class="hd" aria-hidden="true"></span>' : ""}${isEx ? '<span class="ed" aria-hidden="true"></span>' : ""}<span>${d}</span>${tag ? `<span class="t">${tag}</span>` : ""}</button>`;
       }
       const c = count(marks);
       /* 공휴일인데 아직 수업으로 잡혀 있는 날 — 쉬실 거면 직접 바꾸시라고 알린다(자동으로 빼지 않는다) */
@@ -211,6 +238,7 @@
         ? `공휴일 ${holOpen.map(k => +k.slice(8, 10) + "일").join(", ")}에 수업으로 잡혀 있습니다 — 쉬시면 눌러서 휴강으로 바꿔주세요`
         : "";
 
+      const prevScroll = (pan.querySelector(".cc-body") || {}).scrollTop || 0;
       pan.innerHTML = `
       <div class="cc-hd">
         <div class="cc-hdl"></div>
@@ -232,10 +260,11 @@
           <span><i style="background:#f9a8d4"></i>직전보강</span>
           <span><i style="background:#d1d5db"></i>휴강</span>
           <span><i style="background:#dc2626;border-radius:50%"></i>공휴일(수업 여부는 직접 정합니다)</span>
+          <span><i style="background:#d97706;border-radius:50%"></i>지필평가(담당학교)</span>
         </div>
       </div>
       ${picked ? `<div class="cc-pick">
-        <div class="lab">${+picked.slice(5, 7)}월 ${+picked.slice(8, 10)}일 (${DOWN[new Date(picked).getDay()]})${H[picked] ? " · " + esc(H[picked]) : ""} — 이 날은?</div>
+        <div class="lab">${+picked.slice(5, 7)}월 ${+picked.slice(8, 10)}일 (${DOWN[new Date(picked).getDay()]})${H[picked] ? " · 🔴 " + esc(H[picked]) : ""}${EX[+picked.slice(8, 10)] ? " · 📝 " + esc(EX[+picked.slice(8, 10)]) : ""} — 이 날은?</div>
         <div class="cc-chips">${KINDS.map(([v, t]) =>
           `<button type="button" class="cc-chip ${marks[picked] === v || (v === null && !marks[picked]) ? "on" : ""}" data-k="${v === null ? "" : v}">${t}</button>`).join("")}</div>
       </div>` : ""}
@@ -245,6 +274,8 @@
         <button type="button" class="cc-b pri" id="ccSave">저장</button>
       </div>`;
 
+      const bodyEl = pan.querySelector(".cc-body");
+      if (bodyEl) bodyEl.scrollTop = prevScroll;
       pan.querySelectorAll(".cc-c[data-d]").forEach(b => b.onclick = () => {
         picked = iso(y, m, +b.dataset.d); draw();
         pan.querySelector(".cc-pick")?.scrollIntoView({ block: "nearest" });
@@ -260,11 +291,8 @@
         if (diff && !confirm(`직접 고치신 ${diff}일이 사라집니다. 요일 규칙대로 되돌릴까요?`)) return;
         marks = s; picked = null; draw();
       };
-      pan.querySelector("#ccCancel").onclick = () => {
-        if (JSON.stringify(marks) !== original && !confirm("저장하지 않고 닫을까요? 표시한 내용이 사라집니다.")) return;
-        close();
-      };
-      pan.querySelector("#ccSave").onclick = () => { opts.onSave && opts.onSave(marks, count(marks)); close(); };
+      pan.querySelector("#ccCancel").onclick = guardClose;
+      pan.querySelector("#ccSave").onclick = () => { opts.onSave && opts.onSave(marks, count(marks)); dirtyFn = null; close(); };
     }
     draw();
   }
@@ -274,7 +302,15 @@
     el.classList.remove("on");
     if (history.state && history.state.cc) history.back();
   }
-  window.addEventListener("popstate", () => { if (el) el.classList.remove("on"); });
+  window.addEventListener("popstate", () => {
+    if (!el || !el.classList.contains("on")) return;
+    if (dirtyFn && dirtyFn() && !confirm("저장하지 않고 닫을까요? 표시한 내용이 사라집니다.")) {
+      history.pushState({ cc: 1 }, "");   // 닫기 취소 — 히스토리 복원하고 계속 연다
+      return;
+    }
+    dirtyFn = null;
+    el.classList.remove("on");
+  });
 
   window.DaolCourseCal = { open, close, seed, count, targetYM, weekdayPlan, extractDays };
 })();

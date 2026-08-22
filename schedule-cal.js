@@ -63,6 +63,20 @@
   const pad = n => String(n).padStart(2, "0");
   const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
   const shortSchool = s => s.replace("중학교", "중").replace("고등학교", "고");
+  /* 모바일 칩용 3글자 코드 — 좁은 칸(38px~)에서도 잘리지 않는 최대 길이 */
+  const MINI = { "미사강변중학교": "미강중", "미사강변고등학교": "미강고", "은가람중학교": "은가중" };
+  const miniSchool = s => MINI[s] || shortSchool(s).slice(0, 3);
+  /* 담당학교 매칭 — 강사가 어떤 표기(풀네임·약칭·달력의 3글자 코드)로 적어도 인식한다 */
+  const ALIAS = { "미강중": "미사강변중", "미강고": "미사강변고", "은가중": "은가람중",
+                  "강변중": "미사강변중", "강변고": "미사강변고" };
+  function schoolMatch(school, list) {
+    const sh = shortSchool(school);
+    return (list || []).some(raw => {
+      const m = ALIAS[String(raw).trim()] || String(raw).trim();
+      if (!m) return false;
+      return school.includes(m) || m.includes(sh) || sh.includes(m);
+    });
+  }
   const shortGrade = g => g === "전체" ? "" : g.replace("학년", "").replace(/,/g, "·").replace("고", "");
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -95,7 +109,7 @@
 .sc-title{font-weight:800;font-size:18px;letter-spacing:-.02em;display:flex;align-items:center;gap:7px}
 .sc-title small{font-weight:600;color:#8a90a0;font-size:12px}
 .sc-nav{display:flex;align-items:center;gap:6px}
-.sc-nav button{border:1px solid #e2e5ec;background:#fff;border-radius:10px;width:34px;height:34px;
+.sc-nav button{border:1px solid #e2e5ec;background:#fff;border-radius:10px;min-width:44px;height:34px;
   font-size:16px;cursor:pointer;color:#333;display:grid;place-items:center;transition:.15s}
 .sc-nav button:hover{background:#f4f5f8}
 .sc-nav .sc-today{width:auto;padding:0 12px;font-size:13px;font-weight:700;color:var(--sc-navy)}
@@ -109,7 +123,7 @@
 .sc-mpill.on .dot{background:#fde68a}
 .sc-filters{display:flex;gap:6px;margin:4px 0 10px}
 .sc-fp{border:1px solid #e2e5ec;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;
-  font-weight:700;color:#666;cursor:pointer}
+  font-weight:700;color:#666;cursor:pointer;font-family:inherit}
 .sc-fp.on{color:#fff}
 .sc-fp[data-f="전체"].on{background:#334155;border-color:#334155}
 .sc-fp[data-f="중"].on{background:var(--sc-mid);border-color:var(--sc-mid)}
@@ -150,7 +164,30 @@
 .sc-empty{font-size:12.5px;color:#98a0b0;padding:8px 2px}
 .sc-holiline{font-size:12.5px;color:#b4312a;font-weight:700;padding:5px 8px;background:#fef3f2;
   border:1px solid #fbd5d1;border-radius:10px;margin-bottom:5px;display:flex;justify-content:space-between}
-@media(max-width:520px){.sc-cell{min-height:64px}.sc-chip{font-size:9px}.sc-hname{font-size:9.5px}}
+.sc-cell[data-d]{cursor:pointer;-webkit-tap-highlight-color:rgba(30,58,95,.12)}
+.sc-cell[data-d]:active{background:#f4f6fa}
+.sc-cell.on{border-color:#f59e0b;box-shadow:0 0 0 2px #f59e0b inset}
+.sc-chip .scm{display:none}
+.sc-day-detail{margin-top:10px;border:1px solid #f1d9a1;background:#fffdf6;border-radius:12px;padding:10px 12px}
+.sc-dd-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:13.5px}
+.sc-dd-x{border:1px solid #e2e5ec;background:#fff;border-radius:8px;min-width:34px;min-height:34px;
+  font-size:13px;cursor:pointer;color:#6b7280;display:grid;place-items:center}
+.sc-day-detail .sc-row{background:#fff}
+@media(max-width:520px){
+  .sc-grid{gap:4px}
+  .sc-cell{min-height:72px;padding:4px 3px 5px;border-radius:10px}
+  .sc-chip .scf{display:none}
+  .sc-chip .scm{display:block;text-align:center}
+  .sc-chip{font-size:10px;padding:2px 0;text-overflow:clip;border-radius:5px}
+  .sc-hname{font-size:9.5px}
+}
+@media(max-width:380px){
+  .sc-chip{font-size:9.5px;letter-spacing:-.3px}
+}
+@media(max-width:700px){
+  .sc-fp{min-height:44px;display:inline-flex;align-items:center}
+  .sc-dd-x{min-width:44px;min-height:44px}
+}
 `;
     const st = document.createElement("style");
     st.id = "sc-style"; st.textContent = css;
@@ -165,16 +202,14 @@
     injectCSS();
 
     let mySchools = (opts.mySchools || []).map(s => String(s).trim()).filter(Boolean);
-    const state = { month: currentMonthInYear(), filter: "전체", autoFollow: true };
+    const state = { month: currentMonthInYear(), filter: "전체", autoFollow: true, selDay: null };
 
     const wrap = document.createElement("div");
     wrap.className = "sc-wrap";
     mount.innerHTML = "";
     mount.appendChild(wrap);
 
-    function isMine(school) {
-      return mySchools.some(m => school.includes(m) || m.includes(shortSchool(school)) || shortSchool(school).includes(m));
-    }
+    function isMine(school) { return schoolMatch(school, mySchools); }
 
     function draw() {
       const M = state.month, F = state.filter;
@@ -196,18 +231,47 @@
         if (isToday) cls.push("today");
         const numcls = "sc-dnum" + (dow === 0 || holi ? " sun" : dow === 6 ? " sat" : "");
         let chips = "";
-        const shown = evs.slice(0, 2);
+        const shown = evs.slice(0, 3);
         shown.forEach(e => {
           const mine = isMine(e.school) ? " mine" : "";
           const g = shortGrade(e.grade);
-          chips += `<div class="sc-chip ${e.level === "중" ? "mid" : "high"}${mine}" title="${esc(e.school + " " + e.grade + " " + e.term)}">${esc(shortSchool(e.school))}${g ? "<sup>" + esc(g) + "</sup>" : ""}</div>`;
+          chips += `<div class="sc-chip ${e.level === "중" ? "mid" : "high"}${mine}" title="${esc(e.school + " " + e.grade + " " + e.term)}">`
+            + `<span class="scf">${esc(shortSchool(e.school))}${g ? "<sup>" + esc(g) + "</sup>" : ""}</span>`
+            + `<span class="scm">${esc(miniSchool(e.school))}</span></div>`;
         });
-        if (evs.length > 2) chips += `<div class="sc-more">+${evs.length - 2}개 더</div>`;
-        cells += `<div class="${cls.join(" ")}" data-d="${d}">
+        if (evs.length > 3) chips += `<div class="sc-more">+${evs.length - 3}개</div>`;
+        if (state.selDay === d) cls.push("on");
+        const alab = `${M}월 ${d}일` + (holi ? ` ${holi}` : "")
+          + (evs.length ? ", " + evs.map(e => `${e.school} ${e.grade === "전체" ? "" : e.grade + " "}${e.term}`).join(", ") : ", 일정 없음");
+        cells += `<div class="${cls.join(" ")}" data-d="${d}" role="button" tabindex="0" aria-label="${esc(alab)}" aria-expanded="${state.selDay === d}">
           ${isToday ? '<span class="sc-today-badge">오늘</span>' : ""}
           <span class="${numcls}">${d}</span>
           ${holi ? `<span class="sc-hname">${esc(holi)}</span>` : ""}
           <div class="sc-chips">${chips}</div>
+        </div>`;
+      }
+
+      // 날짜 탭 상세 패널 — 칩이 좁아도 여기서 풀네임으로 다 보인다
+      function dayDetail() {
+        const d = state.selDay;
+        if (!d) return "";
+        const dt = iso(YEAR, M, d);
+        const w = ["일", "월", "화", "수", "목", "금", "토"][new Date(YEAR, M - 1, d).getDay()];
+        const holi = HOLI[dt];
+        const evs = examsOn(M, d, F);
+        let body = "";
+        if (holi) body += `<div class="sc-holiline"><span>🔴 ${esc(holi)}</span><span>공휴일</span></div>`;
+        if (evs.length) body += evs.map(e => {
+          const mine = isMine(e.school) ? " mine" : "";
+          return `<div class="sc-row${mine}"><span class="lv ${e.level === "중" ? "mid" : "high"}"></span>`
+            + `<span class="sch">${esc(e.school)}</span>`
+            + `<span class="meta">${e.grade === "전체" ? "전체" : esc(e.grade)} · ${esc(e.term)}</span>`
+            + `<span class="dts">${M}/${e.days.join(", ")}</span></div>`;
+        }).join("");
+        if (!holi && !evs.length) body = `<div class="sc-empty">이 날은 지필·공휴일 일정이 없습니다.</div>`;
+        return `<div class="sc-day-detail" id="scDayDetail">
+          <div class="sc-dd-hd"><b>${M}월 ${d}일 (${w})</b><button type="button" class="sc-dd-x" aria-label="닫기">✕</button></div>
+          ${body}
         </div>`;
       }
 
@@ -257,14 +321,15 @@
         </div>
         <div class="sc-months">${mpills}</div>
         <div class="sc-filters">
-          <span class="sc-fp ${F === "전체" ? "on" : ""}" data-f="전체">전체</span>
-          <span class="sc-fp ${F === "중" ? "on" : ""}" data-f="중">중등</span>
-          <span class="sc-fp ${F === "고" ? "on" : ""}" data-f="고">고등</span>
+          <button type="button" class="sc-fp ${F === "전체" ? "on" : ""}" data-f="전체">전체</button>
+          <button type="button" class="sc-fp ${F === "중" ? "on" : ""}" data-f="중">중등</button>
+          <button type="button" class="sc-fp ${F === "고" ? "on" : ""}" data-f="고">고등</button>
         </div>
         <div class="sc-grid">
           ${dows.map((w, i) => `<div class="sc-dow ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${w}</div>`).join("")}
           ${cells}
         </div>
+        ${dayDetail()}
         <div class="sc-legend">
           <span><i style="background:#0d9488"></i>중등 지필</span>
           <span><i style="background:#d97706"></i>고등 지필</span>
@@ -275,9 +340,25 @@
       </div>`;
 
       // 이벤트 바인딩
+      wrap.querySelectorAll(".sc-cell[data-d]").forEach(c => {
+        const go = () => {
+          const d = Number(c.dataset.d);
+          state.selDay = (state.selDay === d) ? null : d;
+          draw();
+          if (state.selDay) {
+            const p = wrap.querySelector("#scDayDetail");
+            if (p) p.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        };
+        c.onclick = go;
+        c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } };
+      });
+      const ddx = wrap.querySelector(".sc-dd-x");
+      if (ddx) ddx.onclick = () => { state.selDay = null; draw(); };
       wrap.querySelectorAll(".sc-mpill").forEach(b => b.onclick = () => {
         state.month = Number(b.dataset.m);
         state.autoFollow = (state.month === currentMonthInYear());
+        state.selDay = null;
         draw();
       });
       wrap.querySelectorAll(".sc-fp").forEach(b => b.onclick = () => { state.filter = b.dataset.f; draw(); });
@@ -285,6 +366,7 @@
         const v = b.dataset.nav;
         if (v === "today") { state.month = currentMonthInYear(); state.autoFollow = true; }
         else { state.month = Math.min(12, Math.max(1, state.month + Number(v))); state.autoFollow = (state.month === currentMonthInYear()); }
+        state.selDay = null;
         draw();
       });
     }
@@ -308,5 +390,5 @@
     };
   }
 
-  window.DaolScheduleCal = { render, HOLIDAYS, EXAMS };
+  window.DaolScheduleCal = { render, HOLIDAYS, EXAMS, schoolMatch };
 })();

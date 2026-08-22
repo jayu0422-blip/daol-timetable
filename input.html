@@ -246,8 +246,8 @@ label{font-weight:700;color:#5c6a80}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=d8eb2fc6"></script>
 <script src="config.js?v=d46c8eeb"></script>
-<script src="schedule-cal.js?v=88737a8b"></script>
-<script src="course-cal.js?v=844af431"></script>
+<script src="schedule-cal.js?v=0d263017"></script>
+<script src="course-cal.js?v=608e4ed7"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
 const GRADES = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -580,6 +580,7 @@ function openCal(r, card){
   window.DaolCourseCal.open({
     title: r.course_name || "강좌",
     scheduleText: r.schedule_text,
+    mySchools: teacherSchools(),
     ym: {y:TARGET.y, m:TARGET.m},
     marks: saved || undefined,
     onSave: (marks)=>{
