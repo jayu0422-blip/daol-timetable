@@ -1669,10 +1669,10 @@ function renderDay(){
 
 /* ===== 학년별 주간 시간표 ===== */
 const ALL_KEY="🗂 전학년 통합";
-const GRADE_BUTTONS=[ALL_KEY,"중1","중2","중3","미사고1","미사강변고1","하남고1","미사고2","미사강변고2","고3"];
+const GRADE_BUTTONS=[ALL_KEY,"중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고1","미사고2","미사강변고2","고3"];
 /* 통합본 요일 순서 — 월수금반 / 화목토반이 붙어 보이도록 */
 const DAY_ORDER_ALL=["월","수","금","화","목","토","일"];
-const GRADES_ALL=["중1","중2","중3","미사고1","미사강변고1","하남고1","미사고2","미사강변고2","고3"];
+const GRADES_ALL=["중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고1","미사고2","미사강변고2","고3"];
 const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
 let selGrade="미사고1";
 function buildGradeChips(){ document.getElementById("gChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
@@ -1768,6 +1768,8 @@ function coursesForGrade(key){
     if(sub==="수학") return true;                       // 수학=합반/공통 → 학교 무관 표시
     // 하남고1은 자체 영어반(윤재영) 운영, 그 외 과목은 공통 강좌만
     if(key==="하남고1") return sub==="영어" ? (sch===null||sch==="하남고") : sch===null;
+  // 풍산고1도 자체 영어반(윤재영) 운영 — 일 정규 + 금 클리닉
+  if(key==="풍산고1") return sub==="영어" ? (sch===null||sch==="풍산고") : sch===null;
     const wantSchool = key.startsWith("미사강변고") ? "미사강변고" : "미사고";
     return sch===null || sch===wantSchool;              // 그 외 과목: 공통 또는 해당 학교
   });

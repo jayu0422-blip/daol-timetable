@@ -167,7 +167,7 @@
 const P=new URLSearchParams(location.search);
 /* 문자(SMS)용 짧은 영문 별칭 — 한글 URL이 깨지는 문자앱 대비 (?g=m1 == ?g=중1) */
 const GRADE_ALIAS={m1:"중1",m2:"중2",m3:"중3",h1:"미사고1",h2:"미사고2",h3:"고3",
-  mg1:"미사강변고1",mg2:"미사강변고2",hn1:"하남고1"};
+  mg1:"미사강변고1",mg2:"미사강변고2",hn1:"하남고1",ps1:"풍산고1"};
 const GRADE=(g=>GRADE_ALIAS[g.toLowerCase()]||g)(P.get("g")||"중1");
 /* 다올105 대표번호. 031-794-8158은 대치더올이므로 여기에 쓰면 안 된다. */
 const TEL="031-699-8111";
@@ -230,6 +230,7 @@ function coursesForGrade(key,all){
     if(g!==wantG) return false;
     if(sub==="수학") return true;
     if(key==="하남고1") return sub==="영어"?(sch===null||sch==="하남고"):sch===null;
+    if(key==="풍산고1") return sub==="영어"?(sch===null||sch==="풍산고"):sch===null;
     const ws=key.startsWith("미사강변고")?"미사강변고":"미사고";
     return sch===null||sch===ws;
   });
