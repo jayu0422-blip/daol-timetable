@@ -1210,6 +1210,19 @@ document.getElementById("dashBody").addEventListener("click", e=>{
   }
   const toBlob = (cv, q) => new Promise(r => cv.toBlob(r, "image/jpeg", q));
 
+  /* 베타 탭이 열려 있으면 원본 탭은 display:none이라 크기가 0이 된다.
+     캡처하는 동안만 화면 밖에서 펼쳐 두고, 끝나면 원래대로 되돌린다. */
+  function unhide(){
+    const sec = document.getElementById(SRC === "pack" ? "tab-pack" : "tab-lp");
+    if(!sec || !sec.classList.contains("hide")) return ()=>{};
+    const wrap = document.querySelector(".wrap");
+    const prev = sec.getAttribute("style") || "";
+    sec.classList.remove("hide");
+    sec.style.cssText = prev + ";position:absolute;left:-99999px;top:0;" +
+      "width:" + ((wrap && wrap.clientWidth) || 1200) + "px;visibility:visible";
+    return ()=>{ sec.setAttribute("style", prev); sec.classList.add("hide"); };
+  }
+
   /* 캡처 대상 — pack은 이 페이지 안, lp는 같은 도메인 iframe */
   function target(){
     if(SRC === "pack"){
@@ -1228,9 +1241,13 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 
   async function capture(){
     const st = $("btCapStat");
+    let restore = ()=>{};
     try{
+      $("btCap").disabled = true;
+      restore = unhide();
+      await new Promise(r => setTimeout(r, 250));   // 펼쳐진 뒤 레이아웃이 잡히도록
       const { el, name } = target();
-      st.textContent = "캡처 도구 준비 중…"; $("btCap").disabled = true;
+      st.textContent = "캡처 도구 준비 중…";
       await h2c();
       st.textContent = "화면을 이미지로 만드는 중… (길면 20초쯤 걸립니다)";
       const w = el.scrollWidth || el.offsetWidth || WIZ_W;
@@ -1258,7 +1275,9 @@ document.getElementById("dashBody").addEventListener("click", e=>{
       /* 3MB 넘으면 품질을 낮춰가며 다시 — 용량이 크면 마법사가 힘들어한다 */
       let q = 0.86, blob = await toBlob(cv, q);
       while(blob && blob.size > MAX_BYTES && q > 0.4){ q -= 0.12; blob = await toBlob(cv, q); }
-      if(!blob) throw new Error("이미지를 만들지 못했습니다.");
+      if(!cv.width || !cv.height)
+        throw new Error("화면 크기를 읽지 못했습니다. 해당 탭에서 미리보기를 띄운 뒤 다시 시도해 주세요.");
+      if(!blob) throw new Error("이미지를 만들지 못했습니다. (자료가 너무 길 수 있습니다)");
       beforeBlob = blob;
       beforeName = `${name}_${new Date().toISOString().slice(0,10)}.jpg`;
       const url = URL.createObjectURL(blob);
@@ -1267,7 +1286,7 @@ document.getElementById("dashBody").addEventListener("click", e=>{
       st.innerHTML = `<b>완성</b> — ${cv.width}×${cv.height}px · ${(blob.size/1048576).toFixed(2)}MB`;
     }catch(e){
       st.innerHTML = `<span style="color:var(--danger)">${e.message}</span>`;
-    }finally{ $("btCap").disabled = false; }
+    }finally{ restore(); $("btCap").disabled = false; }
   }
 
   function addFiles(files){
