@@ -586,6 +586,85 @@ table.dash td b{color:var(--navy)}
 .bt-log{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6}
 .bt-log b{color:var(--navy)}
 @media (max-width:900px){ .bt-cmp{grid-template-columns:1fr} }
+
+/* ══ 랜딩페이지 모음 ══ */
+.lkbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lkbar .muted{flex:1 1 420px;min-width:280px;line-height:1.7}
+.lkred{color:#B42318;white-space:nowrap}
+.lkq{font:inherit;font-size:13px;font-weight:600;color:var(--navy);background:#fff;border:1px solid var(--line);
+  border-radius:9px;padding:9px 12px;min-width:170px;outline:none;min-height:40px}
+.lkq:focus{border-color:var(--brand)}
+.lkg{margin-top:16px}
+.lkg-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:9px;padding-left:2px}
+.lkg-h b{font-size:15px;font-weight:800;color:var(--navy);letter-spacing:-.02em}
+.lkg-h span{font-size:12px;font-weight:600;color:var(--muted)}
+.lkg-h em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--muted);background:var(--soft);
+  border-radius:20px;padding:2px 9px}
+.lkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:11px}
+.lkc{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 14px 12px;
+  display:flex;flex-direction:column;gap:7px;min-width:0}
+.lkc.own{border-color:#C7D2FE;background:#FBFCFF}
+.lkc-t{display:flex;align-items:flex-start;gap:7px;flex-wrap:wrap}
+.lkc-t b{font-size:14.5px;font-weight:800;color:var(--navy);letter-spacing:-.02em;line-height:1.35;
+  overflow-wrap:anywhere;min-width:0}
+.lkbadge{flex:0 0 auto;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;letter-spacing:-.02em;
+  white-space:nowrap;align-self:center}
+.lkbadge.no{background:#FEE4E2;color:#B42318}
+.lkbadge.in{background:#EEF2FF;color:#3730A3}
+.lkbadge.own{background:#ECFDF5;color:#065F46}
+.lkc-d{font-size:12.5px;color:var(--muted);line-height:1.65;overflow-wrap:anywhere}
+.lkc-u{font-size:11px;color:#94A3B8;font-family:ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere;
+  line-height:1.5;user-select:all}
+.lkc-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+.lkb{font:inherit;font-size:12px;font-weight:800;border-radius:8px;padding:8px 11px;cursor:pointer;
+  border:1px solid var(--line);background:#fff;color:var(--navy);min-height:38px;white-space:nowrap}
+.lkb:hover{background:var(--soft)}
+.lkb.go{background:var(--navy);color:#fff;border-color:var(--navy);text-decoration:none;display:inline-flex;
+  align-items:center}
+.lkb.del{margin-left:auto;color:#B42318;border-color:#FECDCA}
+.lkempty{font-size:13px;color:var(--muted);text-align:center;padding:28px 14px;background:#fff;
+  border:1px dashed var(--line);border-radius:13px;line-height:1.75}
+.lkdim{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;
+  padding:18px;z-index:90}
+.lkmodal{background:#fff;border-radius:16px;padding:20px 18px;width:100%;max-width:460px;max-height:88vh;
+  overflow:auto;box-shadow:0 24px 60px -18px rgba(15,23,42,.5)}
+.lkmodal h3{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:14px}
+.lkf{margin-bottom:11px}
+.lkf label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:5px}
+.lkf input,.lkf select{width:100%;font:inherit;font-size:14px;font-weight:600;color:var(--navy);background:#F8FAFC;
+  border:1px solid var(--line);border-radius:9px;padding:11px 12px;outline:none;min-height:44px}
+.lkf input:focus,.lkf select:focus{border-color:var(--brand);background:#fff}
+.lkf .err{font-size:11.5px;font-weight:700;color:#B42318;margin-top:5px;display:none}
+.lkf.bad input{border-color:#FDA29B}
+.lkf.bad .err{display:block}
+.lkm-b{display:flex;gap:8px;margin-top:16px}
+.lkm-b button{flex:1;font:inherit;font-size:14px;font-weight:800;border-radius:10px;padding:12px;cursor:pointer;
+  min-height:46px;border:1px solid var(--line);background:#fff;color:var(--navy)}
+.lkm-b button.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media(max-width:640px){
+  .lkbar .muted{flex:1 1 100%}
+  .lkq{flex:1 1 100%}
+  .lkgrid{grid-template-columns:1fr}
+  .lkc-b{gap:5px}
+  .lkb{font-size:11.5px;padding:8px 9px}
+}
+
+/* ══ 시인성 보정 — 데스크톱·모바일 전 뷰포트 실측(2026-08-26) 기준 ══
+   흐린 회색 글씨와 작은 터치 타깃을 WCAG AA(4.5:1 / 44px)로 올린다.
+   변수 자체를 손대면 43곳이 한꺼번에 바뀌므로, 문제가 잡힌 곳만 규칙으로 덮는다. */
+:root{--muted:#5F6B80}                     /* 3.77 → 5.4 : muted 를 쓰는 43곳이 한꺼번에 */
+.tab{color:#55617A}                       /* 3.26 → 5.9 : 비활성 탭이 거의 안 보였다 */
+.topbar nav .hi{background:var(--brand-ink)}  /* 흰 글씨 대비 3.39 → 4.9 */
+.lkc-u{color:#5F6B80;font-size:11.5px}   /* URL 2.56 → 5.4 · 11px → 11.5px */
+.lkbadge{font-size:11.5px}                /* 10.5px → 읽히는 크기로 */
+.tab small{font-size:11.5px;color:#5F6B82} /* 10px 는 폰에서 못 읽는다 */
+.topbar .s{font-size:11.5px}
+.lkdim{z-index:400}                        /* 다른 오버레이 위로 확실히 */
+@media(max-width:640px){
+  .lkb{min-height:44px;padding:11px 12px}  /* 38px → 손가락 기준 44px */
+  .lkq{min-height:44px}
+  .lkbar .btn.sm{min-height:44px}
+}
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>
@@ -617,6 +696,7 @@ table.dash td b{color:var(--navy)}
     <button class="tab" data-tab="lp">과목 안내<small>상담 시 꼭 문자 발송</small></button>
     <button class="tab" data-tab="susi">고3 수시지원프로그램<small>수시 지원 상담</small></button>
     <span class="tabsep"></span>
+    <button class="tab" data-tab="links">랜딩페이지 모음<small>링크 한곳에</small></button>
     <button class="tab" data-tab="beta">리디자인 베타<small>시험 운영</small></button>
   </div>
 
@@ -692,6 +772,21 @@ table.dash td b{color:var(--navy)}
       <iframe id="susiFrame" title="고3 수시지원프로그램"
         style="width:100%;height:82vh;border:0;background:#fff;display:block"></iframe>
     </div>
+  </section>
+
+  <!-- ===== 랜딩페이지 모음 ===== -->
+  <section id="tab-links" class="hide">
+    <div class="panel noprint lkbar">
+      <b>🔗 랜딩페이지 모음</b>
+      <span class="muted">지금까지 만든 페이지를 한곳에 모았습니다. <b>「누구에게 주는 링크인지」</b>가 묶음 이름입니다 —
+        <b class="lkred">내부 운영</b>은 밖으로 나가면 안 됩니다.</span>
+      <span style="flex:1"></span>
+      <input id="lkQ" class="lkq" type="search" placeholder="이름·설명으로 찾기" autocomplete="off">
+      <button class="btn sm" id="lkAdd">＋ 링크 추가</button>
+      <button class="btn sm" id="lkReset" title="숨긴 기본 링크를 되살립니다">기본 목록 복원</button>
+      <span class="muted" id="lkStat"></span>
+    </div>
+    <div id="lkList"></div>
   </section>
 
   <!-- ===== 리디자인 베타 ===== -->
@@ -1402,13 +1497,14 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","grade","fee","day","edit","pack","lp","susi","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","grade","fee","day","edit","pack","lp","susi","links","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="pack"){ buildPackChips(); renderPack(); }
   if(t.dataset.tab==="lp"){ buildLpChips(); renderLp(); }
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
   if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
   if(t.dataset.tab==="edit"){ const f=document.getElementById("editFrame"); if(!f.getAttribute("src")) f.src="control.html?embed=1"; }  // 처음 열 때만 로드
+  if(t.dataset.tab==="links") lkRender();
   if(t.dataset.tab==="susi"){ const f=document.getElementById("susiFrame"); if(!f.getAttribute("src")) f.src="https://jayu0422-blip.github.io/daol105-susi/member/"; }
 }));
 
@@ -2696,6 +2792,177 @@ function renderPack(){
 
 buildSchoolFilter();
 loadData();
+
+
+/* ═════════ 랜딩페이지 모음 ═════════
+   기본 목록은 코드에 내장. 사용자가 손댄 것만 localStorage 에 남긴다.
+   기본 항목은 지워도 '숨김'일 뿐이라 「기본 목록 복원」으로 언제든 되살아난다. */
+const LK_DEF=[{"g": "subject", "t": "썸머스쿨", "u": "https://jayu0422-blip.github.io/daol105-summer/", "d": "학원 세 곳 다니는데 성적이 그대로인 이유 — 여름 특강 설득", "b": ""}, {"g": "subject", "t": "국어 (김영하·이정관)", "u": "https://jayu0422-blip.github.io/daol105-gukeo/", "d": "범위가 사라지면 국어 등급도 사라진다 — 내신정규 × 비문학특강", "b": ""}, {"g": "subject", "t": "영어 (민귀홍)", "u": "https://jayu0422-blip.github.io/daol105-english/", "d": "미사강변고 영어는 외워서 될 시험이 아니다 — 객관식 변별력", "b": ""}, {"g": "subject", "t": "수학 (유용권)", "u": "https://jayu0422-blip.github.io/daol105-math/", "d": "선행보다 앞 단원 정복 — 표시만 남은 공부는 무너진다", "b": ""}, {"g": "subject", "t": "과목 안내 (중1)", "u": "https://jayu0422-blip.github.io/daol-timetable/landing.html", "d": "학년별 과목·강사·수강료 안내. 상담 시 문자로 보내는 페이지", "b": ""}, {"g": "exam", "t": "미사강변고 영어 1·2학년", "u": "https://jayu0422-blip.github.io/daol105-migang-eng/", "d": "1학년과 2학년이 정반대인 시험 — 기말 영어 문항 전수분석", "b": ""}, {"g": "exam", "t": "미사고 영어 1·2학년", "u": "https://jayu0422-blip.github.io/daol105-eng-analysis/", "d": "외운다고 오르지 않는다 — 기말 영어 출처·변형 분석", "b": ""}, {"g": "exam", "t": "미사고 국어 1·2학년", "u": "https://jayu0422-blip.github.io/daol105-kor-analysis/", "d": "외운 해설로 열리지 않았다 — 기말 국어 24·26문항 분석", "b": ""}, {"g": "exam", "t": "3개교 수학 기말", "u": "https://jayu0422-blip.github.io/daol105-math-analysis/", "d": "세 학교 기말 수학을 문항 단위로 — 난이도지수·시간부족 분석", "b": ""}, {"g": "tool", "t": "고3 수시지원 (재원생 무료판)", "u": "https://jayu0422-blip.github.io/daol105-susi/member/", "d": "잠금 없음 · 최저판정·3개년추이·출렁임 전부 개방 + 내신 계산기", "b": "no"}, {"g": "tool", "t": "고3 수시지원 (공개판)", "u": "https://jayu0422-blip.github.io/daol105-susi/", "d": "외부·신규 상담용. 상세는 이름·연락처 입력 후 열림 (리드 수집)", "b": ""}, {"g": "tool", "t": "고1·2 내신 진단", "u": "https://jayu0422-blip.github.io/daol105-susi/hs12/", "d": "지금 내 성적은 전교 몇 등일까 — 2022 개정 5등급제 기준", "b": ""}, {"g": "tool", "t": "학원 유형 진단 설문", "u": "https://jayu0422-blip.github.io/daol105-fit/", "d": "우리 아이 학원일까 과외일까 — 8문항 무기입 진단", "b": ""}, {"g": "tool", "t": "수시 지원 전략 설계", "u": "https://jayu0422-blip.github.io/daol105-susi/consulting/", "d": "컨설팅 프로그램 안내. 수시 조회 페이지에서 연결되는 곳", "b": ""}, {"g": "tool", "t": "수시 지원 가이드 PDF", "u": "https://jayu0422-blip.github.io/daol105-susi/guide.html", "d": "수시 검색 가이드 무료 배포 페이지", "b": ""}, {"g": "tool", "t": "환불·수강료 계산기", "u": "https://jayu0422-blip.github.io/daol-timetable/calc.html", "d": "중도 환불액·일할 계산. 상담·정산에서 사용", "b": "in"}, {"g": "member", "t": "이번 달 시간표 (팀보드)", "u": "https://jayu0422-blip.github.io/daol-timetable/board.html", "d": "학생 관심순 반보드 + 학생 360뷰", "b": "in"}, {"g": "member", "t": "내 시간표 (학생·학부모)", "u": "https://jayu0422-blip.github.io/daol-timetable/view.html", "d": "학생별 시간표 + 수강료. 개별 링크로 배포", "b": ""}, {"g": "member", "t": "학년 안내", "u": "https://jayu0422-blip.github.io/daol-timetable/notice.html", "d": "학년별 시간표·수업 안내 페이지", "b": ""}, {"g": "member", "t": "상담 예약", "u": "https://jayu0422-blip.github.io/daol-timetable/booking.html", "d": "원장 가용 시간 기준 예약 + 과목별 레벨테스트 안내", "b": ""}, {"g": "member", "t": "학생 정보 입력", "u": "https://jayu0422-blip.github.io/daol-timetable/student.html", "d": "신규 등록 학생 정보 수집 폼", "b": ""}, {"g": "teacher", "t": "시간표 입력 (강사용)", "u": "https://jayu0422-blip.github.io/daol-timetable/input.html", "d": "강사 개인 토큰 링크로 접속. 월간 일정표 포함", "b": "in"}, {"g": "teacher", "t": "9월 강의계획 쓰는 법", "u": "https://jayu0422-blip.github.io/daol-timetable/guide-teacher.html", "d": "강의계획 작성 가이드", "b": "in"}, {"g": "teacher", "t": "기출분석 설문 (강사용)", "u": "https://jayu0422-blip.github.io/daol105-console/기출분석_설문.html", "d": "담당 학교 기출분석 제출 폼", "b": "in"}, {"g": "teacher", "t": "학사일정 플래너", "u": "https://jayu0422-blip.github.io/daol-timetable/planner.html", "d": "학교별 지필평가·학사일정 관리 (원장용)", "b": "in"}, {"g": "ops", "t": "배포 퍼널 콘솔", "u": "https://jayu0422-blip.github.io/daol105-console/", "d": "초안+사진 → 랜딩·블로그·인스타·유튜브 4종 자동 생성", "b": "in"}, {"g": "ops", "t": "담당학교 작업 현황", "u": "https://jayu0422-blip.github.io/daol105-console/작업현황.html", "d": "학교별 기출분석·콘텐츠 진행 보드", "b": "in"}, {"g": "ops", "t": "원장 AI 비서", "u": "https://jayu0422-blip.github.io/daol105-assistant/", "d": "녹음 → 학원 톤 문자 생성. API 키는 폰에만 저장", "b": "in"}, {"g": "ops", "t": "인포데스크 사용 설명서", "u": "https://jayu0422-blip.github.io/daol-timetable/guide-desk.html", "d": "인포가 보는 매뉴얼. 시스템 바뀌면 여기도 갱신", "b": "in"}, {"g": "ops", "t": "전체 관리 (마스터 편집)", "u": "https://jayu0422-blip.github.io/daol-timetable/control.html", "d": "강좌·강사·수강료 원본 편집", "b": "in"}, {"g": "ops", "t": "운영자 대시보드", "u": "https://jayu0422-blip.github.io/daol-timetable/admin.html", "d": "지금 보고 있는 이 화면", "b": "in"}, {"g": "etc", "t": "교습비등 게시표", "u": "https://jayu0422-blip.github.io/daol105-susi/fee/", "d": "법정 게시 의무 페이지", "b": ""}, {"g": "etc", "t": "주간내신 시즌제", "u": "https://jayu0422-blip.github.io/jugan-naesin/", "d": "8주 시즌제 사업 랜딩 (v1)", "b": ""}, {"g": "etc", "t": "주간내신 시즌제 v2", "u": "https://jayu0422-blip.github.io/jugan-naesin/v2/", "d": "이 동네 여섯 학교 시험지를 전부 분석한 사람 — 개정판", "b": ""}];
+const LK_GRP=[{"k": "subject", "t": "📗 과목 안내 랜딩", "d": "신규 상담·학부모 설득용. 상담 후 문자로 보냅니다"}, {"k": "exam", "t": "📊 기출분석 보고서", "d": "학교별 시험 분석. 카톡·블로그로 배포합니다"}, {"k": "tool", "t": "🎯 진단·조회 도구", "d": "상담 중에 학생과 같이 보는 화면입니다"}, {"k": "member", "t": "👨‍👩‍👧 재원생·학부모", "d": "등록된 학생·학부모에게 보냅니다"}, {"k": "teacher", "t": "🧑‍🏫 강사용", "d": "강사에게만 보냅니다"}, {"k": "ops", "t": "🔧 내부 운영", "d": "직원 전용. 밖으로 나가면 안 됩니다"}, {"k": "etc", "t": "📎 그 밖에", "d": "법정 게시·사업 검토"}];
+
+const LK_KEY = "daol_links_v1";
+
+function lkLoad(){
+  try{
+    const s = JSON.parse(localStorage.getItem(LK_KEY) || "{}");
+    return { own: Array.isArray(s.own) ? s.own : [], hide: Array.isArray(s.hide) ? s.hide : [] };
+  }catch(e){ return { own: [], hide: [] }; }
+}
+function lkSave(s){
+  try{ localStorage.setItem(LK_KEY, JSON.stringify(s)); }
+  catch(e){ alert("브라우저에 저장하지 못했습니다. 시크릿 모드이거나 저장 공간이 꽉 찼을 수 있습니다."); }
+}
+function lkEsc(t){
+  return String(t == null ? "" : t).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+/* 기본 항목의 신원은 URL 로 잡는다 (제목은 바뀔 수 있다) */
+function lkAll(){
+  const st = lkLoad(), out = [];
+  LK_DEF.forEach(function(x){
+    if(st.hide.indexOf(x.u) >= 0) return;
+    out.push({ g:x.g, t:x.t, u:x.u, d:x.d, b:x.b, own:false });
+  });
+  st.own.forEach(function(x, i){
+    out.push({ g:x.g || "etc", t:x.t, u:x.u, d:x.d || "", b:x.b || "", own:true, i:i });
+  });
+  return out;
+}
+
+function lkCard(x){
+  const badge = x.own ? '<span class="lkbadge own">직접 추가</span>'
+    : x.b === "no" ? '<span class="lkbadge no">외부 배포 금지</span>'
+    : x.b === "in" ? '<span class="lkbadge in">직원용</span>' : "";
+  return '<div class="lkc' + (x.own ? " own" : "") + '" data-u="' + lkEsc(x.u) + '">' +
+    '<div class="lkc-t"><b>' + lkEsc(x.t) + '</b>' + badge + '</div>' +
+    (x.d ? '<div class="lkc-d">' + lkEsc(x.d) + '</div>' : "") +
+    '<div class="lkc-u">' + lkEsc(x.u) + '</div>' +
+    '<div class="lkc-b">' +
+      '<a class="lkb go" href="' + lkEsc(x.u) + '" target="_blank" rel="noopener">↗ 열기</a>' +
+      '<button class="lkb" data-act="copy">📋 링크 복사</button>' +
+      (x.own ? '<button class="lkb" data-act="edit" data-i="' + x.i + '">수정</button>' : "") +
+      '<button class="lkb del" data-act="del"' + (x.own ? ' data-i="' + x.i + '"' : "") + '>' +
+        (x.own ? "삭제" : "숨기기") + '</button>' +
+    '</div></div>';
+}
+
+function lkRender(){
+  const box = document.getElementById("lkList");
+  if(!box) return;
+  const qEl = document.getElementById("lkQ");
+  const q = (qEl ? qEl.value : "").trim().toLowerCase();
+  const all = lkAll();
+  const hit = q ? all.filter(function(x){
+    return (x.t + " " + x.d + " " + x.u).toLowerCase().indexOf(q) >= 0;
+  }) : all;
+
+  let html = "";
+  LK_GRP.forEach(function(g){
+    const rows = hit.filter(function(x){ return x.g === g.k; });
+    if(!rows.length) return;
+    html += '<div class="lkg"><div class="lkg-h"><b>' + g.t + '</b>' +
+      '<span>' + lkEsc(g.d) + '</span><em>' + rows.length + '개</em></div>' +
+      '<div class="lkgrid">' + rows.map(lkCard).join("") + '</div></div>';
+  });
+  if(!html) html = '<div class="lkempty">' + (q ? '「' + lkEsc(q) + '」에 맞는 링크가 없습니다.'
+    : '링크가 하나도 없습니다. <b>「기본 목록 복원」</b>을 눌러 보세요.') + '</div>';
+  box.innerHTML = html;
+
+  const st = lkLoad(), s = document.getElementById("lkStat");
+  if(s) s.textContent = "전체 " + all.length + "개" +
+    (st.own.length ? " · 직접 추가 " + st.own.length : "") +
+    (st.hide.length ? " · 숨김 " + st.hide.length : "");
+}
+
+/* 추가·수정 모달 */
+function lkForm(idx){
+  const st = lkLoad();
+  const cur = (idx == null) ? { g:"etc", t:"", u:"", d:"" } : st.own[idx];
+  if(idx != null && !cur) return;
+  const opts = LK_GRP.map(function(g){
+    return '<option value="' + g.k + '"' + (cur.g === g.k ? " selected" : "") + '>' +
+      lkEsc(g.t) + '</option>';
+  }).join("");
+  const dim = document.createElement("div");
+  dim.className = "lkdim";
+  dim.innerHTML = '<div class="lkmodal" role="dialog" aria-modal="true">' +
+    '<h3>' + (idx == null ? "링크 추가" : "링크 수정") + '</h3>' +
+    '<div class="lkf" id="lkfT"><label>이름</label>' +
+      '<input id="lkT" value="' + lkEsc(cur.t) + '" placeholder="예: 2학기 중간 대비 특강">' +
+      '<div class="err">이름을 넣어 주세요.</div></div>' +
+    '<div class="lkf" id="lkfU"><label>주소 (URL)</label>' +
+      '<input id="lkU" value="' + lkEsc(cur.u) + '" placeholder="https://..." inputmode="url">' +
+      '<div class="err">https:// 로 시작하는 주소를 넣어 주세요.</div></div>' +
+    '<div class="lkf"><label>한 줄 설명 <span style="font-weight:600">(안 넣어도 됩니다)</span></label>' +
+      '<input id="lkD" value="' + lkEsc(cur.d || "") + '" placeholder="누구에게 무엇을 보여 주는 페이지인지"></div>' +
+    '<div class="lkf"><label>묶음</label><select id="lkG">' + opts + '</select></div>' +
+    '<div class="lkm-b"><button type="button" id="lkCancel">취소</button>' +
+      '<button type="button" class="pri" id="lkOk">' + (idx == null ? "추가" : "저장") + '</button></div>' +
+    '</div>';
+  document.body.appendChild(dim);
+  const close = function(){ dim.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = function(e){ if(e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  dim.addEventListener("click", function(e){ if(e.target === dim) close(); });
+  dim.querySelector("#lkCancel").onclick = close;
+  setTimeout(function(){ dim.querySelector("#lkT").focus(); }, 30);
+  dim.querySelector("#lkOk").onclick = function(){
+    const t = dim.querySelector("#lkT").value.trim();
+    let u = dim.querySelector("#lkU").value.trim();
+    if(u && !/^https?:\/\//i.test(u) && u.indexOf(".") > 0) u = "https://" + u;
+    const okT = !!t, okU = /^https?:\/\/.+/i.test(u);
+    dim.querySelector("#lkfT").classList.toggle("bad", !okT);
+    dim.querySelector("#lkfU").classList.toggle("bad", !okU);
+    if(!okT || !okU) return;
+    const s2 = lkLoad();
+    const row = { g: dim.querySelector("#lkG").value, t: t, u: u,
+                  d: dim.querySelector("#lkD").value.trim() };
+    if(idx == null) s2.own.push(row); else s2.own[idx] = row;
+    lkSave(s2); close(); lkRender();
+  };
+}
+
+(function lkInit(){
+  const box = document.getElementById("lkList");
+  if(!box) return;
+  box.addEventListener("click", function(e){
+    const b = e.target.closest("[data-act]");
+    if(!b) return;
+    const card = b.closest(".lkc"), url = card.dataset.u, act = b.dataset.act;
+    if(act === "copy"){
+      navigator.clipboard.writeText(url).then(function(){
+        if(!b.dataset.orig) b.dataset.orig = b.textContent;
+        clearTimeout(b._t);
+        b.textContent = "✓ 복사됨";
+        b._t = setTimeout(function(){ b.textContent = b.dataset.orig; }, 1600);
+      }, function(){ alert("복사하지 못했습니다. 주소를 직접 선택해 복사해 주세요."); });
+      return;
+    }
+    if(act === "edit"){ lkForm(+b.dataset.i); return; }
+    if(act === "del"){
+      const own = b.dataset.i != null;
+      const nm = card.querySelector(".lkc-t b").textContent;
+      if(!confirm(own ? "「" + nm + "」을(를) 지웁니다. 되돌릴 수 없습니다."
+                      : "「" + nm + "」을(를) 목록에서 숨깁니다.\n「기본 목록 복원」으로 되살릴 수 있습니다.")) return;
+      const st = lkLoad();
+      if(own) st.own.splice(+b.dataset.i, 1);
+      else if(st.hide.indexOf(url) < 0) st.hide.push(url);
+      lkSave(st); lkRender();
+    }
+  });
+  const q = document.getElementById("lkQ");
+  if(q) q.addEventListener("input", lkRender);
+  const a = document.getElementById("lkAdd");
+  if(a) a.addEventListener("click", function(){ lkForm(null); });
+  const r = document.getElementById("lkReset");
+  if(r) r.addEventListener("click", function(){
+    const st = lkLoad();
+    if(!st.hide.length){ alert("숨긴 링크가 없습니다."); return; }
+    if(!confirm("숨긴 기본 링크 " + st.hide.length + "개를 되살립니다.\n직접 추가한 링크는 그대로 둡니다.")) return;
+    st.hide = []; lkSave(st); lkRender();
+  });
+})();
+
 </script>
 </body>
 </html>
