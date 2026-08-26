@@ -615,6 +615,7 @@ table.dash td b{color:var(--navy)}
     <span class="tabsep"></span>
     <button class="tab" data-tab="pack">상담용 자료<small>상담 시 꼭 배부</small></button>
     <button class="tab" data-tab="lp">과목 안내<small>상담 시 꼭 문자 발송</small></button>
+    <button class="tab" data-tab="susi">고3 수시지원프로그램<small>수시 지원 상담</small></button>
     <span class="tabsep"></span>
     <button class="tab" data-tab="beta">리디자인 베타<small>시험 운영</small></button>
   </div>
@@ -661,6 +662,25 @@ table.dash td b{color:var(--navy)}
     <div class="foot noprint">D A O L &nbsp; 1 0 5 &nbsp;·&nbsp; O P E R A T I O N &nbsp; D A S H B O A R D</div>
   </section>
 
+
+
+  <!-- ===== 고3 수시지원프로그램 ===== -->
+  <section id="tab-susi" class="hide">
+    <div class="panel noprint" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b>🎓 고3 수시지원프로그램</b>
+      <span class="muted">고3 학생·학부모 상담에서 쓰는 <b>수시 입시결과 조회</b> 화면입니다.
+        학생부 성적을 넣으면 <b>지원 가능한 전형</b>을 찾아 줍니다.</span>
+      <span style="flex:1"></span>
+      <a class="btn primary" href="https://jayu0422-blip.github.io/daol105-susi/" target="_blank" rel="noopener"
+         style="text-decoration:none">↗ 새 창으로 열기</a>
+      <button class="btn sm" id="susiCopy">📋 링크 복사</button>
+      <span class="muted" id="susiStat"></span>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <iframe id="susiFrame" title="고3 수시지원프로그램"
+        style="width:100%;height:82vh;border:0;background:#fff;display:block"></iframe>
+    </div>
+  </section>
 
   <!-- ===== 리디자인 베타 ===== -->
   <section id="tab-beta" class="hide">
@@ -1179,6 +1199,13 @@ document.getElementById("mNow").addEventListener("click", ()=>{
     : (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })();
   renderDash();
 });
+document.getElementById("susiCopy").addEventListener("click", ()=>{
+  navigator.clipboard.writeText("https://jayu0422-blip.github.io/daol105-susi/").then(()=>{
+    const el=document.getElementById("susiStat"); el.textContent="복사됨 ✓ — 학생·학부모께 문자로 보내세요";
+    setTimeout(()=>{ el.textContent=""; }, 2500);
+  });
+});
+
 document.getElementById("dashBody").addEventListener("click", e=>{
   const b=e.target.closest("[data-copy]"); if(!b) return;
   navigator.clipboard.writeText(decodeURIComponent(b.dataset.copy)).then(()=>{
@@ -1363,13 +1390,14 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","grade","fee","day","edit","pack","lp","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","grade","fee","day","edit","pack","lp","susi","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="pack"){ buildPackChips(); renderPack(); }
   if(t.dataset.tab==="lp"){ buildLpChips(); renderLp(); }
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
   if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
   if(t.dataset.tab==="edit"){ const f=document.getElementById("editFrame"); if(!f.getAttribute("src")) f.src="control.html?embed=1"; }  // 처음 열 때만 로드
+  if(t.dataset.tab==="susi"){ const f=document.getElementById("susiFrame"); if(!f.getAttribute("src")) f.src="https://jayu0422-blip.github.io/daol105-susi/"; }
 }));
 
 /* ===== 생성 필터 ===== */
