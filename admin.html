@@ -552,6 +552,40 @@ table.dash td b{color:var(--navy)}
   .kpi.hero .lbx,.kpi.hero .v,.kpi.hero .sub{color:#000}
   .tblwrap{overflow:visible!important}
 }
+
+/* ══════════ 탭 부제 · 리디자인 베타 (2026-08-26) ══════════ */
+.tab{line-height:1.25;text-align:center}
+.tab small{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-top:1px;letter-spacing:-.2px}
+.tab.on small{color:var(--brand-ink)}
+.tab[data-tab="beta"] small{color:#b45309}
+.tagline{display:inline-block;font-size:11.5px;font-weight:800;color:var(--brand-ink);
+  background:var(--brand-soft);border:1px solid var(--brand-line);border-radius:999px;padding:2px 10px}
+.tagline.warn{color:#b91c1c;background:var(--danger-bg);border-color:#fecaca}
+
+.bt-steps{display:grid;gap:12px}
+.bt-step{display:flex;gap:11px;align-items:flex-start}
+.bt-n{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;
+  font-weight:900;font-size:12.5px;display:grid;place-items:center;margin-top:2px}
+.bt-b{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bt-t{flex:0 0 100%;font-family:var(--serif);font-weight:900;color:var(--navy);font-size:14px}
+.bt-hint{flex:0 0 100%;font-size:12px;color:var(--muted);line-height:1.55}
+.bt-hint b{color:var(--navy)}
+
+.bt-drop{margin-top:12px;position:relative}
+.bt-drop.over::after{content:"여기에 놓으세요";position:absolute;inset:0;z-index:5;
+  background:rgba(30,58,95,.08);border:2px dashed var(--brand);border-radius:14px;
+  display:grid;place-items:center;font-weight:900;color:var(--navy);font-size:15px}
+.bt-cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bt-col{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.bt-h{padding:9px 14px;font-weight:800;font-size:12.5px;color:var(--muted);
+  background:#f7f9fc;border-bottom:1px solid var(--line)}
+.bt-h.gold{color:var(--brand-ink);background:var(--brand-soft);border-bottom-color:var(--brand-line)}
+.bt-img{max-height:74vh;overflow:auto;padding:10px;background:#fbfcfe;display:grid;gap:10px}
+.bt-img img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
+.bt-empty{color:#9aa2ad;font-size:12.5px;text-align:center;padding:34px 10px}
+.bt-log{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6}
+.bt-log b{color:var(--navy)}
+@media (max-width:900px){ .bt-cmp{grid-template-columns:1fr} }
 </style>
   <link rel="stylesheet" href="mobile-fix.css?v=e768566c"/>
 </head>
@@ -579,8 +613,10 @@ table.dash td b{color:var(--navy)}
     <span class="tabsep"></span>
     <button class="tab" data-tab="edit">강좌 수정</button>
     <span class="tabsep"></span>
-    <button class="tab" data-tab="pack">상담용 자료</button>
-    <button class="tab" data-tab="lp">과목 안내</button>
+    <button class="tab" data-tab="pack">상담용 자료<small>상담 시 꼭 배부</small></button>
+    <button class="tab" data-tab="lp">과목 안내<small>상담 시 꼭 문자 발송</small></button>
+    <span class="tabsep"></span>
+    <button class="tab" data-tab="beta">리디자인 베타<small>시험 운영</small></button>
   </div>
 
   <!-- ===== 대시보드 ===== -->
@@ -623,6 +659,101 @@ table.dash td b{color:var(--navy)}
       </div>
     </div>
     <div class="foot noprint">D A O L &nbsp; 1 0 5 &nbsp;·&nbsp; O P E R A T I O N &nbsp; D A S H B O A R D</div>
+  </section>
+
+
+  <!-- ===== 리디자인 베타 ===== -->
+  <section id="tab-beta" class="hide">
+    <div class="panel noprint">
+      <b>🧪 상세페이지 리디자인 — 베타 테스트</b>
+      <span class="tagline warn">시험 운영</span>
+      <div class="muted" style="margin-top:6px;line-height:1.6">
+        상담용 자료·과목 안내 화면을 <b>긴 이미지로 캡처</b>해서
+        <b>리디자인 마법사</b>에 넣고, 돌아온 결과를 여기서 <b>지금 화면과 나란히 비교</b>합니다.
+        좋으면 그 디자인을 정식으로 반영하고, 아니면 이 탭만 지우면 됩니다 —
+        <b>실제 운영 화면은 이 탭에서 바뀌지 않습니다.</b>
+      </div>
+    </div>
+
+    <div class="panel noprint">
+      <div class="bt-steps">
+        <div class="bt-step">
+          <div class="bt-n">1</div>
+          <div class="bt-b">
+            <div class="bt-t">무엇을 다시 디자인할까요</div>
+            <div class="chips" id="btSrc">
+              <span class="chip on" data-src="pack">상담용 자료</span>
+              <span class="chip" data-src="lp">과목 안내</span>
+            </div>
+            <div class="bt-hint" id="btSrcHint">‘상담용 자료’ 탭에서 <b>학년을 먼저 고르고 미리보기가 나온 상태</b>여야 합니다.</div>
+          </div>
+        </div>
+
+        <div class="bt-step">
+          <div class="bt-n">2</div>
+          <div class="bt-b">
+            <div class="bt-t">지금 화면을 이미지로 만들기</div>
+            <button class="btn primary" id="btCap">📸 캡처 이미지 만들기</button>
+            <button class="btn" id="btDown" disabled>⬇ 이미지 저장</button>
+            <span class="muted" id="btCapStat">아직 캡처하지 않았습니다.</span>
+            <div class="bt-hint">마법사에 넣기 좋게 <b>가로 1080px·용량 3MB 이하</b>로 줄여서 만듭니다.</div>
+          </div>
+        </div>
+
+        <div class="bt-step">
+          <div class="bt-n">3</div>
+          <div class="bt-b">
+            <div class="bt-t">리디자인 마법사에서 새로 만들기</div>
+            <a class="btn" id="btWiz" href="https://wizard.irumai.kr/redesign/15" target="_blank" rel="noopener">↗ 리디자인 마법사 열기</a>
+            <div class="bt-hint">저장한 이미지를 <b>기존 상세 페이지</b>로 올립니다 ·
+              구조를 그대로 두고 보기 좋게만 바꾸려면 <b>「원본 구성 유지」</b>,
+              설득 순서까지 새로 짜려면 <b>「전환 구조로 재구성」</b>을 고릅니다 ·
+              비율은 <b>9:16</b>.</div>
+          </div>
+        </div>
+
+        <div class="bt-step">
+          <div class="bt-n">4</div>
+          <div class="bt-b">
+            <div class="bt-t">결과를 여기에 넣고 비교</div>
+            <input type="file" id="btFile" accept="image/*" multiple hidden>
+            <button class="btn primary" id="btPick">📥 결과 이미지 넣기</button>
+            <button class="btn danger" id="btClear" disabled>결과 지우기</button>
+            <span class="muted" id="btResStat">아직 넣은 결과가 없습니다.</span>
+            <div class="bt-hint">여러 장이면 한 번에 선택해도 됩니다. 이미지를 <b>끌어다 놓아도</b> 됩니다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel noprint" id="btVerdictBox" style="display:none">
+      <div class="bt-t" style="margin-bottom:8px">이 결과, 쓸 만한가요?</div>
+      <div class="chips" id="btVerdict">
+        <span class="chip" data-v="good">👍 좋다 — 정식 반영 검토</span>
+        <span class="chip" data-v="soso">🤔 애매 — 다시 돌려보기</span>
+        <span class="chip" data-v="bad">👎 별로 — 지금 게 낫다</span>
+      </div>
+      <textarea id="btMemo" class="search" style="width:100%;margin-top:8px;min-height:60px"
+        placeholder="어디가 좋았고 어디가 아쉬웠는지 한 줄만 적어두면 다음에 판단하기 쉽습니다."></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="btSaveMemo">평가 저장</button>
+        <span class="muted" id="btMemoStat"></span>
+      </div>
+      <div id="btLog" class="bt-log"></div>
+    </div>
+
+    <div id="btDrop" class="bt-drop">
+      <div class="bt-cmp" id="btCmp">
+        <div class="bt-col">
+          <div class="bt-h">지금 (원본)</div>
+          <div class="bt-img" id="btBefore"><span class="bt-empty">2번을 눌러 캡처하면 여기에 나옵니다.</span></div>
+        </div>
+        <div class="bt-col">
+          <div class="bt-h gold">리디자인 결과</div>
+          <div class="bt-img" id="btAfter"><span class="bt-empty">4번으로 결과 이미지를 넣으면 여기에 나옵니다.</span></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ===== 생성 ===== -->
@@ -751,8 +882,8 @@ table.dash td b{color:var(--navy)}
   <!-- ===== 과목 안내 페이지(랜딩) 링크 생성기 ===== -->
   <section id="tab-lp" class="hide">
     <div class="panel noprint" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <b>🔗 과목 안내 페이지</b>
-      <span class="muted">학생에게 <b>링크로 보내는 과목 소개 페이지</b>를 만듭니다. 지금 듣는 과목 외에 어떤 과목이 왜 필요한지 설득하는 페이지입니다.</span>
+      <b>🔗 과목 안내 페이지</b> <span class="tagline">상담 시 꼭 문자 발송</span>
+      <span class="muted">학생·학부모 <b>휴대폰으로 보내는 링크</b>입니다. 상담을 요청드릴 때, 또는 <b>학원에서 기다리시는 동안</b> 문자로 보내드립니다. 지금 듣는 과목 외에 어떤 과목이 왜 필요한지 설득하는 페이지입니다.</span>
     </div>
     <div class="panel noprint">
       <div class="lp-grid">
@@ -779,8 +910,8 @@ table.dash td b{color:var(--navy)}
   <!-- ===== 상담용 자료 ===== -->
   <section id="tab-pack" class="hide">
     <div class="panel noprint" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <b>🖨️ 상담용 자료</b>
-      <span class="muted">상담 오신 학생·학부모께 <b>한 번에 인쇄해서 드리는 자료</b>입니다. 학년을 고르고 포함할 항목을 선택하세요.</span>
+      <b>🖨️ 상담용 자료</b> <span class="tagline">상담 시 꼭 배부</span>
+      <span class="muted">상담 오신 학생·학부모께 <b>한 번에 인쇄해서 드리는 자료</b>입니다. 상담 <b>시작 전에 출력해서 손에 들려드립니다.</b> 학년을 고르고 포함할 항목을 선택하세요.</span>
     </div>
     <div class="panel noprint">
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
@@ -1058,10 +1189,162 @@ document.getElementById("dashBody").addEventListener("click", e=>{
   });
 });
 
+
+/* ══════════ 리디자인 베타 (2026-08-26) ══════════
+   상담용 자료·과목 안내를 긴 이미지로 캡처 → 리디자인 마법사에 넣고 → 결과를 나란히 비교.
+   실제 운영 화면은 건드리지 않는다. 결과 이미지는 서버에 올리지 않고 이 브라우저에만 둔다. */
+(function(){
+  const $ = id => document.getElementById(id);
+  const WIZ_W = 1080;                  // 마법사 입력 권장 가로폭
+  const MAX_BYTES = 3 * 1024 * 1024;   // 3MB 이하로 (용량 크면 인식률·비용 모두 나빠진다)
+  let SRC = "pack", beforeBlob = null, beforeName = "", results = [], verdict = "";
+
+  function h2c(){
+    if(window.html2canvas) return Promise.resolve();
+    return new Promise((ok, no)=>{
+      const t=document.createElement("script");
+      t.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+      t.onload=ok; t.onerror=()=>no(new Error("캡처 도구를 불러오지 못했습니다"));
+      document.head.appendChild(t);
+    });
+  }
+  const toBlob = (cv, q) => new Promise(r => cv.toBlob(r, "image/jpeg", q));
+
+  /* 캡처 대상 — pack은 이 페이지 안, lp는 같은 도메인 iframe */
+  function target(){
+    if(SRC === "pack"){
+      const el = $("packView");
+      if(!el || !el.innerHTML.trim())
+        throw new Error("‘상담용 자료’ 탭에서 학년을 고르고 미리보기가 나온 뒤에 눌러주세요.");
+      return { el, name: "상담용자료" };
+    }
+    const fr = $("lpFrame");
+    let d = null;
+    try { d = fr && fr.contentDocument; } catch(e){ d = null; }
+    if(!d || !d.body || !d.body.innerHTML.trim())
+      throw new Error("‘과목 안내’ 탭에서 미리보기를 먼저 띄워주세요. (↻ 미리보기 새로고침)");
+    return { el: d.body, name: "과목안내" };
+  }
+
+  async function capture(){
+    const st = $("btCapStat");
+    try{
+      const { el, name } = target();
+      st.textContent = "캡처 도구 준비 중…"; $("btCap").disabled = true;
+      await h2c();
+      st.textContent = "화면을 이미지로 만드는 중… (길면 20초쯤 걸립니다)";
+      const w = el.scrollWidth || el.offsetWidth || WIZ_W;
+      const cv = await html2canvas(el, {
+        backgroundColor:"#fff", useCORS:true, logging:false,
+        scale: Math.min(2, Math.max(0.6, WIZ_W / w)),   // 가로 1080 근처로
+        windowWidth: w, width: w, height: el.scrollHeight,
+        /* html2canvas는 그라디언트 파싱에서 자주 죽는다 — 복제본에서만 단색으로 바꾼다.
+           실제 화면은 그대로다(onclone은 캡처용 사본에만 적용된다). */
+        onclone(doc){
+          const V = doc.defaultView || window;
+          doc.querySelectorAll("*").forEach(node=>{
+            let cs; try{ cs = V.getComputedStyle(node); }catch(e){ return; }
+            const bg = cs && cs.backgroundImage;
+            if(bg && bg.indexOf("gradient") >= 0){
+              const m = bg.match(/rgba?\([^)]*\)|#[0-9a-fA-F]{3,8}/);
+              node.style.backgroundImage = "none";
+              if(m && (cs.backgroundColor === "rgba(0, 0, 0, 0)" || cs.backgroundColor === "transparent"))
+                node.style.backgroundColor = m[0];
+            }
+            if(cs && cs.boxShadow && cs.boxShadow.indexOf("gradient") >= 0) node.style.boxShadow = "none";
+          });
+        }
+      });
+      /* 3MB 넘으면 품질을 낮춰가며 다시 — 용량이 크면 마법사가 힘들어한다 */
+      let q = 0.86, blob = await toBlob(cv, q);
+      while(blob && blob.size > MAX_BYTES && q > 0.4){ q -= 0.12; blob = await toBlob(cv, q); }
+      if(!blob) throw new Error("이미지를 만들지 못했습니다.");
+      beforeBlob = blob;
+      beforeName = `${name}_${new Date().toISOString().slice(0,10)}.jpg`;
+      const url = URL.createObjectURL(blob);
+      $("btBefore").innerHTML = `<img src="${url}" alt="원본 캡처">`;
+      $("btDown").disabled = false;
+      st.innerHTML = `<b>완성</b> — ${cv.width}×${cv.height}px · ${(blob.size/1048576).toFixed(2)}MB`;
+    }catch(e){
+      st.innerHTML = `<span style="color:var(--danger)">${e.message}</span>`;
+    }finally{ $("btCap").disabled = false; }
+  }
+
+  function addFiles(files){
+    const imgs = [...files].filter(f => f.type.startsWith("image/"));
+    if(!imgs.length) return;
+    if(!results.length) $("btAfter").innerHTML = "";
+    imgs.forEach(f=>{
+      results.push(f);
+      const im = document.createElement("img");
+      im.src = URL.createObjectURL(f); im.alt = f.name;
+      $("btAfter").appendChild(im);
+    });
+    $("btResStat").innerHTML = `<b>${results.length}장</b> 넣었습니다.`;
+    $("btClear").disabled = false;
+    $("btVerdictBox").style.display = "";
+  }
+
+  const KEY = "daol_beta_redesign_log";
+  function drawLog(){
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem(KEY) || "[]"); }catch(e){}
+    $("btLog").innerHTML = !list.length ? "" :
+      "<b>지난 평가</b><br>" + list.slice(-6).reverse().map(r =>
+        `· ${r.d} · ${r.src} · ${({good:"👍 좋다",soso:"🤔 애매",bad:"👎 별로"}[r.v] || r.v)}` +
+        (r.m ? ` — ${r.m.replace(/</g,"&lt;")}` : "")).join("<br>");
+  }
+
+  /* ── 이벤트 ── */
+  $("btSrc").addEventListener("click", e=>{
+    const c = e.target.closest(".chip"); if(!c) return;
+    $("btSrc").querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on"); SRC = c.dataset.src;
+    $("btSrcHint").innerHTML = SRC === "pack"
+      ? "‘상담용 자료’ 탭에서 <b>학년을 먼저 고르고 미리보기가 나온 상태</b>여야 합니다."
+      : "‘과목 안내’ 탭에서 <b>미리보기가 떠 있는 상태</b>여야 합니다. (↻ 미리보기 새로고침)";
+  });
+  $("btCap").addEventListener("click", capture);
+  $("btDown").addEventListener("click", ()=>{
+    if(!beforeBlob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(beforeBlob); a.download = beforeName; a.click();
+  });
+  $("btPick").addEventListener("click", ()=> $("btFile").click());
+  $("btFile").addEventListener("change", e=> addFiles(e.target.files));
+  $("btClear").addEventListener("click", ()=>{
+    results = [];
+    $("btAfter").innerHTML = '<span class="bt-empty">4번으로 결과 이미지를 넣으면 여기에 나옵니다.</span>';
+    $("btResStat").textContent = "아직 넣은 결과가 없습니다.";
+    $("btClear").disabled = true; $("btVerdictBox").style.display = "none";
+  });
+  const drop = $("btDrop");
+  ["dragenter","dragover"].forEach(t=> drop.addEventListener(t, e=>{ e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(t=> drop.addEventListener(t, e=>{ e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e=> addFiles(e.dataTransfer.files));
+  $("btVerdict").addEventListener("click", e=>{
+    const c = e.target.closest(".chip"); if(!c) return;
+    $("btVerdict").querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on"); verdict = c.dataset.v;
+  });
+  $("btSaveMemo").addEventListener("click", ()=>{
+    if(!verdict){ $("btMemoStat").textContent = "먼저 위에서 하나 골라주세요."; return; }
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem(KEY) || "[]"); }catch(e){}
+    list.push({ d:new Date().toLocaleDateString("ko-KR"),
+                src: SRC === "pack" ? "상담용 자료" : "과목 안내",
+                v: verdict, m: $("btMemo").value.trim() });
+    localStorage.setItem(KEY, JSON.stringify(list.slice(-30)));
+    $("btMemoStat").textContent = "저장했습니다 ✓ (이 컴퓨터에만 남습니다)";
+    drawLog();
+  });
+  drawLog();
+})();
+
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","gen","grade","fee","day","edit","pack","lp"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","gen","grade","fee","day","edit","pack","lp","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="pack"){ buildPackChips(); renderPack(); }
   if(t.dataset.tab==="lp"){ buildLpChips(); renderLp(); }
   if(t.dataset.tab==="fee") renderFee();
