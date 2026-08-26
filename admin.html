@@ -669,17 +669,20 @@ table.dash td b{color:var(--navy)}
     <div class="panel noprint" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <b>🎓 고3 수시지원프로그램</b>
       <span class="muted">내신 등급을 넣으면 <b>안정·적정·도전 라인</b>과 <b>내 등급이 어디쯤인지</b>를 바로 보여줍니다.
-        <b>상담 중에 학생과 같이 보는 화면</b>입니다 — 여기서 등급을 넣고 결과를 함께 확인하세요.</span>
+        <b>재원생 전용 무료판</b>입니다 — 잠금 없이 상세 결과까지 전부 열려 있습니다.</span>
       <span style="flex:1"></span>
-      <a class="btn primary" href="https://jayu0422-blip.github.io/daol105-susi/" target="_blank" rel="noopener"
+      <a class="btn primary" href="https://jayu0422-blip.github.io/daol105-susi/member/" target="_blank" rel="noopener"
          style="text-decoration:none">↗ 새 창으로 열기</a>
       <button class="btn sm" id="susiCopy">📋 링크 복사</button>
       <span class="muted" id="susiStat"></span>
       <div class="muted" style="flex:0 0 100%;margin-top:7px;font-size:12px;line-height:1.6">
-        🔒 기본 결과(안정·적정·도전 + <b>내 등급 위치 막대</b>)는 <b>바로 보입니다.</b>
-        <b>수능최저 충족 판정 · 3개년 컷 추이 · 출렁임 경고 · 특목자사 경고 · 추합 인원</b>은
-        화면 아래에서 <b>이름·학년·학교·연락처를 넣고 「상세 결과 열어보기」</b>를 눌러야 열립니다 —
-        상담 온 학생이면 그 자리에서 같이 입력하시면 됩니다.
+        ✅ <b>재원생 전용 무료판</b>입니다. 이름·연락처를 넣는 칸이 없고,
+        <b>수능최저 충족 판정 · 3개년 컷 추이 · 출렁임 경고 · 특목자사 경고</b>까지 <b>처음부터 전부 보입니다.</b><br>
+        입력은 <b>내신 등급</b> + (선택) <b>수능 예상 등급 국·수·영·탐</b>. 수능 등급을 넣으면 전형마다
+        <span style="color:#0B7A55;font-weight:800">최저 충족</span> /
+        <span style="color:#C2352C;font-weight:800">최저 미달</span> 이 자동으로 붙습니다.<br>
+        ⚠ <b>외부 배포 금지</b> — 검색에 잡히지 않게(noindex) 막아둔 재원생 링크입니다.
+        외부·신규 상담용은 <b>기존 공개판</b>(<a href="https://jayu0422-blip.github.io/daol105-susi/" target="_blank" rel="noopener">daol105-susi</a>)을 쓰세요.
       </div>
     </div>
     <div class="panel" style="padding:0;overflow:hidden">
@@ -1206,7 +1209,7 @@ document.getElementById("mNow").addEventListener("click", ()=>{
   renderDash();
 });
 document.getElementById("susiCopy").addEventListener("click", ()=>{
-  navigator.clipboard.writeText("https://jayu0422-blip.github.io/daol105-susi/").then(()=>{
+  navigator.clipboard.writeText("https://jayu0422-blip.github.io/daol105-susi/member/").then(()=>{
     const el=document.getElementById("susiStat"); el.textContent="복사됨 ✓ — 학생이 집에서 직접 해볼 때 보내주세요";
     setTimeout(()=>{ el.textContent=""; }, 2500);
   });
@@ -1403,7 +1406,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
   if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
   if(t.dataset.tab==="edit"){ const f=document.getElementById("editFrame"); if(!f.getAttribute("src")) f.src="control.html?embed=1"; }  // 처음 열 때만 로드
-  if(t.dataset.tab==="susi"){ const f=document.getElementById("susiFrame"); if(!f.getAttribute("src")) f.src="https://jayu0422-blip.github.io/daol105-susi/"; }
+  if(t.dataset.tab==="susi"){ const f=document.getElementById("susiFrame"); if(!f.getAttribute("src")) f.src="https://jayu0422-blip.github.io/daol105-susi/member/"; }
 }));
 
 /* ===== 생성 필터 ===== */
