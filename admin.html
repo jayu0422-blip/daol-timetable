@@ -1950,7 +1950,6 @@ const ROOMS=[
   {key:"본관2",label:"2강의실",bldg:"다올105"},
   {key:"본관3",label:"3강의실",bldg:"다올105"},
   {key:"스터디홀",label:"스터디홀",bldg:"다올105"},
-  {key:"복도",label:"복도테이블(재시)",bldg:"다올105",testOnly:true},
   {key:"상담실",label:"상담실",bldg:"다올105"},
   {key:"대치1",label:"대치더올 1강의실",bldg:"대치더올"},
   {key:"대치2",label:"대치더올 2강의실",bldg:"대치더올"},
@@ -2056,16 +2055,7 @@ function assignDay(day){
   return {items, unparsed};
 }
 const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
-const GRID_ROOMS=ROOMS;   // 그리드는 복도테이블 포함 전체 표시(배정은 CLASS_ROOMS만)
-// 복도테이블 중등영어 재시 일정 (수업 끝난 뒤~22시, 중3은 수/목 18시 소집)
-const RETESTS=[
-  {days:["월","수","금"], start:18*60+30, end:22*60, label:"중1 영어 재시"},
-  {days:["월","수","금"], start:20*60,    end:22*60, label:"중2 영어 재시"},
-  {days:["수"],           start:18*60,    end:20*60, label:"중3 영어 재시(소집)"},
-  {days:["화","목","토"], start:19*60,    end:22*60, label:"중1 영어 재시"},
-  {days:["화","목","토"], start:20*60,    end:22*60, label:"중2 영어 재시"},
-  {days:["목"],           start:18*60,    end:20*60, label:"중3 영어 재시(소집)"}
-];
+const GRID_ROOMS=ROOMS;   // 복도테이블을 없애 이제 그리드 = 배정 가능한 강의실과 같다
 // 한 수업이 중간에 방을 옮기는 경우(그리드에서만 분할, 데이터는 1강좌 유지)
 const SESSION_SPLITS=[
   { days:["화","목","토"], at:18*60+15, roomBefore:"본관1", roomAfter:"본관2",
@@ -2122,7 +2112,6 @@ function renderDay(){
     html+=`<div class="rg-body" style="height:${H}px">`;
     for(let t=START;t<=END;t+=60) html+=`<div class="rg-line" style="top:${(t-START)*PX}px"></div>`;
     let blks=items.filter(it=>it.room===r.key).map(it=>({start:it.s.start,end:it.s.end,type:it.s.type,role:it.roomRole,name:it.c.course_name,teacher:it.c.teacher,subj:it.c.subject,conflict:it.conflict,kind:"class"}));
-    if(r.key==="복도") blks=blks.concat(RETESTS.filter(rt=>rt.days.includes(selDay)).map(rt=>({start:rt.start,end:rt.end,name:rt.label,kind:"retest"})));
     layoutRoom(blks);
     blks.forEach(b=>{
       const st=Math.max(b.start,START), en=Math.min(b.end,END), top=(st-START)*PX, h=Math.max((en-st)*PX,26);
