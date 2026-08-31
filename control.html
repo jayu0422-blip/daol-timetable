@@ -420,5 +420,24 @@ if(useSupa){
 /* ===== 시작 ===== */
 loadData();
 </script>
+<script>
+/* ── 화면 자동 최신화 ─────────────────────────────────────────────
+   직원들이 예전 링크를 그대로 쓰고, GitHub Pages 는 HTML 을 10분 캐시한다.
+   그래서 배포해도 옛 화면이 남는 일이 있었다. 서버 파일의 BUILD 를 직접 읽어
+   다르면 한 번만 캐시를 무시하고 다시 받는다(같은 버전은 세션당 1회 → 루프 없음). */
+(function(){
+  var BUILD="2026-08-31b";
+  function hardReload(){ var u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
+  fetch(location.pathname+"?probe="+Date.now(),{cache:"no-store"})
+    .then(function(r){ return r.text(); })
+    .then(function(t){
+      var m=t.match(/var BUILD="([^"]+)"/);
+      if(!m || m[1]===BUILD) return;
+      var once="daol_v_"+m[1];
+      try{ if(sessionStorage.getItem(once)) return; sessionStorage.setItem(once,"1"); }catch(e){}
+      hardReload();
+    }).catch(function(){});
+})();
+</script>
 </body>
 </html>

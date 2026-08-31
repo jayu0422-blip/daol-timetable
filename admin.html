@@ -1814,7 +1814,7 @@ document.getElementById("refresh").addEventListener("click",loadData);
 /* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
    GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
    서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
-const BUILD="2026-08-31a";
+const BUILD="2026-08-31b";
 function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
 async function checkBuild(){
   const b=document.getElementById("buildBadge"); if(!b) return;
@@ -1826,6 +1826,9 @@ async function checkBuild(){
       b.textContent="⚠ 업데이트 있음 · 눌러서 최신으로";
       b.classList.add("stale");
       b.onclick=hardReload;
+      /* 직원들이 예전 링크를 그대로 쓰므로 한 번은 자동으로 최신으로 바꿔 준다 */
+      const once="daol_v_"+m[1];
+      try{ if(!sessionStorage.getItem(once)){ sessionStorage.setItem(once,"1"); hardReload(); } }catch(e){ hardReload(); }
     }
   }catch(e){}
 }
