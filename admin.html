@@ -1990,11 +1990,19 @@ function orderByPref(teacher,day,rooms){
   let pref=[];
   if(teacher==="윤재영") pref=["본관2","본관3","스터디홀","상담실","본관1"];   // 중등영어: 2강의실 우선, 넘치면 3강의실·스터디홀·상담실
   else if(teacher==="이정관") pref=["본관2"];
+  else if(teacher==="황웅") pref=["본관1","본관3","스터디홀","본관2"];      // 정규 1강 · 클리닉 3강
+  else if(teacher==="민귀홍") pref=["본관1","본관2","본관3","스터디홀"];   // 정규 1강 · 클리닉 2강
   else if(teacher==="김영하"&&day==="토") pref=["본관3"];
   else if(teacher==="유용권") pref=["대치2","대치1","대치클리닉","본관1","본관3","스터디홀","본관2"]; // 대치2 우선; 다올105로 밀리면 1강의실(수업)·3강·스터디홀(관리)
   else if(teacher==="임결") pref=["대치1","대치2","대치클리닉","본관2","본관3","스터디홀","본관1"];   // 대치1 우선
   return [...pref.filter(r=>rooms.includes(r)), ...rooms.filter(r=>!pref.includes(r))];
 }
+// 강사별 「정규 / 클리닉」 고정 강의실 — 학년이 달라도 절대 한 방에 섞이지 않게 (원장 규칙 2026-08-28)
+const TEACHER_ROOM_RULE={
+  "황웅":  {"정규":"본관1","클리닉":"본관3"},
+  "민귀홍":{"정규":"본관1","클리닉":"본관2"}
+};
+function ruleRoom(it){ const r=TEACHER_ROOM_RULE[it.c.teacher]; return r?(r[it.s.type]||null):null; }
 function ovl(a,b){ return a.start<b.end && b.start<a.end; }
 function fitCheck(list, rooms, occ, day){
   const sim={}; rooms.forEach(r=>sim[r]=[...(occ[r]||[])]);
@@ -2024,10 +2032,13 @@ function assignDay(day){
     const otherRooms=CLASS_ROOMS.map(r=>r.key).filter(k=>!primaryRooms.includes(k));
     list.forEach(it=>{
       if(it.forced){ it.room=it.forced; occ[it.forced]&&occ[it.forced].push(it.s); return; }  // 세션 분할 강제 강의실
-      // 무학년 통합반(같은 강사·과목·시간) → 이미 배정된 같은 방을 공유. 충돌 아님
-      const twin=list.find(x=>x!==it && x.room && x.c.subject===it.c.subject && x.s.start===it.s.start && x.s.end===it.s.end);
-      if(twin){ it.room=twin.room; it.merged=true; return; }
-      const ov=(it.c.room_overrides||{})[day];                // (A) 수동 지정 우선
+      // (A) 강사 규칙 > 수동 지정 > 자동 배정. 지정이 있으면 통합 병합으로 덮이지 않는다
+      const ov=ruleRoom(it) || (it.c.room_overrides||{})[day];
+      if(!ov){
+        // 무학년 통합반(같은 강사·과목·시간) → 이미 배정된 같은 방을 공유. 충돌 아님
+        const twin=list.find(x=>x!==it && x.room && x.c.subject===it.c.subject && x.s.start===it.s.start && x.s.end===it.s.end);
+        if(twin){ it.room=twin.room; it.merged=true; return; }
+      }
       let chosen=null;
       if(ov && occ[ov]){ chosen=ov; if(occ[ov].some(x=>ovl(x,it.s))) it.conflict=true; }
       else{
@@ -2043,7 +2054,8 @@ function assignDay(day){
       const grp=list.filter(x=>ovl(x.s,base.s));
       if(grp.length>=2){
         // 같은 강사·같은 과목·시간까지 완전히 동일 → 무학년 통합반(한 수업). 수업실/관리실로 나누지 않음
-        const merged = grp.every(x=>x.c.subject===grp[0].c.subject && x.s.start===grp[0].s.start && x.s.end===grp[0].s.end);
+        const merged = grp.every(x=>x.c.subject===grp[0].c.subject && x.s.start===grp[0].s.start && x.s.end===grp[0].s.end
+                                 && x.room===grp[0].room);   // 방이 다르면 통합반이 아니다
         if(merged){ grp.forEach(x=>x.roomRole="통합(무학년)"); return; }
         grp.forEach(x=>{ if(x.s.type==="클리닉"||x.s.type==="관리") x.roomRole="관리실"; });
         const reg=grp.filter(x=>x.s.type==="정규"||x.s.type==="직보").sort((a,b)=>GRADE_ORDER.indexOf(a.c.grade)-GRADE_ORDER.indexOf(b.c.grade));
