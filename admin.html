@@ -655,6 +655,9 @@ table.dash td b{color:var(--navy)}
 :root{--muted:#5F6B80}                     /* 3.77 → 5.4 : muted 를 쓰는 43곳이 한꺼번에 */
 .tab{color:#55617A}                       /* 3.26 → 5.9 : 비활성 탭이 거의 안 보였다 */
 .topbar nav .hi{background:var(--brand-ink)}  /* 흰 글씨 대비 3.39 → 4.9 */
+.topbar nav .ver{background:rgba(255,255,255,.14);color:#e8edf5;border:1px solid rgba(255,255,255,.25);
+  border-radius:6px;padding:5px 10px;font-size:12px;cursor:default;margin-left:6px}
+.topbar nav .ver.stale{background:#b3261e;border-color:#b3261e;color:#fff;font-weight:800;cursor:pointer}
 .lkc-u{color:#5F6B80;font-size:11.5px}   /* URL 2.56 → 5.4 · 11px → 11.5px */
 .lkbadge{font-size:11.5px}                /* 10.5px → 읽히는 크기로 */
 .tab small{font-size:11.5px;color:#5F6B82} /* 10px 는 폰에서 못 읽는다 */
@@ -678,7 +681,8 @@ table.dash td b{color:var(--navy)}
     <a href="control.html">전체 관리</a>
     <a href="https://jayu0422-blip.github.io/daol105-console/" target="_blank" rel="noopener">배포 콘솔</a>
     <a href="https://jayu0422-blip.github.io/daol105-console/작업현황.html" target="_blank" rel="noopener">작업 현황</a>
-    <button class="hi" id="refresh">새로고침</button>
+    <button class="hi" id="refresh" title="자료를 다시 불러옵니다">새로고침</button>
+    <button class="ver" id="buildBadge" title="이 화면이 최신인지 알려줍니다">확인 중…</button>
   </nav>
 </div></div>
 <div class="wrap">
@@ -1806,6 +1810,26 @@ function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
 
 document.getElementById("genBtn").addEventListener("click",generate);
 document.getElementById("refresh").addEventListener("click",loadData);
+
+/* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
+   GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
+   서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
+const BUILD="2026-08-31a";
+function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
+async function checkBuild(){
+  const b=document.getElementById("buildBadge"); if(!b) return;
+  b.textContent="화면 "+BUILD;
+  try{
+    const r=await fetch(location.pathname+"?probe="+Date.now(),{cache:"no-store"});
+    const m=(await r.text()).match(/const BUILD="([^"]+)"/);
+    if(m && m[1]!==BUILD){
+      b.textContent="⚠ 업데이트 있음 · 눌러서 최신으로";
+      b.classList.add("stale");
+      b.onclick=hardReload;
+    }
+  }catch(e){}
+}
+checkBuild();
 document.getElementById("printBtn").addEventListener("click",()=>window.print());
 document.getElementById("pngBtn").addEventListener("click",async()=>{
   if(!window.html2canvas){const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";s.onload=savePng;s.onerror=()=>alert("PNG 모듈 로드 실패 — PDF/인쇄를 이용하세요.");document.body.appendChild(s);}else savePng();
