@@ -744,6 +744,12 @@ table.dash td b{color:var(--navy)}
         </div>
       </div>
     </div>
+    <div class="panel" style="padding:0;overflow:hidden;margin-top:16px">
+      <div class="ph"><h2>월간 일정표</h2>
+        <span class="rtx">신규생 첫 납부 · 인수인계 · 당일 근무자 · 상담 가능 시간대 · 학사일정</span></div>
+      <div id="opsCal"></div>
+    </div>
+
     <div class="foot noprint">D A O L &nbsp; 1 0 5 &nbsp;·&nbsp; O P E R A T I O N &nbsp; D A S H B O A R D</div>
   </section>
 
@@ -1097,11 +1103,14 @@ table.dash td b{color:var(--navy)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=d46c8eeb"></script>
 <script src="copy.js?v=8965f11f"></script>
-<script src="scholars.js?v=d8eb2fc6"></script>
-<script src="consulting.js?v=e095804b"></script>
-<script src="scholars_all.js?v=32243876"></script>
-<script src="manual.js?v=9fea3143"></script>
+<script src="scholars.js?v=c4d7a4a3"></script>
+<script src="consulting.js?v=6442c949"></script>
+<script src="scholars_all.js?v=14cacc5b"></script>
+<script src="manual.js?v=f85b3973"></script>
 <script src="course-cal.js?v=608e4ed7"></script>
+<script src="academic.js?v=c0032fba"></script>
+<script src="schedule-cal.js?v=0d263017"></script>
+<script src="ops-cal.js?v=745e7352"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -1542,6 +1551,7 @@ document.getElementById("dashBody").addEventListener("click", e=>{
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
   ["dash","gen","grade","fee","day","edit","pack","lp","susi","hs12","links","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  if(t.dataset.tab==="dash" && window.DaolOpsCal) DaolOpsCal.mount(document.getElementById("opsCal"));
   if(t.dataset.tab==="pack"){ buildPackChips(); renderPack(); }
   if(t.dataset.tab==="lp"){ buildLpChips(); renderLp(); }
   if(t.dataset.tab==="fee") renderFee();
@@ -1814,7 +1824,7 @@ document.getElementById("refresh").addEventListener("click",loadData);
 /* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
    GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
    서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
-const BUILD="2026-08-31b";
+const BUILD="2026-09-03-cal";
 function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
 async function checkBuild(){
   const b=document.getElementById("buildBadge"); if(!b) return;
@@ -2861,6 +2871,8 @@ function renderPack(){
 
 buildSchoolFilter();
 loadData();
+/* 대시보드 월간 일정표 — 첫 진입에도 그린다 */
+if(window.DaolOpsCal) DaolOpsCal.mount(document.getElementById("opsCal"));
 
 
 /* ═════════ 랜딩페이지 모음 ═════════

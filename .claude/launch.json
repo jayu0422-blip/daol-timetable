@@ -1,6 +1,11 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "calc-preview", "runtimeExecutable": "python", "runtimeArgs": ["-m", "http.server", "8791"], "port": 8791 }
+    {
+      "name": "daol-timetable",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8791", "--directory", "F:/작업/06_개발/daol-timetable"],
+      "port": 8791
+    }
   ]
 }
