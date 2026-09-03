@@ -3,16 +3,20 @@
 --
 --  https://supabase.com/dashboard/project/sqogiblaagmmkpwwodgf/sql/new
 --
--- 한 테이블에 네 종류를 담는다. kind 로 구분한다.
---   staff      당일 근무자        → who
---   consult    상담 가능 시간대    → slots ("10:00,11:00,14:00")
---   newstudent 신규 등록생        → student, pay_due, amount, pay_done
---   handover   인수인계 메모       → body, done
---   memo       그 밖의 메모        → body
+-- 한 테이블에 여섯 종류를 담는다. kind 로 구분한다.
+--   staff      당일 근무자          → who
+--   consult    그날만의 상담 시각 예외 → slots ("22:00,21:00"). 비워 두면 요일 규칙대로
+--   vacation   방학 구간            → body 에 종료일. 월~목 상담이 이 기간에는 닫힌다
+--   newstudent 신규생 첫등원        → student, room, pay_due, amount, told_fee, told_room, pay_done
+--   handover   인수인계 메모        → body, done
+--   memo       그 밖의 메모         → body
 --
--- 신규생 항목이 이 표의 핵심이다. 등록은 됐는데 첫 납부가 빠지는 사고를 막으려고
--- pay_due(첫 납부 예정일)와 pay_done(입금 확인)을 따로 둔다.
--- 예정일이 지났는데 pay_done 이 false 면 대시보드 맨 위에 경보로 뜬다.
+-- 신규생 첫등원 항목이 이 표의 핵심이다. 첫날 수강료 안내와 강의실 안내가 빠지면
+-- 그대로 미납·헤매는 사고로 이어진다. 그래서 안내 여부를 각각 따로 체크하고,
+-- 첫 납부 예정일이 지났는데 확인이 안 됐으면 대시보드 맨 위에 빨간 경보로 남긴다.
+--
+-- ※ 상담 예약(학생 이름·전화)은 여기가 아니라 bookings 표에 들어간다.
+--    전화번호를 anon 이 못 읽게 잠가 두어야 하기 때문. supabase_consult.sql 참고.
 -- ============================================================
 
 create table if not exists public.ops_calendar (
@@ -25,9 +29,12 @@ create table if not exists public.ops_calendar (
   school     text,
   grade      text,
   subjects   text,
+  room       text,                          -- 안내할 강의실 (newstudent)
   pay_due    date,                          -- 첫 납부 예정일 (newstudent)
   amount     int,                           -- 첫 납부 금액
   pay_done   boolean default false,         -- 입금 확인
+  told_fee   boolean default false,         -- 수강료 안내 완료
+  told_room  boolean default false,         -- 강의실 안내 완료
   body       text,                          -- 인수인계·메모 본문
   done       boolean default false,         -- 인수인계 처리 완료
   updated_by text,
@@ -35,10 +42,15 @@ create table if not exists public.ops_calendar (
   updated_at timestamptz default now()
 );
 
--- 상태 값은 다섯 가지만 (오타로 조용히 안 보이는 항목이 생기지 않게)
+-- (이미 만든 뒤 다시 실행하는 경우 — 신규 실행이면 무해)
+alter table public.ops_calendar add column if not exists room      text;
+alter table public.ops_calendar add column if not exists told_fee  boolean default false;
+alter table public.ops_calendar add column if not exists told_room boolean default false;
+
+-- 상태 값은 여섯 가지만 (오타로 조용히 안 보이는 항목이 생기지 않게)
 alter table public.ops_calendar drop constraint if exists ops_calendar_kind_chk;
 alter table public.ops_calendar add constraint ops_calendar_kind_chk
-  check (kind in ('staff','consult','newstudent','handover','memo'));
+  check (kind in ('staff','consult','vacation','newstudent','handover','memo'));
 
 -- 하루에 근무자/상담시간은 한 줄만 둔다. 신규생·인수인계는 여러 줄 가능.
 create unique index if not exists ops_calendar_one_per_day

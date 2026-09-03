@@ -171,13 +171,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script src="config.js?v=d46c8eeb"></script>
+<script src="consult-slots.js?v=309f1c68"></script>
 <script>
-/* ===== 원장 상담 가용 규칙 ===== */
-const WEEKDAY_SLOTS = ["10:00"];                                  // 월~금
-const SAT_SLOTS = ["11:30","12:30","13:30","14:30","15:00"];      // 토 (마지막 3시)
-// 일요일은 닫음. 레벨테스트: 국·영·수 = 30분씩, 과학 = 없음.
-const TEST_SUBJECTS = ["국어","영어","수학"], TEST_MIN = 30;
+/* ===== 원장 상담 가용 규칙 =====
+   시각은 consult-slots.js 한 곳에서만 정한다. 대시보드 월간 일정표와 같은 원본을 써야
+   "달력에서는 열려 있는데 여기서는 안 보이는" 어긋남이 생기지 않는다. */
+const CS = window.DaolConsultSlots;
+const TEST_SUBJECTS = CS.TEST_SUBJECTS, TEST_MIN = CS.TEST_MIN;
 const DAYS_AHEAD = 21, WD = ["일","월","화","수","목","금","토"];
 
 const cfg = window.DAOL_CONFIG||{};
@@ -186,6 +187,7 @@ const sb = useSupa ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
 
 let picked = {subjects:new Set(), date:null, time:null};
 let taken = {};   // "YYYY-MM-DD" -> Set(times)
+let VACATIONS = [];   // [["2026-07-20","2026-08-16"], …] — 방학 중 월~목 상담은 닫힌다
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,"0");
@@ -193,8 +195,8 @@ const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 function toMin(t){const m=t.split(":");return +m[0]*60+ +m[1];}
 function fromMin(x){return pad(Math.floor(x/60))+":"+pad(x%60);}
 
-function testMinutes(){ return [...picked.subjects].filter(s=>TEST_SUBJECTS.includes(s)).length * TEST_MIN; }
-function arriveTime(){ if(!picked.time) return null; const a=toMin(picked.time)-testMinutes(); return fromMin(a); }
+function testMinutes(){ return CS.testMinutes([...picked.subjects]); }
+function arriveTime(){ return picked.time ? CS.arriveTime(picked.time, [...picked.subjects]) : null; }
 
 /* 과목 선택 */
 $("subs").addEventListener("click",e=>{
@@ -220,9 +222,9 @@ function buildDays(){
   for(let i=0;i<DAYS_AHEAD;i++){
     const d=new Date(today); d.setDate(today.getDate()+i);
     const dow=d.getDay();
-    if(dow===0) continue;                          // 일요일 닫음
-    const slots = dow===6 ? SAT_SLOTS : WEEKDAY_SLOTS;
     const key=iso(d);
+    const slots = CS.forDate(key, {vacations: VACATIONS});
+    if(!slots.length) continue;                    // 일요일·방학 중 평일은 열지 않음
     const el=document.createElement("div"); el.className="day";
     const sat = dow===6 ? '<span class="sat">토</span>' : '';
     el.innerHTML=`<div class="dh">${d.getMonth()+1}월 ${d.getDate()}일 (${WD[dow]}) ${sat}</div>`;
@@ -331,6 +333,15 @@ async function loadTaken(){
     (data||[]).forEach(r=>{ (taken[r.slot_date]=taken[r.slot_date]||new Set()).add(r.slot_time); });
   }catch(e){ /* bookings 테이블 준비 전이면 가용표시 없이 진행 */ }
 }
+/* 방학 구간만 읽어 온다. 대시보드에서 원장이 넣은 값이 그대로 여기 반영된다.
+   kind='vacation' 행의 d(시작)·body(종료)만 가져오므로 학생 정보는 넘어오지 않는다. */
+async function loadVacations(){
+  if(!useSupa) return;
+  try{
+    const {data} = await sb.from("ops_calendar").select("d,body").eq("kind","vacation");
+    VACATIONS = (data||[]).map(r=>[r.d, r.body||r.d]);
+  }catch(e){ /* 표가 아직 없으면 방학 없음으로 본다 */ }
+}
 
 $("submit").addEventListener("click",async()=>{
   const btn=$("submit"); btn.disabled=true; btn.textContent="예약 중…";
@@ -393,7 +404,7 @@ $("submit").addEventListener("click",async()=>{
   }
 });
 
-async function init(){ await loadTaken(); buildDays(); updateBtn(); }
+async function init(){ await Promise.all([loadTaken(), loadVacations()]); buildDays(); updateBtn(); }
 init();
 </script>
 </body>

@@ -746,7 +746,7 @@ table.dash td b{color:var(--navy)}
     </div>
     <div class="panel" style="padding:0;overflow:hidden;margin-top:16px">
       <div class="ph"><h2>월간 일정표</h2>
-        <span class="rtx">신규생 첫 납부 · 인수인계 · 당일 근무자 · 상담 가능 시간대 · 학사일정</span></div>
+        <span class="rtx">오늘 상담 · 신규생 첫등원 · 인수인계 · 당일 근무자 · 상담 예약 · 학사일정</span></div>
       <div id="opsCal"></div>
     </div>
 
@@ -1108,9 +1108,10 @@ table.dash td b{color:var(--navy)}
 <script src="scholars_all.js?v=14cacc5b"></script>
 <script src="manual.js?v=f85b3973"></script>
 <script src="course-cal.js?v=608e4ed7"></script>
+<script src="consult-slots.js?v=309f1c68"></script>
 <script src="academic.js?v=c0032fba"></script>
 <script src="schedule-cal.js?v=0d263017"></script>
-<script src="ops-cal.js?v=745e7352"></script>
+<script src="ops-cal.js?v=56aaf56e"></script>
 <script>
 /* ===== 상수 ===== */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -1824,7 +1825,7 @@ document.getElementById("refresh").addEventListener("click",loadData);
 /* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
    GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
    서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
-const BUILD="2026-09-03-cal";
+const BUILD="2026-09-03-cal2";
 function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
 async function checkBuild(){
   const b=document.getElementById("buildBadge"); if(!b) return;
