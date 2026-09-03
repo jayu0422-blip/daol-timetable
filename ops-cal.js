@@ -2,12 +2,14 @@
  *
  *   DaolOpsCal.mount(document.getElementById("opsCal"))
  *
- * 이 달력이 있는 이유는 다섯 가지다.
- *   1) 신규생 첫등원                 — 수강료·강의실 안내와 첫 납부가 빠지는 사고를 막는다
- *   2) 인수인계                      — 날짜에 붙여 두면 다음 근무자가 그날 칸에서 본다
+ * 이 달력이 있는 이유는 네 가지다.
+ *   1) 상담 예약                      — 데스크에서 직접 잡고, 잡히면 그 자리는 신청이 막힌다
+ *   2) 상담 가능 시간대                — 요일 규칙대로 자동, 그날만 예외도 가능
  *   3) 당일 근무자                    — 누가 데스크에 있는지 달력에서 바로
- *   4) 상담 가능 시간대                — 요일 규칙대로 자동, 그날만 예외도 가능
- *   5) 상담 예약                      — 데스크에서 직접 잡고, 잡히면 그 자리는 신청이 막힌다
+ *   4) 인수인계                      — 날짜에 붙여 두면 다음 근무자가 그날 칸에서 본다
+ *
+ * ※ '신규생 첫등원'(수강료·강의실 안내, 첫 납부)은 화면이 복잡해져 2026-09-03 에 뺐다.
+ *   코드는 커밋 e9b1b61 에 남아 있고 DB 칸도 그대로라, 되살릴 때 SQL 은 다시 돌릴 필요 없다.
  *
  * 학사일정은 두 군데서 끌어와 겹쳐 그린다.
  *   · schedule-cal.js  DaolScheduleCal.EXAMS/HOLIDAYS  — 2026 지필평가·공휴일(강사 달력과 같은 원본)
@@ -197,32 +199,6 @@
            [b.school, b.grade, b.subjects].filter(Boolean).map(x => " · " + esc(x)).join("")
     }));
 
-    rows.filter(r => r.kind === "newstudent" && r.d === t).forEach(r => {
-      const miss = [];
-      if (!r.told_fee) miss.push("수강료 안내");
-      if (!r.told_room) miss.push("강의실 안내");
-      out.push({
-        lv: miss.length ? "warn" : "info",
-        txt: "<b>" + esc(r.student || "이름 미기재") + "</b> 오늘 첫등원" +
-             (r.room ? " · " + esc(r.room) : "") +
-             (miss.length ? " — <b>" + miss.join(" · ") + "</b> 아직입니다" : " — 안내 완료")
-      });
-    });
-
-    rows.filter(r => r.kind === "newstudent" && !r.pay_done && r.pay_due && r.pay_due <= t)
-        .sort((a, b) => a.pay_due < b.pay_due ? -1 : 1)
-        .forEach(r => out.push({
-          lv: "danger",
-          txt: "<b>" + esc(r.student || "이름 미기재") + "</b> 첫 납부 예정일 " + r.pay_due +
-               (r.amount ? " · " + won(r.amount) : "") + " — 입금 확인이 안 됐습니다"
-        }));
-    rows.filter(r => r.kind === "newstudent" && !r.pay_done && r.pay_due && r.pay_due > t &&
-                     r.pay_due <= addDays(t, 3))
-        .forEach(r => out.push({
-          lv: "warn",
-          txt: esc(r.student || "이름 미기재") + " 첫 납부 " + r.pay_due + " 예정" +
-               (r.amount ? " · " + won(r.amount) : "")
-        }));
     byDay(t, "handover").filter(r => !r.done).forEach(r => out.push({
       lv: "warn", txt: "오늘 인수인계: " + esc((r.body || "").slice(0, 60))
     }));
@@ -353,8 +329,7 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       const ds = iso(y, m, d), dow = new Date(y, m - 1, d).getDay();
       const hn = holidayOn(ds), ex = examsOn(ds), ac = academicOn(ds);
       const staff = one(ds, "staff");
-      const news = byDay(ds, "newstudent"), hands = byDay(ds, "handover").filter(r => !r.done);
-      const lateNew = news.some(r => !r.pay_done && r.pay_due && r.pay_due <= t);
+      const hands = byDay(ds, "handover").filter(r => !r.done);
       const slots = slotsOn(ds), bks = booksOn(ds);
       const isVac = CS() && CS().inVacation(ds, vac);
       const cls = ["oc-c"];
@@ -376,7 +351,6 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       if (staff && staff.who) mk += '<span class="oc-m staff">' + esc(staff.who) + '</span>';
       if (bks.length) mk += '<span class="oc-m book">상담 ' + bks.length + '</span>';
       else if (slots.length) mk += '<span class="oc-m consult">가능 ' + slots.length + '</span>';
-      if (news.length) mk += '<span class="oc-m new' + (lateNew ? " late" : "") + '">첫등원 ' + news.length + '</span>';
       if (hands.length) mk += '<span class="oc-m hand">인수인계</span>';
 
       cells += '<button type="button" class="' + cls.join(" ") + '" data-d="' + ds + '">' +
@@ -418,8 +392,6 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
             '<span><i style="background:#ecfdf5;border-color:#bfe6dc"></i>근무자</span>' +
             '<span><i style="background:#eff6ff;border-color:#cfe0fb"></i>상담 가능</span>' +
             '<span><i style="background:#1d4ed8;border-color:#1d4ed8"></i>상담 예약됨</span>' +
-            '<span><i style="background:#fff7ed;border-color:#f3d5b5"></i>신규생 첫등원</span>' +
-            '<span><i style="background:#fef2f2;border-color:#f0c9c9"></i>첫 납부 미확인</span>' +
             '<span><i style="background:#f5f3ff;border-color:#ddd6fe"></i>인수인계</span>' +
           '</div>' +
         '</div>' +
@@ -503,7 +475,7 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
     const dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
     const hn = holidayOn(d), ex = examsOn(d), ac = academicOn(d);
     const staff = one(d, "staff") || { d, kind: "staff", who: "" };
-    const news = byDay(d, "newstudent"), hands = byDay(d, "handover");
+    const hands = byDay(d, "handover");
     const slots = slotsOn(d), bks = booksOn(d), ov = one(d, "consult");
     const vac = vacations(), C = CS();
     if (form.date !== d) form = { date: d, time: "", name: "", school: "", div: "고등", grade: "", phone: "", subs: [] };
@@ -595,34 +567,6 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
           '<div class="oc-note">상담확정을 누르면 그 자리가 잠기고, 학부모에게 <b>준비물 안내 문자</b>가, ' +
             '원장님께 <b>예약 알림</b>이 나갑니다. 노션 「신규상담」에도 자동으로 올라갑니다.</div>'
         ) : '') +
-      '</div>' +
-
-      '<div class="oc-sec"><h4>신규생 첫등원 <span style="font-weight:600;opacity:.8">수강료 · 강의실 안내</span></h4>' +
-        news.map(r => {
-          const late = !r.pay_done && r.pay_due && r.pay_due <= t;
-          return '<div class="oc-item' + (late ? " late" : "") + '">' +
-            '<div class="t">' + esc(r.student || "이름 미기재") +
-              '<span class="oc-badge ' + (r.told_fee ? "ok" : "no") + '">수강료 안내</span>' +
-              '<span class="oc-badge ' + (r.told_room ? "ok" : "no") + '">강의실 안내</span>' +
-              '<span class="oc-badge ' + (r.pay_done ? "ok" : "no") + '">' + (r.pay_done ? "입금 확인" : "미납") + '</span></div>' +
-            '<div class="m">' + [esc(r.school || ""), esc(r.grade || ""), esc(r.subjects || "")].filter(Boolean).join(" · ") +
-              (r.room ? '<br>강의실 <b>' + esc(r.room) + '</b>' : "") +
-              (r.pay_due ? '<br>첫 납부 예정 ' + r.pay_due : "") + (r.amount ? " · " + won(r.amount) : "") + '</div>' +
-            '<div class="oc-row" style="margin-top:7px;margin-bottom:0;flex-wrap:wrap">' +
-              '<button class="oc-b" data-fee="' + r.id + '">수강료 안내' + (r.told_fee ? " 취소" : " 완료") + '</button>' +
-              '<button class="oc-b" data-room="' + r.id + '">강의실 안내' + (r.told_room ? " 취소" : " 완료") + '</button>' +
-              '<button class="oc-b" data-pay="' + r.id + '">' + (r.pay_done ? "미확인으로" : "입금 확인") + '</button>' +
-              '<button class="oc-b x" data-del="' + r.id + '">삭제</button></div></div>';
-        }).join("") +
-        '<div class="oc-row"><input class="oc-in" id="nsName" placeholder="학생 이름"></div>' +
-        '<div class="oc-row"><input class="oc-in" id="nsSchool" placeholder="학교"><input class="oc-in" id="nsGrade" placeholder="학년" style="max-width:82px"></div>' +
-        '<div class="oc-row"><input class="oc-in" id="nsSubj" placeholder="과목 (국어·영어)">' +
-          '<input class="oc-in" id="nsRoom" placeholder="강의실" style="max-width:110px"></div>' +
-        '<div class="oc-row"><input class="oc-in" id="nsDue" type="date" value="' + d + '" title="첫 납부 예정일">' +
-          '<input class="oc-in" id="nsAmt" placeholder="수강료" inputmode="numeric" style="max-width:110px"></div>' +
-        '<button class="oc-b p" id="nsAdd" style="width:100%">신규생 첫등원 등록</button>' +
-        '<div class="oc-note">첫등원 당일에 수강료·강의실 안내가 안 끝났으면 맨 위에 뜹니다. ' +
-          '첫 납부 예정일이 지나도 입금 확인을 안 누르면 빨간 경보로 남습니다.</div>' +
       '</div>' +
 
       '<div class="oc-sec"><h4>인수인계</h4>' +
@@ -728,20 +672,6 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       catch (e) { alert("취소하지 못했습니다: " + (e.message || e)); }
     });
 
-    /* 신규생 첫등원 */
-    $("nsAdd").onclick = async () => {
-      const nm = $("nsName").value.trim();
-      if (!nm) { $("nsName").focus(); return; }
-      await save({
-        d, kind: "newstudent", student: nm,
-        school: $("nsSchool").value.trim(), grade: $("nsGrade").value.trim(),
-        subjects: $("nsSubj").value.trim(), room: $("nsRoom").value.trim(),
-        pay_due: $("nsDue").value || null,
-        amount: Number(String($("nsAmt").value).replace(/[^0-9]/g, "")) || null,
-        pay_done: false, told_fee: false, told_room: false
-      });
-      reload();
-    };
     $("hoAdd").onclick = async () => {
       const b = $("hoBody").value.trim();
       if (!b) { $("hoBody").focus(); return; }
@@ -753,7 +683,7 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       const patch = {}; patch[field] = !r[field];
       await save(Object.assign(r, patch)); reload();
     });
-    toggle("pay", "pay_done"); toggle("fee", "told_fee"); toggle("room", "told_room"); toggle("done", "done");
+    toggle("done", "done");
     el.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
       if (!confirm("이 항목을 지울까요?")) return;
       await remove(b.dataset.del); reload();
