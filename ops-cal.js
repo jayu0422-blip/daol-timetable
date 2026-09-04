@@ -60,16 +60,29 @@
     const h2 = A.find(x => x.date === d);
     return h2 ? h2.name : null;
   }
-  const MINI = { "미사강변중학교": "미강중", "미사강변고등학교": "미강고", "은가람중학교": "은가중" };
+  /* 좁은 칸에서 줄이는 표기. 은가람중학교는 원장 지시로 줄이지 않는다(2026-09-04). */
+  const MINI = { "미사강변중학교": "미강중", "미사강변고등학교": "미강고",
+                 "은가람중학교": "은가람중학교" };
   const shortSchool = s => MINI[s] || String(s).replace("중학교", "중").replace("고등학교", "고");
 
-  function examsOn(d) {                                     // 지필평가
+  /* 지필평가. 그 시험의 며칠째인지, 시작일·종료일인지까지 같이 준다.
+     시험은 주말을 건너뛰기도 해서(예: 미사강변고 10/1·2·6·7·8) 날짜가 이어지지 않는다.
+     그래서 '첫 날/마지막 날'은 날짜 간격이 아니라 days 배열의 처음·끝으로 판정한다. */
+  function examsOn(d) {
     const S = window.DaolScheduleCal;
     if (!S || !S.EXAMS) return [];
     const p = d.split("-"), m = +p[1], day = +p[2];
     if (+p[0] !== 2026) return [];
-    return S.EXAMS.filter(e => e.month === m && e.days.indexOf(day) >= 0)
-      .map(e => ({ school: shortSchool(e.school), grade: e.grade, term: e.term, level: e.level }));
+    return S.EXAMS.filter(e => e.month === m && e.days.indexOf(day) >= 0).map(e => {
+      const days = e.days.slice().sort((a, b) => a - b);
+      const i = days.indexOf(day);
+      return {
+        school: shortSchool(e.school), grade: e.grade, term: e.term, level: e.level,
+        nth: i + 1, total: days.length,
+        first: i === 0, last: i === days.length - 1,
+        span: e.month + "/" + days[0] + "~" + e.month + "/" + days[days.length - 1]
+      };
+    });
   }
 
   function academicOn(d) {                                  // planner.html 에서 넣은 행사·방학
@@ -244,6 +257,10 @@
 .oc-tag{display:inline-block;font-size:10px;font-weight:800;line-height:1.5;padding:1px 5px;border-radius:5px;margin:2px 2px 0 0;
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
 .oc-ex{background:#eef2ff;color:#3730a3;border:1px solid #d5dbf7}
+.oc-ex i{font-style:normal;font-weight:900;margin-left:3px;opacity:.95}
+.oc-ex.s{border-left:3px solid #4338ca;padding-left:4px}
+.oc-ex.e{border-right:3px solid #4338ca;padding-right:4px}
+.oc-ex.s i,.oc-ex.e i{color:#312e81}
 .oc-ac{background:#f1f5f9;color:#334155;border:1px solid #dde5ee}
 .oc-mk{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;position:absolute;left:7px;right:7px;bottom:6px}
 .oc-m{font-size:10px;font-weight:800;padding:1px 5px;border-radius:20px;border:1px solid}
@@ -339,8 +356,14 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
 
       let tags = "";
       ex.slice(0, 2).forEach(e => {
-        tags += '<span class="oc-tag oc-ex" title="' + esc(e.school + " " + e.grade + " " + e.term) + '">' +
-                esc(e.school + (e.grade && e.grade !== "전체" ? " " + e.grade.replace("학년", "") : "")) + '</span>';
+        const one = e.total === 1;
+        const cls = one ? "" : (e.first ? " s" : (e.last ? " e" : ""));
+        const mark = one ? "" : (e.first ? "시작" : (e.last ? "끝" : e.nth + "일"));
+        tags += '<span class="oc-tag oc-ex' + cls + '" title="' +
+                esc(e.school + " " + e.grade + " " + e.term + " · " + e.span +
+                    (one ? " (하루)" : " · " + e.nth + "/" + e.total + "일째")) + '">' +
+                esc(e.school + (e.grade && e.grade !== "전체" ? " " + e.grade.replace("학년", "") : "")) +
+                (mark ? '<i>' + mark + '</i>' : "") + '</span>';
       });
       if (ex.length > 2) tags += '<span class="oc-tag oc-ex">+' + (ex.length - 2) + '</span>';
       ac.slice(0, 1).forEach(e => {
@@ -388,6 +411,8 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
           '<div class="oc-days">' + cells + '</div>' +
           '<div class="oc-legend">' +
             '<span><i style="background:#eef2ff;border-color:#d5dbf7"></i>지필평가</span>' +
+            '<span><i style="background:#eef2ff;border-color:#d5dbf7;border-left:3px solid #4338ca"></i>시험 시작일</span>' +
+            '<span><i style="background:#eef2ff;border-color:#d5dbf7;border-right:3px solid #4338ca"></i>시험 종료일</span>' +
             '<span><i style="background:#f1f5f9;border-color:#dde5ee"></i>학사일정</span>' +
             '<span><i style="background:#ecfdf5;border-color:#bfe6dc"></i>근무자</span>' +
             '<span><i style="background:#eff6ff;border-color:#cfe0fb"></i>상담 가능</span>' +
@@ -482,8 +507,12 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
 
     let sch = "";
     if (hn) sch += '<div class="oc-note" style="color:#b91c1c;font-weight:700">' + esc(hn) + ' — 공휴일</div>';
-    if (ex.length) sch += '<div class="oc-note"><b>지필평가</b> · ' +
-      ex.map(e => esc(e.school + " " + (e.grade === "전체" ? "" : e.grade) + " " + e.term)).join(" / ") + '</div>';
+    if (ex.length) sch += '<div class="oc-note"><b>지필평가</b><br>' + ex.map(e => {
+      const head = esc(e.school + " " + (e.grade === "전체" ? "" : e.grade) + " " + e.term);
+      if (e.total === 1) return head + ' — 하루 (' + esc(e.span.split("~")[0]) + ')';
+      const what = e.first ? '<b>시작일</b>' : (e.last ? '<b>종료일</b>' : e.nth + '일째');
+      return head + ' — ' + what + ' · 전체 ' + esc(e.span) + ' (' + e.total + '일)';
+    }).join("<br>") + '</div>';
     if (ac.length) sch += '<div class="oc-note"><b>학사일정</b> · ' +
       ac.map(e => esc(e.school + " " + e.title)).join(" / ") + '</div>';
     if (C && C.inVacation(d, vac)) sch += '<div class="oc-note"><b>방학 기간</b> — 월~목 상담은 닫힙니다.</div>';
