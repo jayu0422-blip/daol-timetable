@@ -172,6 +172,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=d46c8eeb"></script>
+<script src="schedule-cal.js?v=f059a448"></script>
 <script src="consult-slots.js?v=309f1c68"></script>
 <script>
 /* ===== 원장 상담 가용 규칙 =====
@@ -189,6 +190,23 @@ let picked = {subjects:new Set(), date:null, time:null};
 let taken = {};   // "YYYY-MM-DD" -> Set(times)
 let VACATIONS = [];   // [["2026-07-20","2026-08-16"], …] — 방학 중 월~목 상담은 닫힌다
 
+/* 공휴일이면 닫는다. 원장 대시보드 달력과 같은 원본(schedule-cal.js)을 쓴다.
+   이게 없으면 추석 연휴에 학부모가 신청해 놓고 그날 밤 학원에 온다. */
+function isHoliday(key){
+  const S = window.DaolScheduleCal;
+  return !!(S && S.HOLIDAYS && S.HOLIDAYS.some(h => h[0] === key));
+}
+/* 이미 지나간 시각은 안 보여준다. 레벨테스트 도착시각 기준으로 자른다 —
+   22시 상담이라도 2과목이면 21시까지 와야 하므로 21시가 지나면 의미가 없다. */
+function isPast(key, t){
+  const now = new Date();
+  const todayKey = iso(now);
+  if (key > todayKey) return false;
+  if (key < todayKey) return true;
+  const arrive = CS.arriveTime(t, [...picked.subjects]) || t;
+  return CS.toMin(arrive) <= now.getHours()*60 + now.getMinutes();
+}
+
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,"0");
 const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
@@ -204,7 +222,7 @@ $("subs").addEventListener("click",e=>{
   const s=c.dataset.s;
   if(picked.subjects.has(s)){picked.subjects.delete(s);c.classList.remove("on");}
   else{picked.subjects.add(s);c.classList.add("on");}
-  renderTestInfo(); renderConfirm(); updateBtn();
+  renderTestInfo(); buildDays(); renderConfirm(); updateBtn();
 });
 function renderTestInfo(){
   const tm=testMinutes(); const box=$("testInfo");
@@ -223,8 +241,9 @@ function buildDays(){
     const d=new Date(today); d.setDate(today.getDate()+i);
     const dow=d.getDay();
     const key=iso(d);
-    const slots = CS.forDate(key, {vacations: VACATIONS});
-    if(!slots.length) continue;                    // 일요일·방학 중 평일은 열지 않음
+    if(isHoliday(key)) continue;                   // 공휴일은 닫음(대시보드와 같은 기준)
+    const slots = CS.forDate(key, {vacations: VACATIONS}).filter(t => !isPast(key, t));
+    if(!slots.length) continue;                    // 일요일·방학 중 평일·지난 시각은 열지 않음
     const el=document.createElement("div"); el.className="day";
     const sat = dow===6 ? '<span class="sat">토</span>' : '';
     el.innerHTML=`<div class="dh">${d.getMonth()+1}월 ${d.getDate()}일 (${WD[dow]}) ${sat}</div>`;

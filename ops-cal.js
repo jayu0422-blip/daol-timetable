@@ -243,7 +243,7 @@
 .oc-head div{text-align:center;font-size:11.5px;font-weight:800;color:var(--oc-mut);letter-spacing:.04em}
 .oc-head div:first-child{color:#b91c1c}.oc-head div:last-child{color:#1d4ed8}
 .oc-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 8px}
-.oc-c{min-height:96px;border:1px solid var(--oc-line);border-radius:10px;background:#fff;padding:6px 7px;
+.oc-c{min-height:112px;border:1px solid var(--oc-line);border-radius:10px;background:#fff;padding:6px 7px;
   cursor:pointer;position:relative;overflow:hidden;text-align:left;font:inherit;display:block;width:100%}
 .oc-c:hover{border-color:#c3cede;box-shadow:0 2px 10px -4px rgba(16,24,40,.25)}
 .oc-c.off{background:#fafbfd;opacity:.45}
@@ -257,13 +257,16 @@
 .oc-tag{display:inline-block;font-size:10px;font-weight:800;line-height:1.5;padding:1px 5px;border-radius:5px;margin:2px 2px 0 0;
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
 .oc-ex{background:#eef2ff;color:#3730a3;border:1px solid #d5dbf7}
-.oc-ex i{font-style:normal;font-weight:900;margin-left:3px;opacity:.95}
+.oc-ex{display:inline-flex;align-items:baseline;gap:3px}
+.oc-ex .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.oc-ex i{font-style:normal;font-weight:900;opacity:.95;flex:none}
 .oc-ex.s{border-left:3px solid #4338ca;padding-left:4px}
 .oc-ex.e{border-right:3px solid #4338ca;padding-right:4px}
 .oc-ex.s i,.oc-ex.e i{color:#312e81}
 .oc-ac{background:#f1f5f9;color:#334155;border:1px solid #dde5ee}
 .oc-mk{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;position:absolute;left:7px;right:7px;bottom:6px}
 .oc-m{font-size:10px;font-weight:800;padding:1px 5px;border-radius:20px;border:1px solid}
+.oc-m.ex{background:#e0e7ff;color:#3730a3;border-color:#c7d2fe}
 .oc-m.staff{background:#ecfdf5;color:#0f766e;border-color:#bfe6dc}
 .oc-m.consult{background:#eff6ff;color:#1d4ed8;border-color:#cfe0fb}
 .oc-m.book{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
@@ -362,15 +365,19 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
         tags += '<span class="oc-tag oc-ex' + cls + '" title="' +
                 esc(e.school + " " + e.grade + " " + e.term + " · " + e.span +
                     (one ? " (하루)" : " · " + e.nth + "/" + e.total + "일째")) + '">' +
+                '<span class="nm">' +
                 esc(e.school + (e.grade && e.grade !== "전체" ? " " + e.grade.replace("학년", "") : "")) +
-                (mark ? '<i>' + mark + '</i>' : "") + '</span>';
+                '</span>' + (mark ? '<i>' + mark + '</i>' : "") + '</span>';
       });
-      if (ex.length > 2) tags += '<span class="oc-tag oc-ex">+' + (ex.length - 2) + '</span>';
+      const more = ex.length > 2 ? (ex.length - 2) : 0;   // 배지 줄에서 그린다(아래 mk)
       ac.slice(0, 1).forEach(e => {
         tags += '<span class="oc-tag oc-ac" title="' + esc(e.school + " " + e.title) + '">' + esc(e.title) + '</span>';
       });
 
       let mk = "";
+      if (more) mk += '<span class="oc-m ex" title="' +
+        esc(ex.slice(2).map(e => e.school + " " + e.grade + " " + e.term).join(" / ")) +
+        '">시험 +' + more + '</span>';
       if (staff && staff.who) mk += '<span class="oc-m staff">' + esc(staff.who) + '</span>';
       if (bks.length) mk += '<span class="oc-m book">상담 ' + bks.length + '</span>';
       else if (slots.length) mk += '<span class="oc-m consult">가능 ' + slots.length + '</span>';

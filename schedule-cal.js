@@ -62,7 +62,9 @@
   /* ---------- 유틸 ---------- */
   const pad = n => String(n).padStart(2, "0");
   const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
-  const shortSchool = s => s.replace("중학교", "중").replace("고등학교", "고");
+  /* 은가람중학교는 원장 지시로 줄이지 않는다(2026-09-04). 나머지는 종전대로. */
+  const NO_SHORT = { "은가람중학교": 1 };
+  const shortSchool = s => NO_SHORT[s] ? s : s.replace("중학교", "중").replace("고등학교", "고");
   /* 모바일 칩용 3글자 코드 — 좁은 칸(38px~)에서도 잘리지 않는 최대 길이 */
   const MINI = { "미사강변중학교": "미강중", "미사강변고등학교": "미강고", "은가람중학교": "은가람중학교" };
   const miniSchool = s => MINI[s] || shortSchool(s).slice(0, 3);
