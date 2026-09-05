@@ -1825,7 +1825,7 @@ document.getElementById("refresh").addEventListener("click",loadData);
 /* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
    GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
    서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
-const BUILD="2026-09-04c";
+const BUILD="2026-09-05a";
 function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
 async function checkBuild(){
   const b=document.getElementById("buildBadge"); if(!b) return;
@@ -2118,11 +2118,10 @@ const GRID_ROOMS=ROOMS;   // 복도테이블도 실제로 수업을 하는 자�
 // 한 수업이 도중에 강의실을 옮기는 경우. roomBefore/roomAfter 는 문자열이거나
 // {요일:강의실} 객체 — 요일마다 옮겨 갈 방이 다를 수 있다.
 const SESSION_SPLITS=[
-  // 화요일 — 중3(덕풍중·미사중)과 하남고1은 6:30~8시를 복도테이블에서 하고,
-  // 8시에 중1 A반이 스터디홀에서 빠지면 스터디홀로 옮긴다. (원장 지시 2026-09-04)
+  // 화요일 — 하남고1 클리닉은 6:30~8시를 복도테이블에서 하고, 8시에 중1 A반이
+  // 스터디홀에서 빠지면 스터디홀로 옮긴다. (하남중3·미사중3은 토·일 1:1로 빠졌다 — 2026-09-05)
   { days:["화"], at:20*60, roomBefore:"복도", roomAfter:"스터디홀",
-    match:c=>c.teacher==="윤재영" &&
-             (/덕풍|미사중/.test(c.course_name||"") || (c.course_name||"").includes("하남고1")) }
+    match:c=>c.teacher==="윤재영" && (c.course_name||"").includes("하남고1") }
 ];
 function splitRoom(v,day){ return (v && typeof v==="object") ? (v[day]||null) : v; }
 // 같은 강의실에 겹치는 블록 → 좌우 분할(합반/통합관리 시각화)
