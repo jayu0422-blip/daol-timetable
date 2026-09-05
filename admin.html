@@ -1825,7 +1825,7 @@ document.getElementById("refresh").addEventListener("click",loadData);
 /* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
    GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
    서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
-const BUILD="2026-09-04a";
+const BUILD="2026-09-04b";
 function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
 async function checkBuild(){
   const b=document.getElementById("buildBadge"); if(!b) return;
@@ -1988,6 +1988,7 @@ const ROOMS=[
   {key:"본관2",label:"2강의실",bldg:"다올105"},
   {key:"본관3",label:"3강의실",bldg:"다올105"},
   {key:"스터디홀",label:"스터디홀",bldg:"다올105"},
+  {key:"복도",label:"복도테이블",bldg:"다올105"},
   {key:"상담실",label:"상담실",bldg:"다올105"},
   {key:"대치1",label:"대치더올 1강의실",bldg:"대치더올"},
   {key:"대치2",label:"대치더올 2강의실",bldg:"대치더올"},
@@ -2036,11 +2037,16 @@ function orderByPref(teacher,day,rooms){
   return [...pref.filter(r=>rooms.includes(r)), ...rooms.filter(r=>!pref.includes(r))];
 }
 // 강사별 「정규 / 클리닉」 고정 강의실 — 학년이 달라도 절대 한 방에 섞이지 않게 (원장 규칙 2026-08-28)
+// 값은 강의실 이름이거나 {요일:강의실} — 민귀홍 클리닉처럼 요일마다 방이 다른 경우가 있다
 const TEACHER_ROOM_RULE={
   "황웅":  {"정규":"본관1","클리닉":"본관3"},
-  "민귀홍":{"정규":"본관1","클리닉":"본관2"}
+  "민귀홍":{"정규":"본관1","클리닉":{"목":"본관3","일":"본관2"}}
 };
-function ruleRoom(it){ const r=TEACHER_ROOM_RULE[it.c.teacher]; return r?(r[it.s.type]||null):null; }
+function ruleRoom(it,day){
+  const r=TEACHER_ROOM_RULE[it.c.teacher]; if(!r) return null;
+  const v=r[it.s.type];
+  return (v && typeof v==="object") ? (v[day]||null) : (v||null);
+}
 function ovl(a,b){ return a.start<b.end && b.start<a.end; }
 function fitCheck(list, rooms, occ, day){
   const sim={}; rooms.forEach(r=>sim[r]=[...(occ[r]||[])]);
@@ -2072,7 +2078,7 @@ function assignDay(day){
     list.forEach(it=>{
       if(it.forced){ it.room=it.forced; occ[it.forced]&&occ[it.forced].push(it.s); return; }  // 세션 분할 강제 강의실
       // (A) 강사 규칙 > 수동 지정 > 자동 배정. 지정이 있으면 통합 병합으로 덮이지 않는다
-      const ov=ruleRoom(it) || (it.c.room_overrides||{})[day];
+      const ov=ruleRoom(it,day) || (it.c.room_overrides||{})[day];
       if(!ov){
         // 무학년 통합반(같은 강사·과목·시간) → 이미 배정된 같은 방을 공유. 충돌 아님
         const twin=list.find(x=>x!==it && x.room && x.c.subject===it.c.subject && x.s.start===it.s.start && x.s.end===it.s.end);
@@ -2106,16 +2112,16 @@ function assignDay(day){
   return {items, unparsed};
 }
 const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
-const GRID_ROOMS=ROOMS;   // 복도테이블을 없애 이제 그리드 = 배정 가능한 강의실과 같다
+const GRID_ROOMS=ROOMS;   // 복도테이블도 실제로 수업을 하는 자리라 그리드·배정 모두에 들어간다
 // 한 수업이 중간에 방을 옮기는 경우(그리드에서만 분할, 데이터는 1강좌 유지)
 // 한 수업이 도중에 강의실을 옮기는 경우. roomBefore/roomAfter 는 문자열이거나
 // {요일:강의실} 객체 — 요일마다 옮겨 갈 방이 다를 수 있다.
 const SESSION_SPLITS=[
-  // 내신 대비(2026-09) — 중3(덕풍중·미사중)은 화·목 6시 등원.
-  // 6~8시에는 강의실 네 곳이 모두 차 있어 상담실에서 인포가 테스트·문제풀이를 진행하고,
-  // 8시에 중1 A반이 빠지면 정규 강의실로 옮겨 원장 수업을 한다.
-  { days:["화","목"], at:20*60, roomBefore:"상담실", roomAfter:{"화":"본관2","목":"본관3"},
-    match:c=>c.teacher==="윤재영" && (c.course_name||"").includes("중3") && (c.course_name||"").includes("화목토") }
+  // 화요일 — 중3(덕풍중·미사중)과 하남고1은 6:30~8시를 복도테이블에서 하고,
+  // 8시에 중1 A반이 스터디홀에서 빠지면 스터디홀로 옮긴다. (원장 지시 2026-09-04)
+  { days:["화"], at:20*60, roomBefore:"복도", roomAfter:"스터디홀",
+    match:c=>c.teacher==="윤재영" &&
+             (/덕풍|미사중/.test(c.course_name||"") || (c.course_name||"").includes("하남고1")) }
 ];
 function splitRoom(v,day){ return (v && typeof v==="object") ? (v[day]||null) : v; }
 // 같은 강의실에 겹치는 블록 → 좌우 분할(합반/통합관리 시각화)
