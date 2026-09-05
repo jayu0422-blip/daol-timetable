@@ -1825,7 +1825,7 @@ document.getElementById("refresh").addEventListener("click",loadData);
 /* ── 화면 버전 — 배포했는데 안 바뀌는 일을 막는다 ──────────────────
    GitHub Pages 가 admin.html 을 10분 캐시해 코드만 옛 것으로 남는 일이 있었다.
    서버 파일의 BUILD 를 직접 읽어 다르면 배지를 빨갛게 바꾸고, 누르면 캐시를 무시하고 다시 받는다. */
-const BUILD="2026-09-04b";
+const BUILD="2026-09-04c";
 function hardReload(){ const u=new URL(location.href); u.searchParams.set("v",Date.now()); location.replace(u.toString()); }
 async function checkBuild(){
   const b=document.getElementById("buildBadge"); if(!b) return;
@@ -2039,8 +2039,9 @@ function orderByPref(teacher,day,rooms){
 // 강사별 「정규 / 클리닉」 고정 강의실 — 학년이 달라도 절대 한 방에 섞이지 않게 (원장 규칙 2026-08-28)
 // 값은 강의실 이름이거나 {요일:강의실} — 민귀홍 클리닉처럼 요일마다 방이 다른 경우가 있다
 const TEACHER_ROOM_RULE={
-  "황웅":  {"정규":"본관1","클리닉":"본관3"},
-  "민귀홍":{"정규":"본관1","클리닉":{"목":"본관3","일":"본관2"}}
+  "황웅":  {"정규":"본관1","클리닉":"본관3"}
+  // 민귀홍은 강좌·요일마다 방이 달라(목 미강고1=1강 / 미강고2=3강, 일 미강고2=1강 / 미강고1=2강)
+  // 규칙으로 묶지 않고 강좌별 수동 지정에 맡긴다. 두 강좌 모두 지정이 있어 통합 병합에 덮이지 않는다.
 };
 function ruleRoom(it,day){
   const r=TEACHER_ROOM_RULE[it.c.teacher]; if(!r) return null;
