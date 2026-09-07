@@ -267,6 +267,7 @@
 .oc-mk{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;position:absolute;left:7px;right:7px;bottom:6px}
 .oc-m{font-size:10px;font-weight:800;padding:1px 5px;border-radius:20px;border:1px solid}
 .oc-m.ex{background:#e0e7ff;color:#3730a3;border-color:#c7d2fe}
+.oc-m.only-mob{display:none}
 .oc-m.staff{background:#ecfdf5;color:#0f766e;border-color:#bfe6dc}
 .oc-m.consult{background:#eff6ff;color:#1d4ed8;border-color:#cfe0fb}
 .oc-m.book{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
@@ -325,7 +326,17 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
   display:flex;align-items:center;gap:6px}
 .oc-tod .empty{font-size:12px;color:#5b7095;line-height:1.55}
 @media(max-width:1080px){.oc-wrap{grid-template-columns:1fr}.oc-side{border-left:0;border-top:1px solid var(--oc-line)}}
-@media(max-width:760px){.oc-c{min-height:74px}.oc-tag{display:none}.oc-mk{position:static;margin-top:5px}}
+@media(max-width:760px){
+  .oc-c{min-height:78px;padding:5px 4px}
+  .oc-tag{display:none}                      /* 칩은 좁아서 못 쓴다 — 아래 배지로 대신한다 */
+  .oc-mk{position:static;margin-top:4px;gap:3px}
+  .oc-m{font-size:9.5px;padding:1px 4px}
+  .oc-m.only-mob{display:inline-block}
+  .oc-m.no-mob{display:none}
+  .oc-hn{font-size:9.5px}
+  /* 칩이 안 보이는데 시작/종료 설명만 남으면 '시험이 없다'로 읽힌다 */
+  .oc-legend .lg-mark{display:none}
+}
 @media print{.oc-side,.oc-bar .oc-b,.oc-warn{display:none}.oc-wrap{grid-template-columns:1fr}}
 `;
     document.head.appendChild(s);
@@ -375,7 +386,11 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       });
 
       let mk = "";
-      if (more) mk += '<span class="oc-m ex" title="' +
+      /* 폰에서는 칩이 숨겨지므로 개수 배지로 대신한다. 안 그러면 시험 주간을 평범한 주로 본다. */
+      if (ex.length) mk += '<span class="oc-m ex only-mob" title="' +
+        esc(ex.map(e => e.school + " " + e.grade + " " + e.term).join(" / ")) +
+        '">시험 ' + ex.length + '</span>';
+      if (more) mk += '<span class="oc-m ex no-mob" title="' +
         esc(ex.slice(2).map(e => e.school + " " + e.grade + " " + e.term).join(" / ")) +
         '">시험 +' + more + '</span>';
       if (staff && staff.who) mk += '<span class="oc-m staff">' + esc(staff.who) + '</span>';
@@ -418,8 +433,8 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
           '<div class="oc-days">' + cells + '</div>' +
           '<div class="oc-legend">' +
             '<span><i style="background:#eef2ff;border-color:#d5dbf7"></i>지필평가</span>' +
-            '<span><i style="background:#eef2ff;border-color:#d5dbf7;border-left:3px solid #4338ca"></i>시험 시작일</span>' +
-            '<span><i style="background:#eef2ff;border-color:#d5dbf7;border-right:3px solid #4338ca"></i>시험 종료일</span>' +
+            '<span class="lg-mark"><i style="background:#eef2ff;border-color:#d5dbf7;border-left:3px solid #4338ca"></i>시험 시작일</span>' +
+            '<span class="lg-mark"><i style="background:#eef2ff;border-color:#d5dbf7;border-right:3px solid #4338ca"></i>시험 종료일</span>' +
             '<span><i style="background:#f1f5f9;border-color:#dde5ee"></i>학사일정</span>' +
             '<span><i style="background:#ecfdf5;border-color:#bfe6dc"></i>근무자</span>' +
             '<span><i style="background:#eff6ff;border-color:#cfe0fb"></i>상담 가능</span>' +
