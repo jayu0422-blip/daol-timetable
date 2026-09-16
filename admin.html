@@ -2200,10 +2200,10 @@ function renderDay(){
 
 /* ===== 학년별 주간 시간표 ===== */
 const ALL_KEY="🗂 전학년 통합";
-const GRADE_BUTTONS=[ALL_KEY,"중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고1","미사고2","미사강변고2","고3"];
+const GRADE_BUTTONS=[ALL_KEY,"중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고2","미사고2","미사강변고2","고3"];
 /* 통합본 요일 순서 — 월수금반 / 화목토반이 붙어 보이도록 */
 const DAY_ORDER_ALL=["월","수","금","화","목","토","일"];
-const GRADES_ALL=["중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고1","미사고2","미사강변고2","고3"];
+const GRADES_ALL=["중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고2","미사고2","미사강변고2","고3"];
 const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
 let selGrade="미사고1";
 function buildGradeChips(){ document.getElementById("gChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
@@ -2299,8 +2299,8 @@ function coursesForGrade(key){
     if(sub==="수학") return true;                       // 수학=합반/공통 → 학교 무관 표시
     // 하남고1은 자체 영어반(윤재영) 운영, 그 외 과목은 공통 강좌만
     if(key==="하남고1") return sub==="영어" ? (sch===null||sch==="하남고") : sch===null;
-  // 풍산고1도 자체 영어반(윤재영) 운영 — 일 정규 + 금 클리닉
-  if(key==="풍산고1") return sub==="영어" ? (sch===null||sch==="풍산고") : sch===null;
+  // 풍산고2도 자체 영어반(윤재영) 운영 — 일 정규 + 목 클리닉
+  if(key==="풍산고2") return sub==="영어" ? (sch===null||sch==="풍산고") : sch===null;
     const wantSchool = key.startsWith("미사강변고") ? "미사강변고" : "미사고";
     return sch===null || sch===wantSchool;              // 그 외 과목: 공통 또는 해당 학교
   });
@@ -2315,7 +2315,7 @@ function renderCombined(){
       const p=parseDayTimes(c.schedule_text);
       p.sessions.forEach(s=>{
         if(!cells[g][s.day]) return;
-        const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+        const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")) && !/1:1/.test(c.course_name||"");
         let type=(s.type==="관리"||s.type==="클리닉")?"클리닉":"수업";
         if(midEng) type=(s.day==="금"||s.day==="토")?"클리닉":"수업";
         cells[g][s.day].push({start:s.start,end:s.end,type,subj:c.subject,teacher:c.teacher,
@@ -2372,7 +2372,7 @@ function renderGrade(){
       if(!byDay[s.day]) return;
       let type=(s.type==="관리"||s.type==="클리닉")?"클리닉":"수업";
       // 중등 영어 운영 규칙: 월·수 / 화·목 = 수업, 금 / 토 = 관리(클리닉)
-      const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+      const midEng = c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")) && !/1:1/.test(c.course_name||"");
       if(midEng) type = (s.day==="금"||s.day==="토") ? "클리닉" : "수업";
       // 강사가 입력한 요일·시간대별 진행내용 우선, 없으면 중등영어 기본 문구
       const detail = notesFor(c.session_notes, s.day, s.start) || (midEng ? midEngDetail(s.day) : "");
@@ -2457,7 +2457,7 @@ function bullets(t){
 function scheduleSummary(c){
   const p=parseDayTimes(c.schedule_text);
   if(!p.sessions.length) return (c.schedule_text||"").replace(/\n/g," / ");
-  const midEng=c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||""));
+  const midEng=c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")) && !/1:1/.test(c.course_name||"");
   const groups={};
   p.sessions.forEach(s=>{
     let kind=(s.type==="관리"||s.type==="클리닉")?"관리(클리닉)":"수업";
@@ -2526,7 +2526,7 @@ function subjectCardsHtml(){
   }).join("");
 }
 function renderGuide(){
-  const hasMidEng=coursesForGrade(selGrade).some(c=>c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")));
+  const hasMidEng=coursesForGrade(selGrade).some(c=>c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")) && !/1:1/.test(c.course_name||""));
   let html=`<div class="gu-head"><div class="t1">D A O L 1 0 5 &nbsp; G U I D E</div><div class="t2">${esc(selGrade)} 수업 방식 안내</div></div>`;
 
   // ① 과목별 강좌 안내 (강사가 입력한 대상·내용·목표 기반)
