@@ -72,7 +72,7 @@
   .story{background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:24px 22px;box-shadow:var(--shadow-sm)}
   .story p{margin:0;font-size:15.5px;line-height:1.9;color:var(--text)}
   .pull{margin-top:16px;background:var(--paper);border-left:4px solid var(--gold);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow-sm)}
-  .pull b{display:block;font-family:var(--serif);font-size:17px;color:var(--navy);margin-bottom:7px}
+  .pull>b{display:block;font-family:var(--serif);font-size:17px;color:var(--navy);margin-bottom:7px}
   .pull span{font-size:15px;line-height:1.88;color:var(--text)}
 
   /* 비교표 */
@@ -88,7 +88,7 @@
   .pillars{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
   .pl{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 19px;box-shadow:var(--shadow-sm);position:relative}
   .pl .n{font-family:var(--serif);font-size:13px;font-weight:800;color:var(--gold);letter-spacing:.1em}
-  .pl b{display:block;font-family:var(--serif);font-size:17px;color:var(--ink);margin:5px 0 7px;line-height:1.45}
+  .pl>b{display:block;font-family:var(--serif);font-size:17px;color:var(--ink);margin:5px 0 7px;line-height:1.45}
   .pl span{font-size:14px;line-height:1.82;color:var(--muted)}
 
   /* 강사 */
@@ -287,6 +287,8 @@ function notesFor(raw,day,start){
 
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const escA=s=>esc(s).replace(/"/g,"&quot;");
+// 원고(copy.js)의 강조 표시: 전부 이스케이프한 뒤 짝이 맞는 <b>…</b>만 되살린다
+const rich=s=>esc(s).replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/g,"<b>$1</b>");
 const fmt=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
 const bullets=t=>String(t||"").split(/\n/).map(s=>s.replace(/^[-–—·•]\s*/,"").trim()).filter(Boolean);
 const ggf=g=>(/고3|수능/.test(g||""))?"고3":g;
@@ -409,7 +411,7 @@ function render(courses,teachers){
     <div>
       <div class="brand">D A O L 1 0 5 &nbsp;·&nbsp; 미사학원</div>
       <h1>${esc(headline)}</h1>
-      <p class="sub">${subline===cp1?.hero_sub?esc(subline):subline}</p>
+      <p class="sub">${cp1?rich(subline):subline}</p>
       <div class="who">${NAME?esc(NAME)+" 학생 · ":""}${esc(GRADE)} 안내</div>
     </div>
     ${heroT.length?`<div class="hero-duo">${heroT.map(t=>`<div class="hero-pic"><img src="${escA(t.photo_url)}" alt="${esc(t.name)} 선생님"><span class="cap">${esc(t.name)} 선생님</span></div>`).join("")}</div>`:""}
@@ -436,17 +438,17 @@ function render(courses,teachers){
     if(cp){
       h+=`<div class="eyebrow">지금 이런 상황이라면</div>
         <h2 class="sec">${esc(cp.problem.title)}</h2>
-        <div class="story"><p>${esc(cp.problem.body)}</p>
-          ${level==="중등"?`<div class="pull"><b>${esc(cp.analogy.title)}</b><span>${esc(cp.analogy.body)}</span></div>`:""}
+        <div class="story"><p>${rich(cp.problem.body)}</p>
+          ${level==="중등"?`<div class="pull"><b>${esc(cp.analogy.title)}</b><span>${rich(cp.analogy.body)}</span></div>`:""}
         </div>`;
       h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">흔한 오해</div>
-        <h3 class="sub">${esc(cp.myth.title)}</h3><p class="lead">${esc(cp.myth.body)}</p></div>`;
+        <h3 class="sub">${esc(cp.myth.title)}</h3><p class="lead">${rich(cp.myth.body)}</p></div>`;
       h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">한눈에 비교</div>
         <h3 class="sub">${esc(cp.compare.title)}</h3>
         <table class="vs"><thead><tr><th>구분</th><th>흔한 방식</th><th class="our">다올105</th></tr></thead><tbody>${
-        cp.compare.rows.map(r=>`<tr><td class="ax">${esc(r.axis)}</td><td>${esc(r.common)}</td><td class="our">${esc(r.ours)}</td></tr>`).join("")}</tbody></table></div>`;
+        cp.compare.rows.map(r=>`<tr><td class="ax">${esc(r.axis)}</td><td>${rich(r.common)}</td><td class="our">${rich(r.ours)}</td></tr>`).join("")}</tbody></table></div>`;
       h+=`<div style="margin-top:34px" class="reveal"><div class="eyebrow">다올105는 이렇게 합니다</div>
-        <div class="pillars">${cp.solution_points.map((p,idx)=>`<div class="pl"><div class="n">0${idx+1}</div><b>${esc(p.title)}</b><span>${esc(p.body)}</span></div>`).join("")}</div></div>`;
+        <div class="pillars">${cp.solution_points.map((p,idx)=>`<div class="pl"><div class="n">0${idx+1}</div><b>${esc(p.title)}</b><span>${rich(p.body)}</span></div>`).join("")}</div></div>`;
     }
     const profs=names.map(n=>{
       const t=profFor(teachers[n]||{}, n, level), raw=(window.DAOL_SCHOLARS||{})[n]||{};
@@ -484,7 +486,11 @@ function render(courses,teachers){
       </div>`;
     });
     h+=`</div>`;
-    if(cp&&cp.cross_sell) h+=`<div class="note warn" style="margin-top:22px">${esc(cp.cross_sell)}</div>`;
+    if(cp&&cp.cross_sell){
+      const xs=cp.cross_sell;   // 원고에 따라 문자열 또는 {title, body}
+      const xsHtml=typeof xs==="string"?rich(xs):`${xs.title?`<b>${esc(xs.title)}</b><br>`:""}${rich(xs.body)}`;
+      h+=`<div class="note warn" style="margin-top:22px">${xsHtml}</div>`;
+    }
     h+=`</div></section>`;
   });
 
@@ -573,7 +579,7 @@ function render(courses,teachers){
   /* FAQ */
   const faqs=[]; targets.forEach(s=>{const cp=copyFor(s,level); if(cp) cp.faq.slice(0,3).forEach(f=>faqs.push({...f,sub:s}));});
   if(faqs.length) h+=`<section><div class="wrap reveal"><div class="eyebrow">FAQ</div><h2 class="sec">자주 묻는 질문</h2>
-    ${faqs.map(f=>`<details><summary><span class="q-sub" style="background:${SC[f.sub]||'#8b93a7'}">${esc(f.sub)}</span>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></section>`;
+    ${faqs.map(f=>`<details><summary><span class="q-sub" style="background:${SC[f.sub]||'#8b93a7'}">${esc(f.sub)}</span>${esc(f.q)}</summary><p>${rich(f.a)}</p></details>`).join("")}</div></section>`;
 
   /* CTA */
   h+=`<section class="cta"><div class="wrap">
