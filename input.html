@@ -230,6 +230,9 @@ label{font-weight:700;color:#5c6a80}
   <!-- 월간 일정표 (공휴일 + 중·고 지필평가) -->
   <div id="monthlyCal" style="margin:14px 0"></div>
 
+  <!-- 지금 입력하는 계획 달 — 15일이 지나면 다음 달 계획으로 넘어간다 -->
+  <div id="planBanner" style="margin:0 0 10px;padding:12px 14px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;font-size:13.5px;color:#713f12;line-height:1.5"></div>
+
   <div class="savebar">
     <button class="btn primary sm" id="addTop">+ 강좌 추가</button>
     <span class="status" id="saveStatus">—</span>
@@ -245,8 +248,8 @@ label{font-weight:700;color:#5c6a80}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=c4d7a4a3"></script>
-<script src="config.js?v=d46c8eeb"></script>
-<script src="schedule-cal.js?v=f059a448"></script>
+<script src="config.js?v=72ddcbd2"></script>
+<script src="schedule-cal.js?v=813b2c27"></script>
 <script src="course-cal.js?v=608e4ed7"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
@@ -346,9 +349,8 @@ async function save(){
        월별로 쌓아 두어야 상담자료·과목안내가 "가장 최근 달" 기준으로 나갈 수 있다. */
     if(window.DaolPlan && TARGET && TARGET.key){
       rows.forEach(r=>{
-        let mp = r.monthly_plans;
-        if(typeof mp === "string"){ try{ mp = JSON.parse(mp||"{}"); }catch(e){ mp = {}; } }
-        r.monthly_plans = Object.assign({}, mp||{}, {[TARGET.key]: DaolPlan.snapshot(r)});
+        /* merge: 같은 달에 먼저 찍힌 제출 시각(submitted_at)을 지우지 않는다 */
+        r.monthly_plans = DaolPlan.merge(r.monthly_plans, TARGET.key, DaolPlan.snapshot(r));
       });
     }
     const build = (withDates, withPlans)=> rows.map(r=>{
@@ -501,7 +503,7 @@ function initDuty(){
     },600);
   });
 }
-function updateCount(){ document.getElementById("countStat").textContent = `총 ${rows.length}개 강좌`; }
+function updateCount(){ document.getElementById("countStat").textContent = `총 ${rows.length}개 강좌`;  if(typeof renderPlanBanner==='function') renderPlanBanner(); }
 
 /* ---------- 렌더 ---------- */
 const opt = (arr,v)=>arr.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
@@ -616,8 +618,12 @@ function addRow(){ rows.push(blankRow()); render(); document.querySelector(".car
 document.getElementById("addTop").addEventListener("click",addRow);
 document.getElementById("addBottom").addEventListener("click",addRow);
 document.getElementById("submitBtn").addEventListener("click", async ()=>{
+  /* 제출 도장은 강좌마다 "그 달 스냅샷" 안에 찍는다 — teachers.submitted_at 은 칸이 하나뿐이라
+     다음 달 제출이 이번 달 기록을 덮지만, 스냅샷 안의 도장은 달마다 남는다 (대시보드 월별 기록의 근거). */
+  const stamp = new Date().toISOString();
+  if(window.DaolPlan && TARGET && TARGET.key) rows.forEach(r=>{ r.monthly_plans = DaolPlan.merge(r.monthly_plans, TARGET.key, {submitted_at: stamp}); });
   await save();
-  if(useSupa){ await sb.from("teachers").upsert({name:TEACHER, submitted_at:new Date().toISOString(), course_count:rows.length},{onConflict:"name"}); }
+  if(useSupa){ await sb.from("teachers").upsert({name:TEACHER, submitted_at:stamp, course_count:rows.length},{onConflict:"name"}); }
   else { localStorage.setItem("daol_submitted_"+TEACHER, new Date().toISOString()); }
   alert(`${TEACHER} 선생님, 제출 완료되었습니다! (총 ${rows.length}개 강좌)\n수정이 필요하면 언제든 다시 입력 후 저장하시면 됩니다.`);
 });
@@ -625,6 +631,15 @@ document.getElementById("submitBtn").addEventListener("click", async ()=>{
 // 폰에서 앱 전환·화면 끄기 시 마지막 입력 즉시 저장
 document.addEventListener("visibilitychange", ()=>{ if(document.hidden && TEACHER) save(); });
 
+function renderPlanBanner(){
+  const el = document.getElementById("planBanner"); if(!el || !TARGET) return;
+  const subs = rows.map(r=>{ const mp=(window.DaolPlan?DaolPlan.parse(r.monthly_plans):null)||{}; return (mp[TARGET.key]||{}).submitted_at; }).filter(Boolean).sort();
+  const last = subs.length ? new Date(subs[subs.length-1]) : null;
+  const conf = rows.filter(r=>marksOf(r)).length;
+  el.innerHTML = `📌 지금 입력하는 계획: <b>${TARGET.y}년 ${TARGET.m}월</b> — 강좌마다 <b>📅 ${TARGET.m}월 수업 진행표</b>에서 실제 수업일(시험 주간 보강·휴강 포함)을 확인하고, 마지막에 <b>✅ 작성 완료 제출</b>을 눌러주세요.`
+    + ` <span style="color:#92400e">진행표 확정 ${conf}/${rows.filter(r=>(r.course_name||"").trim()).length}개</span>`
+    + (last ? ` · <span style="color:#065f46;font-weight:700">${TARGET.m}월분 제출 ${last.toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})} ${last.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})} ✓</span>` : ` · <span style="color:#b91c1c;font-weight:700">${TARGET.m}월분 아직 제출 전</span>`);
+}
 async function init(){
   const st = await resolveTeacher();
   if(st==="error"){ connError(); return; }

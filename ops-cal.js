@@ -76,13 +76,34 @@
     return S.EXAMS.filter(e => e.month === m && e.days.indexOf(day) >= 0).map(e => {
       const days = e.days.slice().sort((a, b) => a - b);
       const i = days.indexOf(day);
+      const kind = days.length === 1 ? "one" : (i === 0 ? "start" : (i === days.length - 1 ? "end" : "mid"));
       return {
-        school: shortSchool(e.school), grade: e.grade, term: e.term, level: e.level,
-        nth: i + 1, total: days.length,
-        first: i === 0, last: i === days.length - 1,
+        school: shortSchool(e.school), fullSchool: e.school, grade: e.grade, term: e.term, level: e.level,
+        nth: i + 1, total: days.length, days, month: e.month,
+        first: i === 0, last: i === days.length - 1, kind,
+        subjects: e.subjects || null, note: e.note || "",
         span: e.month + "/" + days[0] + "~" + e.month + "/" + days[days.length - 1]
       };
     });
+  }
+  /* 시작일·시험 중·종료일 — 칸의 칩, 폰 배지, 오른쪽 상세가 같은 색을 쓴다 */
+  const KIND_LABEL = { start: "시작", mid: "시험중", end: "종료", one: "하루" };
+  const KIND_LONG = { start: "시작일", mid: "시험 중", end: "종료일", one: "하루 시험" };
+  /* 그 시험의 날짜×학년 과목표. 선택한 날 열을 강조한다. */
+  function examTable(e, selDay) {
+    const days = e.days, subj = e.subjects || {};
+    const grades = [];
+    days.forEach(d => Object.keys(subj[d] || {}).forEach(g => { if (grades.indexOf(g) < 0) grades.push(g); }));
+    const dowOf = d => DOW[new Date(2026, e.month - 1, d).getDay()];
+    const kindOf = d => days.length === 1 ? "one" : (d === days[0] ? "start" : (d === days[days.length - 1] ? "end" : "mid"));
+    let h = '<table class="oc-xt"><thead><tr><th></th>' + days.map(d =>
+      '<th class="k-' + kindOf(d) + (d === selDay ? ' on' : '') + '">' + e.month + '/' + d + '<small>' + dowOf(d) + '</small></th>').join("") + '</tr></thead><tbody>';
+    if (!grades.length) h += '<tr><td class="g">일정</td>' + days.map(d => '<td class="' + (d === selDay ? 'on' : '') + '">시험</td>').join("") + '</tr>';
+    grades.forEach(g => {
+      h += '<tr><td class="g">' + esc(g) + '</td>' + days.map(d =>
+        '<td class="' + (d === selDay ? 'on' : '') + '">' + esc((subj[d] || {})[g] || "–") + '</td>').join("") + '</tr>';
+    });
+    return h + '</tbody></table>';
   }
 
   function academicOn(d) {                                  // planner.html 에서 넣은 행사·방학
@@ -183,6 +204,13 @@
   }
 
   const byDay = (d, kind) => rows.filter(r => r.d === d && (!kind || r.kind === kind));
+  /* 시험기간 임시 일정(kind=memo). body 는 {"t":"직보|휴강|정규|보류|메모","memo":"…"} JSON */
+  function memoBody(r) { try { return JSON.parse(r.body || "{}") || {}; } catch (e) { return { memo: r.body || "" }; } }
+  function memoType(r) { return memoBody(r).t || "메모"; }
+  function memoLine(r) {
+    const b = memoBody(r);
+    return [r.who, r.school, r.subjects, r.slots ? r.slots.replace("-", "~") : "", r.room ? "→ " + r.room : "", b.memo].filter(Boolean).join(" ");
+  }
   const one = (d, kind) => byDay(d, kind)[0] || null;
 
   /* ---------- 상담 예약 쓰기 (bookings) ---------- */
@@ -243,8 +271,9 @@
 .oc-head div{text-align:center;font-size:11.5px;font-weight:800;color:var(--oc-mut);letter-spacing:.04em}
 .oc-head div:first-child{color:#b91c1c}.oc-head div:last-child{color:#1d4ed8}
 .oc-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 8px}
-.oc-c{min-height:112px;border:1px solid var(--oc-line);border-radius:10px;background:#fff;padding:6px 7px;
-  cursor:pointer;position:relative;overflow:hidden;text-align:left;font:inherit;display:block;width:100%}
+.oc-c{min-height:112px;border:1px solid var(--oc-line);border-radius:10px;background:#fff;padding:6px 7px 5px;
+  cursor:pointer;position:relative;overflow:hidden;text-align:left;font:inherit;display:flex;flex-direction:column;align-items:flex-start;width:100%}
+.oc-c .oc-tags{display:block;width:100%}
 .oc-c:hover{border-color:#c3cede;box-shadow:0 2px 10px -4px rgba(16,24,40,.25)}
 .oc-c.off{background:#fafbfd;opacity:.45}
 .oc-c.sel{border-color:var(--navy,#1e3a5f);box-shadow:0 0 0 2px rgba(30,58,95,.16)}
@@ -260,11 +289,34 @@
 .oc-ex{display:inline-flex;align-items:baseline;gap:3px}
 .oc-ex .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .oc-ex i{font-style:normal;font-weight:900;opacity:.95;flex:none}
-.oc-ex.s{border-left:3px solid #4338ca;padding-left:4px}
-.oc-ex.e{border-right:3px solid #4338ca;padding-right:4px}
-.oc-ex.s i,.oc-ex.e i{color:#312e81}
+.oc-ex.k-start{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd;border-left:3px solid #2563eb;padding-left:4px}
+.oc-ex.k-mid{background:#ffedd5;color:#7c2d12;border-color:#fdba74}
+.oc-ex.k-end{background:#fce7f3;color:#831843;border-color:#f9a8d4;border-right:3px solid #db2777;padding-right:4px}
+.oc-ex.k-one{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+.oc-m.ex.k-start{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd}
+.oc-m.ex.k-mid{background:#ffedd5;color:#7c2d12;border-color:#fdba74}
+.oc-m.ex.k-end{background:#fce7f3;color:#831843;border-color:#f9a8d4}
+.oc-m.tmp{background:#fef9c3;color:#713f12;border-color:#fde047}
+.oc-kind{display:inline-block;font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;margin-left:4px;vertical-align:middle}
+.oc-kind.k-start{background:#dbeafe;color:#1e40af}.oc-kind.k-mid{background:#ffedd5;color:#9a3412}
+.oc-kind.k-end{background:#fce7f3;color:#9d174d}.oc-kind.k-one{background:#eef2ff;color:#3730a3}
+.oc-xhd{margin-top:8px;font-weight:700;color:#1f2937}
+.oc-xsub{font-size:12px;color:#334155;margin:3px 0 4px}
+.oc-xnote{font-size:11.5px;color:#b45309;margin-top:3px}
+.oc-xt{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:4px;table-layout:fixed}
+.oc-xt th,.oc-xt td{border:1px solid #e5e7eb;padding:3px 4px;text-align:center;vertical-align:top;word-break:keep-all}
+.oc-xt th{font-weight:800;background:#f8fafc;color:#334155;line-height:1.15}
+.oc-xt th small{display:block;font-weight:600;color:#64748b;font-size:10px}
+.oc-xt th.k-start{background:#dbeafe;color:#1e40af}.oc-xt th.k-mid{background:#ffedd5;color:#9a3412}
+.oc-xt th.k-end{background:#fce7f3;color:#9d174d}.oc-xt th.k-one{background:#eef2ff;color:#3730a3}
+.oc-xt th.on,.oc-xt td.on{outline:2px solid #1e3a5f;outline-offset:-2px;font-weight:800}
+.oc-xt td.g{text-align:left;font-weight:800;background:#fbfbfd;white-space:nowrap}
+.oc-tm{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;background:#fef9c3;color:#713f12;border:1px solid #fde047}
+.oc-tm.t-휴강{background:#fee2e2;color:#991b1b;border-color:#fecaca}.oc-tm.t-정규{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+.oc-tm.t-보류{background:#f1f5f9;color:#475569;border-color:#cbd5e1}
 .oc-ac{background:#f1f5f9;color:#334155;border:1px solid #dde5ee}
-.oc-mk{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;position:absolute;left:7px;right:7px;bottom:6px}
+/* 배지 줄은 칩 아래에 흐르게(static) — 시험 칩이 2개 이상이면 절대배치 배지가 칩 위를 덮었다 (2026-09-19) */
+.oc-mk{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto;padding-top:5px;width:100%}
 .oc-m{font-size:10px;font-weight:800;padding:1px 5px;border-radius:20px;border:1px solid}
 .oc-m.ex{background:#e0e7ff;color:#3730a3;border-color:#c7d2fe}
 .oc-m.only-mob{display:none}
@@ -371,11 +423,11 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       let tags = "";
       ex.slice(0, 2).forEach(e => {
         const one = e.total === 1;
-        const cls = one ? "" : (e.first ? " s" : (e.last ? " e" : ""));
-        const mark = one ? "" : (e.first ? "시작" : (e.last ? "끝" : e.nth + "일"));
+        const cls = " k-" + e.kind;
+        const mark = one ? "" : KIND_LABEL[e.kind];
         tags += '<span class="oc-tag oc-ex' + cls + '" title="' +
                 esc(e.school + " " + e.grade + " " + e.term + " · " + e.span +
-                    (one ? " (하루)" : " · " + e.nth + "/" + e.total + "일째")) + '">' +
+                    (one ? " (하루)" : " · " + KIND_LONG[e.kind] + " " + e.nth + "/" + e.total + "일째")) + '">' +
                 '<span class="nm">' +
                 esc(e.school + (e.grade && e.grade !== "전체" ? " " + e.grade.replace("학년", "") : "")) +
                 '</span>' + (mark ? '<i>' + mark + '</i>' : "") + '</span>';
@@ -387,9 +439,11 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
 
       let mk = "";
       /* 폰에서는 칩이 숨겨지므로 개수 배지로 대신한다. 안 그러면 시험 주간을 평범한 주로 본다. */
-      if (ex.length) mk += '<span class="oc-m ex only-mob" title="' +
-        esc(ex.map(e => e.school + " " + e.grade + " " + e.term).join(" / ")) +
+      if (ex.length) mk += '<span class="oc-m ex only-mob k-' + ex[0].kind + '" title="' +
+        esc(ex.map(e => e.school + " " + e.grade + " " + e.term + " " + KIND_LONG[e.kind]).join(" / ")) +
         '">시험 ' + ex.length + '</span>';
+      const tmp = byDay(ds, "memo");
+      if (tmp.length) mk += '<span class="oc-m tmp" title="' + esc(tmp.map(memoLine).join(" / ")) + '">임시 ' + tmp.length + '</span>';
       if (more) mk += '<span class="oc-m ex no-mob" title="' +
         esc(ex.slice(2).map(e => e.school + " " + e.grade + " " + e.term).join(" / ")) +
         '">시험 +' + more + '</span>';
@@ -401,7 +455,7 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
       cells += '<button type="button" class="' + cls.join(" ") + '" data-d="' + ds + '">' +
         '<div class="oc-n">' + d + (ds === t ? ' <span style="font-size:9.5px;color:#8c6d1f">오늘</span>' : "") + '</div>' +
         (hn ? '<div class="oc-hn">' + esc(hn) + '</div>' : "") +
-        tags + (mk ? '<div class="oc-mk">' + mk + '</div>' : "") +
+        (tags ? '<div class="oc-tags">' + tags + '</div>' : "") + (mk ? '<div class="oc-mk">' + mk + '</div>' : "") +
         '</button>';
     }
 
@@ -432,9 +486,10 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
           '<div class="oc-head">' + DOW.map(x => "<div>" + x + "</div>").join("") + '</div>' +
           '<div class="oc-days">' + cells + '</div>' +
           '<div class="oc-legend">' +
-            '<span><i style="background:#eef2ff;border-color:#d5dbf7"></i>지필평가</span>' +
-            '<span class="lg-mark"><i style="background:#eef2ff;border-color:#d5dbf7;border-left:3px solid #4338ca"></i>시험 시작일</span>' +
-            '<span class="lg-mark"><i style="background:#eef2ff;border-color:#d5dbf7;border-right:3px solid #4338ca"></i>시험 종료일</span>' +
+            '<span><i style="background:#dbeafe;border-color:#93c5fd"></i>시험 시작일</span>' +
+            '<span><i style="background:#ffedd5;border-color:#fdba74"></i>시험 중(일찍 하교)</span>' +
+            '<span><i style="background:#fce7f3;border-color:#f9a8d4"></i>시험 종료일</span>' +
+            '<span><i style="background:#fef9c3;border-color:#fde047"></i>임시 일정(직보·휴강)</span>' +
             '<span><i style="background:#f1f5f9;border-color:#dde5ee"></i>학사일정</span>' +
             '<span><i style="background:#ecfdf5;border-color:#bfe6dc"></i>근무자</span>' +
             '<span><i style="background:#eff6ff;border-color:#cfe0fb"></i>상담 가능</span>' +
@@ -529,12 +584,20 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
 
     let sch = "";
     if (hn) sch += '<div class="oc-note" style="color:#b91c1c;font-weight:700">' + esc(hn) + ' — 공휴일</div>';
-    if (ex.length) sch += '<div class="oc-note"><b>지필평가</b><br>' + ex.map(e => {
-      const head = esc(e.school + " " + (e.grade === "전체" ? "" : e.grade) + " " + e.term);
-      if (e.total === 1) return head + ' — 하루 (' + esc(e.span.split("~")[0]) + ')';
-      const what = e.first ? '<b>시작일</b>' : (e.last ? '<b>종료일</b>' : e.nth + '일째');
-      return head + ' — ' + what + ' · 전체 ' + esc(e.span) + ' (' + e.total + '일)';
-    }).join("<br>") + '</div>';
+    if (ex.length) sch += '<div class="oc-note"><b>지필평가</b>' + ex.map(e => {
+      const head = esc(e.fullSchool + " " + (e.grade === "전체" ? "" : e.grade + " ") + e.term);
+      const badge = '<span class="oc-kind k-' + e.kind + '">' + KIND_LONG[e.kind] +
+        (e.total > 1 ? ' · ' + e.nth + '/' + e.total + '일째' : '') + '</span>';
+      const sub = (e.subjects && e.subjects[p[2]]) ? Object.keys(e.subjects[p[2]]).map(g =>
+        '<b>' + esc(g) + '</b> ' + esc(e.subjects[p[2]][g])).join(' · ') : '';
+      return '<div class="oc-xhd">' + head + ' ' + badge + '</div>' +
+        (sub ? '<div class="oc-xsub">이 날 과목 — ' + sub + '</div>' : '') +
+        examTable(e, p[2]) +
+        (e.note ? '<div class="oc-xnote">⚠ ' + esc(e.note) + '</div>' : '');
+    }).join("") + '</div>';
+    const tmp = byDay(d, "memo");
+    if (tmp.length) sch += '<div class="oc-note"><b>임시 일정</b> <span style="font-weight:400;color:#64748b">(시험기간 직보·휴강 — 대시보드 「시험기간 임시 일정표」에서 편집)</span><br>' +
+      tmp.map(r => '<span class="oc-tm t-' + esc(memoType(r)) + '">' + esc(memoType(r)) + '</span> ' + esc(memoLine(r))).join("<br>") + '</div>';
     if (ac.length) sch += '<div class="oc-note"><b>학사일정</b> · ' +
       ac.map(e => esc(e.school + " " + e.title)).join(" / ") + '</div>';
     if (C && C.inVacation(d, vac)) sch += '<div class="oc-note"><b>방학 기간</b> — 월~목 상담은 닫힙니다.</div>';

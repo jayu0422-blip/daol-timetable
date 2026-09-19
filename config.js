@@ -76,6 +76,8 @@ window.daolIsLegacyMaterial = function (v) {
    컬럼이 아직 없는 DB에서도 그냥 통과한다(스냅샷이 없으면 강좌의 현재 값을 그대로 쓴다). */
 window.DaolPlan = (function () {
   var FIELDS = ["audience", "content", "textbook", "session_notes"];
+  /* 월별 기록 열람용으로 함께 남기는 식별 정보. apply()는 FIELDS 만 되돌리므로 학부모 화면에는 영향 없다. */
+  var META = ["course_name", "grade", "subject", "schedule_text", "course_type", "target_school", "material_fee"];
   function parse(v) {
     if (!v) return null;
     if (typeof v === "string") { try { return JSON.parse(v || "{}"); } catch (e) { return null; } }
@@ -90,7 +92,19 @@ window.DaolPlan = (function () {
   function snapshot(c) {
     var o = {};
     FIELDS.forEach(function (f) { o[f] = (c && c[f] != null) ? c[f] : ""; });
+    META.forEach(function (f) { if (c && c[f] != null && c[f] !== "") o[f] = c[f]; });
+    o.saved_at = new Date().toISOString();
     return o;
+  }
+  /* 그 달 스냅샷에 새 내용을 얹는다 — 제출 시각(submitted_at)처럼 먼저 적힌 값은 지우지 않는다 */
+  function merge(mp, key, patch) {
+    var cur = parse(mp) || {}, out = {}, k;
+    for (k in cur) out[k] = cur[k];
+    var prev = out[key] || {}, next = {};
+    for (k in prev) next[k] = prev[k];
+    for (k in patch) next[k] = patch[k];
+    out[key] = next;
+    return out;
   }
   function apply(c) {
     var mp = parse(c && c.monthly_plans);
@@ -105,7 +119,7 @@ window.DaolPlan = (function () {
     return out;
   }
   return {
-    FIELDS: FIELDS, latestKey: latestKey, snapshot: snapshot, apply: apply,
+    FIELDS: FIELDS, META: META, latestKey: latestKey, snapshot: snapshot, apply: apply, merge: merge, parse: parse,
     applyAll: function (rows) { return (rows || []).map(apply); },
     keyOf: function (y, m) { return y + "-" + (m < 10 ? "0" + m : "" + m); }
   };

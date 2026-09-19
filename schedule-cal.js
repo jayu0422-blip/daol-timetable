@@ -25,37 +25,75 @@
   ];
   const HOLI = {}; HOLIDAYS.forEach(([d, n]) => { HOLI[d] = n; });
 
-  /* 지필평가: {level, school, grade, term, month, days[]} */
+  /* 지필평가: {level, school, grade, term, month, days[], subjects?, note?}
+     subjects = { 일: { 학년: "과목, 과목" } } — 2학기 1차는 원장 전달 학교별 세부과목표(2026-09-19 hwpx) 기준.
+     ※ 2학기 1차 날짜는 그 표를 따랐다. 연초 엑셀과 달랐던 곳: 미사고(10/13~16 → 10/7·8·12·13·14), 미사강변중(9/29·30 → 9/28·29).
+     ※ 중1은 2학기 1차 지필이 없다(표에 빈칸) → 미사중·은가람중 1차는 2,3학년만. */
   const EXAMS = [
-    ["중", "미사중학교", "전체", "1차지필", 9, [21, 22]],
+    ["중", "미사중학교", "2,3학년", "1차지필", 9, [21, 22],
+      { 21: { "중2": "국어, 수학", "중3": "국어, 수학" }, 22: { "중2": "영어, 과학", "중3": "영어, 과학" } }],
     ["중", "미사중학교", "3학년", "2차지필", 11, [10, 11, 12]],
     ["중", "미사중학교", "1,2학년", "2차지필", 12, [8, 9, 10]],
     ["중", "덕풍중학교", "2,3학년", "1차지필", 9, [22, 23]],
     ["중", "덕풍중학교", "3학년", "2차지필", 11, [13, 16, 17]],
     ["중", "덕풍중학교", "1,2학년", "2차지필", 12, [4, 7, 8]],
-    ["중", "미사강변중학교", "2,3학년", "1차지필", 9, [29, 30]],
+    ["중", "미사강변중학교", "2,3학년", "1차지필", 9, [28, 29],
+      { 28: { "중2": "국어, 영어", "중3": "영어" }, 29: { "중2": "수학, 과학", "중3": "수학, 과학" } },
+      "원장 전달표 9/28·29 (연초 엑셀은 9/29·30) — 학교 공지로 재확인 권장"],
     ["중", "미사강변중학교", "3학년", "2차지필", 11, [16, 17, 18]],
     ["중", "미사강변중학교", "1학년", "2차지필", 12, [7, 8]],
     ["중", "미사강변중학교", "2학년", "2차지필", 12, [7, 8, 9]],
-    ["중", "윤슬중학교", "2,3학년", "1차지필", 9, [21, 22]],
+    ["중", "윤슬중학교", "2,3학년", "1차지필", 9, [21, 22],
+      { 21: { "중2": "영어, 과학", "중3": "국어, 수학" }, 22: { "중2": "영어, 과학", "중3": "국어, 수학" } },
+      "전달표에 중2·중3 과목이 이틀 동일하게 적혀 있음 — 과목 배치 확인 필요"],
     ["중", "윤슬중학교", "3학년", "2차지필", 11, [12, 13, 16]],
     ["중", "윤슬중학교", "1,2학년", "2차지필", 12, [8, 9]],
-    ["중", "은가람중학교", "전체", "1차지필", 9, [29, 30]],
+    ["중", "은가람중학교", "2,3학년", "1차지필", 9, [29, 30],
+      { 29: { "중2": "영어, 과학", "중3": "영어, 과학" }, 30: { "중2": "국어, 수학", "중3": "국어, 수학" } }],
     ["중", "은가람중학교", "3학년", "2차지필", 11, [23, 24, 25]],
     ["중", "은가람중학교", "1,2학년", "2차지필", 12, [15, 16, 17]],
-    ["고", "미사고등학교", "전체", "1차지필", 10, [13, 14, 15, 16]],
+    ["고", "미사고등학교", "전체", "1차지필", 10, [7, 8, 12, 13, 14],
+      { 7:  { "고1": "영어", "고2": "기하, 과학, 동사", "고3": "윤사, 세계사" },
+        8:  { "고1": "수학", "고2": "미적, 과학, 한지", "고3": "화작, 물리" },
+        12: { "고1": "통과", "고2": "영어, 법, 과학", "고3": "미적, 사문" },
+        13: { "고1": "한국사", "고2": "사문, 과학", "고3": "영어" },
+        14: { "고1": "국어", "고2": "화법, 세지", "고3": "한지" } },
+      "원장 전달표 10/7·8·12·13·14 (연초 엑셀은 10/13~16)"],
     ["고", "미사고등학교", "전체", "2차지필", 12, [7, 8, 9, 10, 11]],
-    ["고", "미사강변고등학교", "전체", "1차지필", 10, [1, 2, 6, 7, 8]],
+    ["고", "미사강변고등학교", "전체", "1차지필", 10, [1, 2, 6, 7, 8],
+      { 1: { "고1": "영어, 과학", "고2": "국어, 수학", "고3": "동사, 영어" },
+        2: { "고1": "사회", "고2": "동사, 과학", "고3": "국어(화작), 사문" },
+        6: { "고1": "국어", "고2": "과학, 영어", "고3": "수학, 생윤" },
+        7: { "고1": "수학", "고2": "과학, 법", "고3": "경제, (진로)영어" },
+        8: { "고1": "한국사", "고2": "수학, 과학", "고3": "세지, 국어(고전)" } }],
     ["고", "미사강변고등학교", "전체", "2차지필", 12, [8, 9, 10, 11, 14]],
-    ["고", "하남고등학교", "전체", "1차지필", 10, [12, 13, 14, 15, 16]],
+    ["고", "하남고등학교", "전체", "1차지필", 10, [12, 13, 14, 15, 16],
+      { 12: { "고1": "미정" }, 13: { "고1": "미정" }, 14: { "고1": "미정" }, 15: { "고1": "미정" }, 16: { "고1": "미정" } }],
     ["고", "하남고등학교", "고3", "2차지필", 11, [23, 24, 25, 26]],
     ["고", "하남고등학교", "고1,2", "2차지필", 12, [10, 11, 14, 15, 16]],
     ["고", "세마고등학교", "전체", "1차지필", 10, [7, 8, 12, 13]],
     ["고", "세마고등학교", "고3", "2차지필", 11, [23, 24, 25, 26]],
     ["고", "세마고등학교", "고1,2", "2차지필", 12, [8, 9, 10, 11]],
-    ["고", "풍산고등학교", "전체", "1차지필", 10, [13, 14, 15, 16]],
+    ["고", "풍산고등학교", "전체", "1차지필", 10, [13, 14, 15, 16],
+      { 13: { "고2": "미정" }, 14: { "고2": "미정" }, 15: { "고2": "미정" }, 16: { "고2": "미정" } }],
     ["고", "풍산고등학교", "전체", "2차지필", 12, [7, 8, 9, 10, 11]],
-  ].map(a => ({ level: a[0], school: a[1], grade: a[2], term: a[3], month: a[4], days: a[5] }));
+  ].map(a => ({ level: a[0], school: a[1], grade: a[2], term: a[3], month: a[4], days: a[5],
+                subjects: a[6] || null, note: a[7] || "" }));
+
+  /* 시험 며칠째인지 — 시작일 / 시험 중 / 종료일. 날짜가 띄엄띄엄이어도(주말 건너뜀) days 순서로 판정한다. */
+  function examKind(e, day) {
+    const ds = e.days.slice().sort((a, b) => a - b), i = ds.indexOf(day);
+    if (i < 0) return null;
+    if (ds.length === 1) return "one";
+    return i === 0 ? "start" : (i === ds.length - 1 ? "end" : "mid");
+  }
+  const KIND_LABEL = { start: "시작일", mid: "시험 중", end: "종료일", one: "하루" };
+  /* 그 날 과목을 "고1 영어 · 고2 기하, 과학" 꼴로 */
+  function subjectsText(e, day) {
+    const s = e.subjects && e.subjects[day];
+    if (!s) return "";
+    return Object.keys(s).map(g => g + " " + s[g]).join(" · ");
+  }
 
   const MONTHS_WITH_EXAM = new Set(EXAMS.map(e => e.month));
 
@@ -154,7 +192,12 @@
 .sc-legend i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:5px;vertical-align:-1px}
 .sc-panels{margin-top:14px;display:grid;gap:12px}
 .sc-panel h4{margin:0 0 7px;font-size:13px;font-weight:800;color:#39404e;display:flex;align-items:center;gap:6px}
-.sc-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #eef0f4;border-radius:10px;
+.sc-row .sc-kind{font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:6px;white-space:nowrap}
+.sc-row .sc-kind.start{background:#dbeafe;color:#1e40af}.sc-row .sc-kind.mid{background:#ffedd5;color:#9a3412}
+.sc-row .sc-kind.end{background:#fce7f3;color:#9d174d}.sc-row .sc-kind.one{background:#eef2ff;color:#3730a3}
+.sc-row .sc-subj{flex-basis:100%;font-size:11.5px;color:#334155;margin-top:2px;padding-left:14px}
+.sc-row .sc-note{flex-basis:100%;font-size:11px;color:#b45309;padding-left:14px}
+.sc-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 8px;border:1px solid #eef0f4;border-radius:10px;
   font-size:12.5px;margin-bottom:5px;background:#fbfbfd}
 .sc-row .lv{flex:0 0 auto;width:9px;height:9px;border-radius:50%}
 .sc-row .lv.mid{background:var(--sc-mid)}.sc-row .lv.high{background:var(--sc-high)}
@@ -265,10 +308,14 @@
         if (holi) body += `<div class="sc-holiline"><span>🔴 ${esc(holi)}</span><span>공휴일</span></div>`;
         if (evs.length) body += evs.map(e => {
           const mine = isMine(e.school) ? " mine" : "";
+          const k = examKind(e, d), subj = subjectsText(e, d);
           return `<div class="sc-row${mine}"><span class="lv ${e.level === "중" ? "mid" : "high"}"></span>`
             + `<span class="sch">${esc(e.school)}</span>`
             + `<span class="meta">${e.grade === "전체" ? "전체" : esc(e.grade)} · ${esc(e.term)}</span>`
-            + `<span class="dts">${M}/${e.days.join(", ")}</span></div>`;
+            + `<span class="dts">${M}/${e.days.join(", ")}</span>`
+            + `<span class="sc-kind ${k}">${KIND_LABEL[k] || ""}</span>`
+            + (subj ? `<span class="sc-subj">${esc(subj)}</span>` : "")
+            + (e.note ? `<span class="sc-note">⚠ ${esc(e.note)}</span>` : "") + `</div>`;
         }).join("");
         if (!holi && !evs.length) body = `<div class="sc-empty">이 날은 지필·공휴일 일정이 없습니다.</div>`;
         return `<div class="sc-day-detail" id="scDayDetail">
@@ -392,5 +439,5 @@
     };
   }
 
-  window.DaolScheduleCal = { render, HOLIDAYS, EXAMS, schoolMatch };
+  window.DaolScheduleCal = { render, HOLIDAYS, EXAMS, schoolMatch, examKind, KIND_LABEL, subjectsText };
 })();
