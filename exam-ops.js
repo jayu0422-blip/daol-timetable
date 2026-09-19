@@ -32,15 +32,21 @@ window.DaolExamOps = (function () {
   const ovl = (a, b) => a.start < b.end && b.start < a.end;
   const todayISO = () => { const n = new Date(); return iso(n.getFullYear(), n.getMonth() + 1, n.getDate()); };
 
-  /* ---------- 기간: 2학기 1차 지필 첫날 하루 전 ~ 마지막 날 (일정표에서 자동) ---------- */
+  /* ---------- 기간: 시험 묶음(1차지필 9·10월 / 2차지필 11·12월) 중 오늘이 속하거나 다음에 오는 것.
+     첫 시험 하루 전 ~ 마지막 시험일. 묶음이 끝나면 자동으로 다음 묶음으로 넘어간다. ---------- */
+  function clusters() {
+    const S = window.DaolScheduleCal, ex = (S && S.EXAMS) || [], Y = (S && S.YEAR) || 2026;
+    const by = {};
+    ex.forEach(e => { const k = e.term; (by[k] = by[k] || { term: k, days: [] }).days.push(...e.days.map(d => iso(Y, e.month, d))); });
+    return Object.values(by).map(c => {
+      c.days.sort(); const s = new Date(c.days[0]); s.setDate(s.getDate() - 1);
+      return { term: c.term, start: iso(s.getFullYear(), s.getMonth() + 1, s.getDate()), end: c.days[c.days.length - 1] };
+    }).sort((a, b) => a.start < b.start ? -1 : 1);
+  }
   function period() {
-    const S = window.DaolScheduleCal, ex = (S && S.EXAMS) || [];
-    const ds = [];
-    ex.filter(e => e.term === "1차지필" && (e.month === 9 || e.month === 10)).forEach(e => e.days.forEach(d => ds.push(iso(2026, e.month, d))));
-    if (!ds.length) return { start: "2026-09-20", end: "2026-10-16" };
-    ds.sort();
-    const s = new Date(ds[0]); s.setDate(s.getDate() - 1);
-    return { start: iso(s.getFullYear(), s.getMonth() + 1, s.getDate()), end: ds[ds.length - 1] };
+    const cs = clusters(), t = todayISO();
+    if (!cs.length) return { term: "", start: "2026-09-20", end: "2026-10-16" };
+    return cs.find(c => c.end >= t) || cs[cs.length - 1];
   }
   function datesIn(P) {
     const out = []; const d = new Date(P.start); const e = new Date(P.end);
@@ -69,8 +75,10 @@ window.DaolExamOps = (function () {
   function typeOf(r) { return body(r).t || "메모"; }
   function timeOf(r) {
     const m = /^(\d{1,2}:\d{2})?-?(\d{1,2}:\d{2})?$/.exec(r.slots || "");
-    const s = m && m[1] ? toMin(m[1]) : null, e = m && m[2] ? toMin(m[2]) : null;
-    return { start: s, end: e != null ? e : (s != null ? s + 120 : null), endGuessed: s != null && e == null };
+    const s = m && m[1] ? toMin(m[1]) : null; let e = m && m[2] ? toMin(m[2]) : null;
+    let bad = false;
+    if (s != null && e != null && e <= s) { e = null; bad = true; }          // 끝이 시작보다 앞이면 무시하고 2시간으로 본다(정규 파서와 동일)
+    return { start: s, end: e != null ? e : (s != null ? s + 120 : null), endGuessed: s != null && e == null, bad };
   }
   const entriesOn = d => rows.filter(r => r.d === d);
   const roomLabel = k => { const r = (dep.rooms || []).find(x => x.key === k); return r ? r.label : (k || ""); };
@@ -99,15 +107,52 @@ window.DaolExamOps = (function () {
     });
     return out;
   }
-  /* 휴강 항목이 가리키는 강좌인가 — 강사 같고, 반 표기(윤슬중3 등)가 강좌명·대상학교에 들어 있으면 */
-  function matchCourse(r, c) {
-    if (!c || c.teacher !== r.who) return false;
-    const key = String(r.school || "").replace(/\s+/g, "");
-    if (!key) return false;
-    const hay = ((c.course_name || "") + " " + (c.target_school || "") + " " + (c.grade || "")).replace(/\s+/g, "");
-    const alt = key.replace("미강", "미사강변");
-    return hay.indexOf(key) >= 0 || hay.indexOf(alt) >= 0;
+  /* ── 반 표기(윤슬중3 · 미강고1 · 중3) → 이 항목이 가리키는 강좌 ──
+     강좌명은 "중3 영어정규반 (화목토) 미강·윤슬·은가람중" 처럼 학교가 가운뎃점으로 묶여 있고 target_school 은 '공통'이 많다.
+     그래서 부분문자열이 아니라 (1) 학년이 같고 (2) 학교 토큰(윤슬/미강/은가람…)이 강좌명·대상학교에 있으면 강한 일치,
+     학교 정보가 아예 없는 강좌는 약한 일치 — 강한 일치가 하나도 없을 때만 쓴다. */
+  const normS = s => String(s || "").replace(/\s+/g, "").replace(/학교/g, "").replace(/미사강변/g, "미강").replace(/은가람/g, "은가");
+  function parseKey(school) {
+    const k = normS(school);
+    const m = /^(.*?)(중|고)([1-3])$/.exec(k) || /^(.*?)(중|고)$/.exec(k);
+    if (!m) return { school: k, grade: "", level: "" };
+    return { school: m[1] ? m[1] + m[2] : "", grade: m[3] ? m[2] + m[3] : "", level: m[2] };
   }
+  /* 학교 토큰만 뽑는다 — '…미강·윤슬·은가람중' 처럼 가운뎃점으로 묶여 마지막에만 중/고가 붙은 것도 전부 학교로 본다.
+     '국어정규반'·'화목토' 같은 일반 낱말은 학교가 아니므로 제외(그래야 학교 표기 없는 혼합반을 weak 로 구분할 수 있다). */
+  function schoolTokens(c) {
+    const src = normS((c.course_name || "") + " " + ((c.target_school || "") === "공통" ? "" : (c.target_school || "")));
+    const out = []; const re = /([가-힣]+(?:·[가-힣]+)*)(중|고)(?![가-힣])/g; let m;
+    while ((m = re.exec(src))) m[1].split("·").forEach(t => { if (t.length >= 2) out.push(t); });
+    return out;
+  }
+  /* 강좌 학년 — grade 칸이 비어 있는 강좌(김영하 중2·중3 국어 정규반)는 강좌명 앞머리에서 읽는다 */
+  function gradeOf(c) {
+    if (c.grade) return String(c.grade);
+    const m = /^(중|고)\s*([1-3])/.exec(c.course_name || "");
+    return m ? m[1] + m[2] : "";
+  }
+  function courseMatchLevel(r, c) {
+    if (!c || c.teacher !== r.who) return 0;
+    const k = parseKey(r.school);
+    if (!k.school && !k.grade) return 0;
+    const cg = gradeOf(c);
+    if (k.grade && cg.indexOf(k.grade) !== 0) return 0;              // 학년 불일치
+    if (k.level && !k.grade && cg.indexOf(k.level) !== 0) return 0;  // '미강고' 처럼 학년 없이 학교만
+    if (!k.school) return 2;                                                             // '중3' 처럼 학년만 → 그 학년 전부
+    const want = k.school.replace(/(중|고)$/, "");
+    const toks = schoolTokens(c);
+    if (toks.some(t => t === want || t.indexOf(want) === 0 || want.indexOf(t) === 0)) return 2;
+    return toks.length ? 0 : 1;                                                          // 학교 정보 없는 강좌 = 약한 일치
+  }
+  /* strong = 그 학교 반이 확실한 강좌(강의실 계산에 반영) / weak = 학교 표기 없는 혼합반(정보만 보여주고 강의실은 그대로 잡음) */
+  function matchedCourses(r) {
+    const all = (dep.getCourses ? dep.getCourses() : []) || [];
+    const strong = all.filter(c => courseMatchLevel(r, c) === 2);
+    const weak = strong.length ? [] : all.filter(c => courseMatchLevel(r, c) === 1);
+    return { strong, weak, any: strong.length ? strong : weak };
+  }
+  function matchCourse(r, c) { return matchedCourses(r).strong.some(x => x.id === c.id); }
   function isOffThatDay(c, d) { return entriesOn(d).some(r => typeOf(r) === "휴강" && matchCourse(r, c)); }
 
   /* 자동 제안: 강사 선호 순서로 그 시간에 비어 있는 첫 방 */
@@ -236,15 +281,21 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     const rm = r.room || (tm.start != null ? suggestRoom(r, true) : "");
     const cf = rm ? conflictsOf(r, rm) : [];
     const hasTime = tm.start != null;
-    const time = hasTime ? fmt(tm.start) + "~" + fmt(tm.end) + (tm.endGuessed ? " (종료 미정·2시간 가정)" : "") : "";
+    const time = hasTime ? fmt(tm.start) + "~" + fmt(tm.end) + (tm.bad ? " (⚠ 종료가 시작보다 빨라 2시간으로 봄)" : (tm.endGuessed ? " (종료 미정·2시간 가정)" : "")) : "";
     const b = body(r);
+    const hits = (["휴강", "정규", "보류"].indexOf(t) >= 0 && r.who) ? matchedCourses(r) : null;
+    const hitHtml = hits === null ? "" : (hits.strong.length
+      ? '<div class="memo">→ 강좌 ' + hits.strong.length + '개: ' + esc(hits.strong.map(c => c.course_name).join(" / ")) + '</div>'
+      : (hits.weak.length
+        ? '<div class="memo" style="color:#92400e">→ 학교 혼합반 ' + hits.weak.length + '개: ' + esc(hits.weak.map(c => c.course_name).join(" / ")) + ' <b>(다른 학교 학생은 수업하므로 강의실은 그대로 잡아 둠)</b></div>'
+        : '<div class="memo" style="color:#b91c1c;font-weight:700">⚠ 일치하는 강좌 없음 — 반 표기를 확인하세요 (예: 윤슬중3 · 미강고1 · 중3)</div>'));
     return '<div class="xo-e' + (cf.length ? ' c' : '') + '" data-id="' + esc(r.id) + '">' +
       '<span class="xo-t t' + esc(t) + '">' + esc(t) + '</span>' +
       '<div class="xo-b"><b>' + esc(r.who || "") + '</b> ' + esc(r.school || "") + (r.subjects ? ' <span style="color:#64748b">' + esc(r.subjects) + '</span>' : '') +
       (time ? ' · ' + esc(time) : '') +
       (rm ? ' → <span class="rm' + (r.room ? '' : ' sg') + '">' + esc(roomLabel(rm)) + (r.room ? '' : ' (자동 제안 · 확정 필요)') + '</span>' : (hasTime ? ' → <span class="rm sg">빈 방 없음</span>' : '')) +
       (cf.length ? cf.map(c => '<span class="cf">⚠ 겹침 · ' + esc(c.name) + ' [' + esc(c.teacher) + '] ' + fmt(c.start) + '~' + fmt(c.end) + ' 같은 ' + esc(roomLabel(c.room)) + '</span>').join("") : '') +
-      (b.memo ? '<div class="memo">' + esc(b.memo) + '</div>' : '') + '</div>' +
+      (b.memo ? '<div class="memo">' + esc(b.memo) + '</div>' : '') + hitHtml + '</div>' +
       (opts && opts.noAct ? '' : '<div class="xo-a">' + (rm && !r.room && hasTime ? '<button data-fix="' + esc(r.id) + '" data-room="' + esc(rm) + '" title="제안 강의실을 저장">확정</button>' : '') +
         '<button data-edit="' + esc(r.id) + '">수정</button><button data-del="' + esc(r.id) + '">삭제</button></div>') +
       '</div>';
@@ -258,7 +309,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     const ds = datesIn(P);
     let nE = 0, nC = 0, nS = 0;
     rows.forEach(r => { nE++; const rm = r.room || suggestRoom(r, true); if (rm && conflictsOf(r, rm).length) nC++; if (!r.room && timeOf(r).start != null) nS++; });
-    let h = '<div class="xo-sum"><span>기간 <b>' + mdOf(P.start) + '(' + dowOf(P.start) + ') ~ ' + mdOf(P.end) + '(' + dowOf(P.end) + ')</b></span>' +
+    let h = '<div class="xo-sum"><span>' + esc(P.term || "시험") + ' 기간 <b>' + mdOf(P.start) + '(' + dowOf(P.start) + ') ~ ' + mdOf(P.end) + '(' + dowOf(P.end) + ')</b> <span style="color:#94a3b8">(시험 묶음이 끝나면 다음 묶음으로 자동 전환)</span></span>' +
       '<span>임시 일정 <b>' + nE + '건</b></span>' +
       '<span class="' + (nC ? 'bad' : '') + '">강의실 겹침 <b>' + nC + '건</b></span>' +
       '<span class="' + (nS ? 'bad' : '') + '">강의실 미확정 <b>' + nS + '건</b></span>' +
@@ -332,7 +383,17 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
       const hn = holidayOf(o.d); const ex = examsOf(o.d);
       let msg = mdOf(o.d) + "(" + dowOf(o.d) + ")" + (hn ? " · 🔴 " + hn : "") + (ex.length ? " · 시험: " + ex.map(e => shortSchool(e.school) + " " + KIND[e.kind]).join(", ") : "");
       msg += " · " + TYPE_HELP[o.t];
+      const P = period();
+      if (o.d < P.start || o.d > P.end) msg += "\n⚠ 이 표의 기간(" + mdOf(P.start) + "~" + mdOf(P.end) + ") 밖 날짜 — 저장은 되지만 이 표·강의실 겹침 검사에는 안 잡히고 월간 일정표에서만 보입니다.";
+      const s0 = q("s").value, e0 = q("e").value;
+      if (s0 && e0 && toMin(e0) <= toMin(s0)) { hint.className = "hint bad"; hint.textContent = msg + "\n⚠ 종료 시각이 시작보다 빠르거나 같습니다."; return; }
       const fake = { id: o.id, d: o.d, who: o.who, school: o.school, subjects: o.subjects, slots: o.slots, room: o.room, body: JSON.stringify({ t: o.t }) };
+      if (["휴강", "정규", "보류"].indexOf(o.t) >= 0 && o.who && o.school) {
+        const hits = matchedCourses(fake);
+        msg += hits.strong.length ? "\n→ 이 항목이 가리키는 강좌 " + hits.strong.length + "개: " + hits.strong.map(c => c.course_name).join(" / ")
+             : (hits.weak.length ? "\n→ 학교 혼합반 " + hits.weak.length + "개: " + hits.weak.map(c => c.course_name).join(" / ") + " (다른 학교 학생은 수업하므로 강의실은 그대로 잡아 둡니다)"
+             : "\n⚠ 일치하는 강좌 없음 — 반 표기를 확인하세요 (예: 윤슬중3 · 미강고1 · 중3). 이대로 저장하면 휴강이 강의실 계산에 반영되지 않습니다.");
+      }
       if (["직보", "정규", "보류"].indexOf(o.t) >= 0 && timeOf(fake).start != null) {
         const rm = o.room || suggestRoom(fake, true);
         const cf = rm ? conflictsOf(fake, rm) : [];
@@ -356,6 +417,12 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
         if (o.t !== "메모" && !o.who) return alert("강사를 고르세요.");
         if (["직보", "휴강", "정규", "보류"].indexOf(o.t) >= 0 && !o.school) return alert("반(학교+학년)을 적어주세요. 예: 윤슬중3");
         if (o.t === "직보" && !o.slots) return alert("직보는 시작 시각이 필요합니다.");
+        const s1 = q("s").value, e1 = q("e").value;
+        if (s1 && e1 && toMin(e1) <= toMin(s1)) return alert("종료 시각이 시작보다 빠르거나 같습니다. 종료 시각을 고쳐주세요.");
+        const P = period();
+        if ((o.d < P.start || o.d > P.end) && !confirm("이 표의 기간(" + mdOf(P.start) + "~" + mdOf(P.end) + ") 밖 날짜입니다.\n저장은 되지만 이 표와 강의실 겹침 검사에는 잡히지 않습니다(월간 일정표에는 보임). 그래도 저장할까요?")) return;
+        if (o.t === "휴강" && o.who && !matchedCourses({ d: o.d, who: o.who, school: o.school }).any.length &&
+            !confirm("'" + o.school + "' 과 일치하는 " + o.who + " 선생님 강좌가 없습니다.\n이대로 저장하면 휴강이 강의실 계산에 반영되지 않습니다. 그래도 저장할까요?")) return;
         try { await save(o); back.remove(); } catch (err) { alert("저장 실패: " + err.message); }
       }
     });

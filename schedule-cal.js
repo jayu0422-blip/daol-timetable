@@ -439,5 +439,5 @@
     };
   }
 
-  window.DaolScheduleCal = { render, HOLIDAYS, EXAMS, schoolMatch, examKind, KIND_LABEL, subjectsText };
+  window.DaolScheduleCal = { render, HOLIDAYS, EXAMS, schoolMatch, examKind, KIND_LABEL, subjectsText, YEAR };
 })();

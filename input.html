@@ -249,7 +249,7 @@ label{font-weight:700;color:#5c6a80}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=c4d7a4a3"></script>
 <script src="config.js?v=72ddcbd2"></script>
-<script src="schedule-cal.js?v=813b2c27"></script>
+<script src="schedule-cal.js?v=fc42af95"></script>
 <script src="course-cal.js?v=608e4ed7"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
@@ -305,6 +305,7 @@ function connError(){ screenMsg('📶','연결이 불안정합니다','인터넷
 
 let rows = [];      // {id, grade, subject, course_name, schedule_text, target_school, audience, content, course_type, sort_order}
 let saveTimer = null;
+let DIRTY = false;  // 강사가 실제로 무언가 바꿨을 때만 true — 링크만 열었다 닫아도 스냅샷이 생기면 대시보드에 '작성중' 오탐이 난다
 
 function uid(){ return (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
   : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16)); }
@@ -334,6 +335,7 @@ async function load(){
 
 /* ---------- 저장 (디바운스) ---------- */
 function scheduleSave(){
+  DIRTY = true;
   setStatus("입력 중…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(save, 700);
@@ -371,11 +373,16 @@ async function save(){
       localStorage.setItem("daol_dates_"+TEACHER, JSON.stringify(rows.map(r=>({id:r.id, d:r.session_dates||""}))));
     }
     setStatus(error ? ("저장 오류: "+error.message) : "저장됨 ✓");
+    if(!error) DIRTY = false;
+    updateCount();
+    return error || null;
   } else {
     localStorage.setItem(lskey(), JSON.stringify(rows));
     setStatus("저장됨 ✓ (데모)");
+    DIRTY = false;
   }
   updateCount();
+  return null;
 }
 function setStatus(t){ document.getElementById("saveStatus").innerHTML = t.includes("저장됨")?`<b>${t}</b>`:t; }
 
@@ -588,7 +595,7 @@ function openCal(r, card){
     onSave: (marks)=>{
       const all = datesOf(r); all[TARGET.key] = marks;
       r.session_dates = JSON.stringify(all);
-      render(); save();
+      DIRTY = true; render(); save();
     }
   });
 }
@@ -610,26 +617,36 @@ document.getElementById("list").addEventListener("click", e=>{
   const btn = e.target.closest("[data-act]"); if(!btn) return;
   const card = e.target.closest(".card"); const id = card.dataset.id;
   const idx = rows.findIndex(x=>x.id===id);
-  if(btn.dataset.act==="dup"){ const c={...rows[idx], id:uid()}; rows.splice(idx+1,0,c); render(); save(); }
+  if(btn.dataset.act==="dup"){ const c={...rows[idx], id:uid()}; rows.splice(idx+1,0,c); DIRTY=true; render(); save(); }
   if(btn.dataset.act==="cal"){ openCal(rows[idx], btn.closest(".card")); return; }
-  if(btn.dataset.act==="del"){ if(rows.length<=1 || confirm("이 강좌를 삭제할까요?")){ const removed=rows.splice(idx,1)[0]; if(useSupa&&removed) sb.from("courses").delete().eq("id",removed.id); if(!rows.length) rows=[blankRow()]; render(); save(); } }
+  if(btn.dataset.act==="del"){ if(rows.length<=1 || confirm("이 강좌를 삭제할까요?")){ const removed=rows.splice(idx,1)[0]; if(useSupa&&removed) sb.from("courses").delete().eq("id",removed.id); if(!rows.length) rows=[blankRow()]; DIRTY=true; render(); save(); } }
 });
-function addRow(){ rows.push(blankRow()); render(); document.querySelector(".card:last-child")?.scrollIntoView({behavior:"smooth",block:"center"}); save(); }
+function addRow(){ rows.push(blankRow()); DIRTY=true; render(); document.querySelector(".card:last-child")?.scrollIntoView({behavior:"smooth",block:"center"}); save(); }
 document.getElementById("addTop").addEventListener("click",addRow);
 document.getElementById("addBottom").addEventListener("click",addRow);
 document.getElementById("submitBtn").addEventListener("click", async ()=>{
   /* 제출 도장은 강좌마다 "그 달 스냅샷" 안에 찍는다 — teachers.submitted_at 은 칸이 하나뿐이라
      다음 달 제출이 이번 달 기록을 덮지만, 스냅샷 안의 도장은 달마다 남는다 (대시보드 월별 기록의 근거). */
   const stamp = new Date().toISOString();
-  if(window.DaolPlan && TARGET && TARGET.key) rows.forEach(r=>{ r.monthly_plans = DaolPlan.merge(r.monthly_plans, TARGET.key, {submitted_at: stamp}); });
-  await save();
-  if(useSupa){ await sb.from("teachers").upsert({name:TEACHER, submitted_at:stamp, course_count:rows.length},{onConflict:"name"}); }
-  else { localStorage.setItem("daol_submitted_"+TEACHER, new Date().toISOString()); }
-  alert(`${TEACHER} 선생님, 제출 완료되었습니다! (총 ${rows.length}개 강좌)\n수정이 필요하면 언제든 다시 입력 후 저장하시면 됩니다.`);
+  const btn = document.getElementById("submitBtn"); btn.disabled = true;
+  try{
+    if(window.DaolPlan && TARGET && TARGET.key) rows.forEach(r=>{ r.monthly_plans = DaolPlan.merge(r.monthly_plans, TARGET.key, {submitted_at: stamp}); });
+    DIRTY = true;
+    const err = await save();
+    if(err){
+      /* 저장이 안 됐는데 '제출 완료'라고 하면 안 된다 — 도장도 원장 알림도 내용이 없는 채로 남는다 */
+      if(window.DaolPlan && TARGET && TARGET.key) rows.forEach(r=>{ const mp=DaolPlan.parse(r.monthly_plans)||{}; if(mp[TARGET.key]) delete mp[TARGET.key].submitted_at; r.monthly_plans=mp; });
+      alert(`저장에 실패해 제출되지 않았습니다.\n(${err.message})\n인터넷 연결을 확인하고 잠시 후 다시 [작성 완료 제출]을 눌러주세요.`);
+      return;
+    }
+    if(useSupa){ const {error:e2} = await sb.from("teachers").upsert({name:TEACHER, submitted_at:stamp, course_count:rows.length},{onConflict:"name"}); if(e2) console.warn("teachers.submitted_at 갱신 실패", e2.message); }
+    else { localStorage.setItem("daol_submitted_"+TEACHER, new Date().toISOString()); }
+    alert(`${TEACHER} 선생님, 제출 완료되었습니다! (총 ${rows.length}개 강좌)\n수정이 필요하면 언제든 다시 입력 후 저장하시면 됩니다.`);
+  } finally { btn.disabled = false; }
 });
 
 // 폰에서 앱 전환·화면 끄기 시 마지막 입력 즉시 저장
-document.addEventListener("visibilitychange", ()=>{ if(document.hidden && TEACHER) save(); });
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden && TEACHER && DIRTY) save(); });
 
 function renderPlanBanner(){
   const el = document.getElementById("planBanner"); if(!el || !TARGET) return;

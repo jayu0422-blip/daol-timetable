@@ -292,6 +292,15 @@ function patchRow(id, patch){
     const p = pendingPatch[id]||{}; delete pendingPatch[id];
     if(!useSupa){ setStat("저장됨 ✓ (데모)","ok"); return; }
     markLocalWrite();
+    /* 대상·내용·교재·회차메모는 학부모 화면(landing/admin 상담자료)이 '가장 최근 달 스냅샷'을 우선 보여준다.
+       원장이 여기서 고친 값이 그 스냅샷에도 들어가야 화면이 바뀐다 (2026-09-19). */
+    const cc = DATA.find(x=>x.id===id);
+    if(cc && window.DaolPlan && DaolPlan.merge){
+      const F = (DaolPlan.FIELDS||[]).concat(DaolPlan.META||[]);
+      const sub = {}; Object.keys(p).forEach(k=>{ if(F.includes(k)) sub[k]=p[k]; });
+      const mp = DaolPlan.parse(cc.monthly_plans)||{}; const lk = DaolPlan.latestKey(mp);
+      if(Object.keys(sub).length && lk){ p.monthly_plans = DaolPlan.merge(mp, lk, sub); cc.monthly_plans = p.monthly_plans; }
+    }
     const {error}=await sb.from("courses").update(p).eq("id",id);
     markLocalWrite();
     setStat(error?("저장 오류: "+error.message):"저장됨 ✓", error?"err":"ok");
