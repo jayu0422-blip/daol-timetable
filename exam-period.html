@@ -89,7 +89,7 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=72ddcbd2"></script>
 <script src="schedule-cal.js?v=fc42af95"></script>
-<script src="exam-ops.js?v=abffd584"></script>
+<script src="exam-ops.js?v=5b5512bd"></script>
 <script src="rooms.js?v=c72a1628"></script>
 <script>
 /* rooms.js 가 기대하는 전역 */
@@ -100,7 +100,7 @@ const DOW = ["일","월","화","수","목","금","토"];
 const dowOf = d => { const p=d.split("-").map(Number); return DOW[new Date(p[0],p[1]-1,p[2]).getDay()]; };
 const md = d => (+d.slice(5,7))+"/"+(+d.slice(8,10));
 const todayISO = () => { const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; };
-const shortSchool = s => String(s).replace("미사강변","미강").replace("학교","");
+const shortSchool = s => String(s).replace("미사강변","미강").replace("고등학교","고").replace("중학교","중").replace("학교","");
 const KIND = { start:"시작", mid:"시험중", end:"종료", one:"하루" };
 
 const cfg = window.DAOL_CONFIG || {};
@@ -181,8 +181,10 @@ function editorHTML(d, A){
     </tr>`;
   });
   h += `</tbody></table>`;
-  const others = XO.entriesOn(d).filter(r=>["휴강","정규","보류","메모"].indexOf(XO.typeOf(r))>=0 && !XO.body(r).course_id);
-  h += `<div class="memo-list">${others.length?`<div class="muted" style="margin-bottom:4px">이 날의 메모·휴강·정규유지·보류 (대시보드 임시 일정표와 같은 항목)</div>`+XO.entriesHTML(d).replace(/<div class="xo-e/g,'<div class="xo-e" style="max-width:900px"'):""}</div>`;
+  /* 표(temps)에 안 들어간 나머지 항목 — 휴강·정규·보류·메모 + 시각이 없는 직보(예: '5(화) 미강고1' 처럼 시각 미정) */
+  const tempIds = new Set(A.temps.map(b=>b.id));
+  const others = XO.entriesOn(d).filter(r=>XO.typeOf(r)!=="배정" && !tempIds.has(r.id) && !XO.body(r).course_id);
+  h += `<div class="memo-list">${others.length?`<div class="muted" style="margin-bottom:4px">이 날의 메모·휴강·정규유지·보류·시각 미정 직보 (대시보드 임시 일정표와 같은 항목 — 「수정」은 대시보드에서)</div>`+others.map(r=>XO.entryOneHTML(r)).join(""):""}</div>`;
   h += `<button class="add" data-new="${d}">+ 이 날 일정 추가 (직보·휴강·정규·보류·메모)</button>`;
   return h;
 }

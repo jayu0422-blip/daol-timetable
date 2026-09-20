@@ -68,7 +68,7 @@ window.DaolExamOps = (function () {
     });
   }
   const KIND = { start: "시작", mid: "시험중", end: "종료", one: "하루" };
-  const shortSchool = s => String(s).replace("미사강변", "미강").replace("학교", "");
+  const shortSchool = s => String(s).replace("미사강변", "미강").replace("고등학교", "고").replace("중학교", "중").replace("학교", "");
 
   /* ---------- 행 파싱 ---------- */
   function body(r) { try { return JSON.parse(r.body || "{}") || {}; } catch (e) { return { memo: r.body || "" }; } }
@@ -198,6 +198,7 @@ window.DaolExamOps = (function () {
   }
   /* 읽기 전용 목록 (exam-period.html · 인쇄용) */
   function entriesHTML(d) { return entriesOn(d).map(r => entryHTML(r, { noAct: true })).join(""); }
+  function entryOneHTML(r) { return entryHTML(r, { noAct: true }); }
 
   /* ── 날짜별 실제 배정 ──
      요일 정규표(assignDay) 위에 ① 그 날 강의실 지정(t=배정, course_id) ② 휴강·전체휴강(흐림, 방 비움) ③ 임시 수업(직보 등)을
@@ -522,6 +523,6 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     renderBanner();
   }
   return { init, mountTable, mountDayBanner, load, render, period, clusters, datesIn, entriesOn, blocksFor, offCourseIds, allOffThatDay, keepCourseIds,
-           entriesHTML, examsOf, holidayOf, conflictsOf, suggestRoom, assignForDate, setRoomOverride, setOff, setTempRoom, typeOf, body, openForm, remove, wire,
+           entriesHTML, entryOneHTML, examsOf, holidayOf, conflictsOf, suggestRoom, assignForDate, setRoomOverride, setOff, setTempRoom, typeOf, body, openForm, remove, wire,
            get overlayDate() { return overlayDate; }, get rows() { return rows; } };
 })();
