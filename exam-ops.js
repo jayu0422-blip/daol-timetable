@@ -17,9 +17,9 @@
  */
 window.DaolExamOps = (function () {
   const DOW = ["일", "월", "화", "수", "목", "금", "토"];
-  const TYPES = ["직보", "휴강", "정규", "보류", "메모"];
+  const TYPES = ["직보", "휴강", "정규", "보류", "메모", "배정"];
   const TYPE_HELP = { 직보: "시험 직전 보강 — 시간·강의실 필요", 휴강: "그 날 그 반 수업 없음", 정규: "공휴일·연휴여도 평소대로 수업",
-                      보류: "아직 결정 안 됨(원장 확인)", 메모: "그 날 전체 안내(예: 추석 연휴 전체 휴강)" };
+                      보류: "아직 결정 안 됨(원장 확인)", 메모: "그 날 전체 안내(예: 추석 연휴 전체 휴강)", 배정: "그 날만 이 반의 강의실을 바꿈(전체 일정표에서 지정)" };
   let dep = null, rows = [], host = null, bannerHost = null, bannerDay = null, booted = false;
 
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -133,7 +133,10 @@ window.DaolExamOps = (function () {
     return m ? m[1] + m[2] : "";
   }
   function courseMatchLevel(r, c) {
-    if (!c || c.teacher !== r.who) return 0;
+    if (!c) return 0;
+    const cid = body(r).course_id;
+    if (cid) return c.id === cid ? 2 : 0;                              // 전체 일정표에서 강좌를 직접 찍은 항목
+    if (c.teacher !== r.who) return 0;
     const k = parseKey(r.school);
     if (!k.school && !k.grade) return 0;
     const cg = gradeOf(c);
@@ -185,6 +188,70 @@ window.DaolExamOps = (function () {
     (courses || []).forEach(c => { if (isOffThatDay(c, d)) s.add(c.id); });
     return s;
   }
+  /* '전체 휴강' 메모가 있는 날(추석 연휴 등) — 정규 항목으로 따로 살린 반만 빼고 전부 휴강 */
+  function allOffThatDay(d) { return entriesOn(d).some(r => typeOf(r) === "메모" && /전체\s*휴강/.test(body(r).memo || "")); }
+  /* 그 날짜에 '정규'(연휴여도 수업)로 잡힌 강좌 id 집합 */
+  function keepCourseIds(d) {
+    const s = new Set();
+    entriesOn(d).filter(r => typeOf(r) === "정규").forEach(r => matchedCourses(r).strong.forEach(c => s.add(c.id)));
+    return s;
+  }
+  /* 읽기 전용 목록 (exam-period.html · 인쇄용) */
+  function entriesHTML(d) { return entriesOn(d).map(r => entryHTML(r, { noAct: true })).join(""); }
+
+  /* ── 날짜별 실제 배정 ──
+     요일 정규표(assignDay) 위에 ① 그 날 강의실 지정(t=배정, course_id) ② 휴강·전체휴강(흐림, 방 비움) ③ 임시 수업(직보 등)을
+     얹고, 같은 방·겹치는 시간을 다시 계산한다. admin 요일 탭의 덧입히기와 exam-period.html 이 같은 결과를 쓴다. */
+  function roomOverrideOf(d, courseId) {
+    const r = entriesOn(d).find(x => typeOf(x) === "배정" && body(x).course_id === courseId && x.room);
+    return r ? r.room : null;
+  }
+  function assignForDate(d) {
+    const courses = (dep.getCourses ? dep.getCourses() : []) || [];
+    const day = dowOf(d);
+    const base = (dep.assignDay(day) || {}).items || [];
+    const offIds = offCourseIds(d, courses), keepIds = keepCourseIds(d), allOff = allOffThatDay(d);
+    const items = base.map(it => {
+      const ov = roomOverrideOf(d, it.c.id);
+      const off = (allOff && !keepIds.has(it.c.id)) || offIds.has(it.c.id);
+      return { c: it.c, s: it.s, room: ov || it.room, autoRoom: it.room, overridden: !!ov, roomRole: it.roomRole, off, conflict: false };
+    });
+    const temps = entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류"].indexOf(typeOf(r)) >= 0).map(r => {
+      const t = timeOf(r);
+      return { id: r.id, room: r.room || suggestRoom(r, true), start: t.start, end: t.end, type: typeOf(r), teacher: r.who, school: r.school, subj: r.subjects,
+               name: [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), suggested: !r.room, conflict: false, bad: t.bad, endGuessed: t.endGuessed };
+    });
+    /* 겹침 재계산 — 휴강인 반은 방을 비운 것으로 본다 */
+    const live = items.filter(it => !it.off).map(it => ({ ref: it, room: it.room, s: it.s }))
+      .concat(temps.map(b => ({ ref: b, room: b.room, s: { start: b.start, end: b.end } })));
+    for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+      const a = live[i], b = live[j];
+      if (!a.room || a.room !== b.room || !ovl(a.s, b.s)) continue;
+      /* 같은 강사·같은 과목·같은 시간의 무학년 통합반은 한 수업 — 충돌 아님 */
+      const ac = a.ref.c, bc = b.ref.c;
+      if (ac && bc && ac.teacher === bc.teacher && ac.subject === bc.subject && a.s.start === b.s.start && a.s.end === b.s.end) continue;
+      a.ref.conflict = true; b.ref.conflict = true;
+    }
+    return { day, items, temps, offIds, keepIds, allOff };
+  }
+  /* 그 날 이 강좌의 강의실 지정 (roomKey 비면 지정 해제 → 자동) */
+  async function setRoomOverride(d, c, roomKey) {
+    const cur = entriesOn(d).find(x => typeOf(x) === "배정" && body(x).course_id === c.id);
+    if (!roomKey) { if (cur) await remove(cur.id); return; }
+    await save({ id: cur ? cur.id : null, d, t: "배정", who: c.teacher, school: c.course_name, subjects: c.subject, slots: "", room: roomKey, memo: "", course_id: c.id });
+  }
+  /* 그 날 이 강좌 휴강 토글 (강좌 id 로 직접 잡는다) */
+  async function setOff(d, c, on) {
+    const cur = entriesOn(d).find(x => typeOf(x) === "휴강" && body(x).course_id === c.id);
+    if (!on) { if (cur) await remove(cur.id); return; }
+    if (cur) return;
+    await save({ d, t: "휴강", who: c.teacher, school: c.course_name, subjects: c.subject, slots: "", room: "", memo: "전체 일정표에서 지정", course_id: c.id });
+  }
+  /* 임시 수업(직보 등)의 강의실 지정 */
+  async function setTempRoom(id, roomKey) {
+    const r = rows.find(x => x.id === id); if (!r) return;
+    await save({ id: r.id, d: r.d, t: typeOf(r), who: r.who, school: r.school, subjects: r.subjects, slots: r.slots, room: roomKey || "", memo: body(r).memo, course_id: body(r).course_id });
+  }
 
   /* ---------- 저장 ---------- */
   async function load() {
@@ -194,8 +261,9 @@ window.DaolExamOps = (function () {
     rows = error ? [] : (data || []);
   }
   async function save(o) {
+    const bodyObj = { t: o.t, memo: o.memo || "" }; if (o.course_id) bodyObj.course_id = o.course_id;
     const row = { d: o.d, kind: "memo", who: o.who || null, school: o.school || null, subjects: o.subjects || null,
-                  slots: o.slots || null, room: o.room || null, body: JSON.stringify({ t: o.t, memo: o.memo || "" }) };
+                  slots: o.slots || null, room: o.room || null, body: JSON.stringify(bodyObj) };
     if (o.id) { const { error } = await dep.sb.from("ops_calendar").update(row).eq("id", o.id); if (error) throw error; }
     else { const { error } = await dep.sb.from("ops_calendar").insert(row); if (error) throw error; }
     await load(); render(); if (dep.onChange) dep.onChange();
@@ -230,6 +298,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
 .xo-t{flex:none;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;background:#fef9c3;color:#713f12;border:1px solid #fde047;margin-top:1px}
 .xo-t.t휴강{background:#fee2e2;color:#991b1b;border-color:#fecaca}.xo-t.t정규{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
 .xo-t.t보류{background:#f1f5f9;color:#475569;border-color:#cbd5e1}.xo-t.t메모{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
+.xo-t.t배정{background:#e0f2fe;color:#075985;border-color:#bae6fd}
 .xo-b{flex:1;min-width:0;line-height:1.4}
 .xo-b .rm{font-weight:800;color:#1e3a5f}.xo-b .rm.sg{color:#92400e}
 .xo-b .cf{display:block;color:#b91c1c;font-weight:700;font-size:11.5px}
@@ -375,7 +444,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     function draft() {
       const s = q("s").value, e = q("e").value;
       return { id: r ? r.id : null, d: q("d").value, t: q("t").value, who: q("who").value, school: q("school").value.trim(), subjects: q("subjects").value.trim(),
-               slots: s ? (s + (e ? "-" + e : "")) : "", room: q("room").value, memo: q("memo").value.trim() };
+               slots: s ? (s + (e ? "-" + e : "")) : "", room: q("room").value, memo: q("memo").value.trim(), course_id: r ? body(r).course_id : undefined };
     }
     function refresh() {
       const o = draft();
@@ -452,6 +521,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     if (!bannerHost._wired) { wire(bannerHost); bannerHost._wired = true; }
     renderBanner();
   }
-  return { init, mountTable, mountDayBanner, load, render, period, entriesOn, blocksFor, offCourseIds, conflictsOf, suggestRoom,
+  return { init, mountTable, mountDayBanner, load, render, period, clusters, datesIn, entriesOn, blocksFor, offCourseIds, allOffThatDay, keepCourseIds,
+           entriesHTML, examsOf, holidayOf, conflictsOf, suggestRoom, assignForDate, setRoomOverride, setOff, setTempRoom, typeOf, body, openForm, remove, wire,
            get overlayDate() { return overlayDate; }, get rows() { return rows; } };
 })();

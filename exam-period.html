@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>시험기간 강의실 일정표</title>
+<!-- 시험기간(2학기 1차 9/20~10/16 …)은 요일이 아니라 날짜마다 다르다.
+     이 페이지는 하루씩: 그 날 요일의 정규 시간표 + 직보(빗금) + 휴강(흐림) + 이날만 강의실 지정.
+     저장은 전부 Supabase ops_calendar(kind=memo) — 대시보드 「시험기간 임시 일정표」와 같은 데이터. -->
+<style>
+:root{--navy:#1e3a5f;--line:#e5e7eb;--muted:#6b7280;--brand:#c9a227}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;background:#eef2f7;color:#1f2430}
+.top{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top h1{margin:0;font-size:17px;font-weight:900}
+.top .sub{font-size:12.5px;opacity:.85}
+.top a{color:#fde68a;font-weight:700;text-decoration:none;margin-left:auto}
+.top .btn{border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:8px;padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+.wrap{max-width:1500px;margin:0 auto;padding:14px 16px 40px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px;border:1px solid #d1d5db}
+.dates{display:flex;gap:6px;flex-wrap:wrap}
+.dch{border:1px solid #fcd34d;background:#fffbeb;border-radius:9px;padding:6px 10px;font-size:12.5px;cursor:pointer;font-weight:800;color:#78350f;line-height:1.25;text-align:center;min-width:64px}
+.dch small{display:block;font-weight:700;font-size:10px;opacity:.8}
+.dch.wk{background:#fff;border-color:#e5e7eb;color:#6b7280}
+.dch.holi{border-color:#fca5a5;color:#b91c1c}
+.dch.on{background:#f59e0b;color:#fff;border-color:#d97706}.dch.on small{opacity:.95}
+.dch.today{box-shadow:0 0 0 2px #c9a227}
+.dhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.dhead h2{margin:0;font-size:18px;font-weight:900;color:var(--navy)}
+.dhead .ex{display:inline-flex;align-items:baseline;gap:3px;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;border:1px solid}
+.ex.start{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd}.ex.mid{background:#ffedd5;color:#7c2d12;border-color:#fdba74}
+.ex.end{background:#fce7f3;color:#831843;border-color:#f9a8d4}.ex.one{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+.holi-b{font-size:12px;font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:2px 7px}
+.alloff{font-size:12px;font-weight:800;color:#7c2d12;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;padding:2px 7px}
+.sheet{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+.stat{font-size:12.5px;color:var(--muted);margin-left:auto}
+.stat b.bad{color:#b91c1c}
+table.ed{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+table.ed th{background:#f7f9fc;font-size:11.5px;font-weight:800;color:#5b7095;padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+table.ed td{padding:7px 10px;border-bottom:1px solid #f1f4f9;vertical-align:middle}
+table.ed tr.off td{opacity:.5}
+table.ed tr.cf td{background:#fff7f7}
+table.ed select,table.ed input[type=time]{font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid #dde3ec;border-radius:8px;background:#fff}
+table.ed .tg{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;background:#eef2ff;color:#3730a3;margin-left:4px}
+table.ed .tg.temp{background:#fef3c7;color:#92400e}.table.ed .tg.ovd,table.ed .tg.ovd{background:#e0f2fe;color:#075985}
+table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
+.rowbtn{border:1px solid #dde3ec;background:#fff;border-radius:7px;font:inherit;font-size:11.5px;padding:3px 8px;cursor:pointer;color:#31405a}
+.rowbtn.p{background:var(--navy);color:#fff;border-color:var(--navy)}
+.add{border:1px dashed #cbd5e1;background:#fff;border-radius:8px;font:inherit;font-size:12.5px;padding:6px 12px;cursor:pointer;color:#5b7095;margin-top:8px}
+.add:hover{background:#f7f9fc;color:var(--navy)}
+.memo-list{margin-top:8px}
+.muted{color:var(--muted);font-size:12px}
+@media print{
+  .top,.dates,.legend,#editor,.noprint{display:none!important}
+  body{background:#fff}.wrap{max-width:none;padding:0}
+  .print-day{page-break-after:always;margin-bottom:6mm}
+  .sheet{border:0}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>📝 시험기간 강의실 일정표</h1>
+  <span class="sub" id="periodSub">불러오는 중…</span>
+  <button class="btn" id="printAll">🖨️ 전체 인쇄 (날짜별 한 장씩)</button>
+  <a href="admin.html">← 운영자 대시보드</a>
+</div>
+<div class="wrap">
+  <div class="panel">
+    <div class="legend">
+      <span><i style="background:#dbeafe;border-color:#93c5fd"></i>시험 시작일</span>
+      <span><i style="background:#ffedd5;border-color:#fdba74"></i>시험 중</span>
+      <span><i style="background:#fce7f3;border-color:#f9a8d4"></i>시험 종료일</span>
+      <span><i style="background:repeating-linear-gradient(135deg,#fef3c7 0 3px,#fde68a 3px 6px);border:1px dashed #d97706"></i>임시 수업(직보 등)</span>
+      <span><i style="background:#e5e7eb;opacity:.4"></i>그 날 휴강</span>
+      <span><i style="background:#e0f2fe;border-color:#bae6fd"></i>이날만 강의실 지정</span>
+      <span><i style="outline:2px solid #dc2626;outline-offset:-2px"></i>같은 방 겹침</span>
+      <span class="muted">날짜를 누르면 그 날만의 표가 뜹니다. 아래 표에서 강의실·휴강·임시 수업을 바로 고치면 즉시 저장되고 대시보드에도 같이 반영됩니다.</span>
+    </div>
+    <div class="dates" id="dates" style="margin-top:10px"></div>
+  </div>
+  <div class="panel" id="dayPanel"><div class="muted">불러오는 중…</div></div>
+  <div id="printAllHost"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js?v=72ddcbd2"></script>
+<script src="schedule-cal.js?v=fc42af95"></script>
+<script src="exam-ops.js?v=abffd584"></script>
+<script src="rooms.js?v=c72a1628"></script>
+<script>
+/* rooms.js 가 기대하는 전역 */
+const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+let DATA = [];
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const DOW = ["일","월","화","수","목","금","토"];
+const dowOf = d => { const p=d.split("-").map(Number); return DOW[new Date(p[0],p[1]-1,p[2]).getDay()]; };
+const md = d => (+d.slice(5,7))+"/"+(+d.slice(8,10));
+const todayISO = () => { const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; };
+const shortSchool = s => String(s).replace("미사강변","미강").replace("학교","");
+const KIND = { start:"시작", mid:"시험중", end:"종료", one:"하루" };
+
+const cfg = window.DAOL_CONFIG || {};
+const sb = (cfg.url && cfg.anonKey && window.supabase) ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
+const XO = window.DaolExamOps;
+const st = document.createElement("style"); st.textContent = DAOL_ROOM_GRID_CSS; document.head.appendChild(st);
+
+let ROSTER = [], sel = null;
+
+async function load(){
+  if(!sb){ document.getElementById("dayPanel").innerHTML = '<div class="muted">Supabase 연결이 없습니다.</div>'; return; }
+  const [{data:cs},{data:tt}] = await Promise.all([ sb.from("courses").select("*"), sb.from("teachers").select("name,subject") ]);
+  DATA = window.DaolPlan ? DaolPlan.applyAll(cs||[]) : (cs||[]);
+  ROSTER = (tt||[]);
+  XO.init({ sb, teachers: ROSTER, rooms: CLASS_ROOMS, assignDay, orderByPref, getCourses: ()=>DATA, onChange: ()=>renderAll() });
+  await XO.load();
+  const P = XO.period(), t = todayISO();
+  sel = (t>=P.start && t<=P.end) ? t : P.start;
+  renderAll();
+}
+
+function termLabel(P){ return P.term==="1차지필" ? "2학기 1차(중간)" : (P.term==="2차지필" ? "2학기 2차(기말)" : (P.term||"시험")); }
+
+function renderDates(){
+  const P = XO.period(), ds = XO.datesIn(P), t = todayISO();
+  document.getElementById("periodSub").textContent = `${termLabel(P)} · ${md(P.start)}(${dowOf(P.start)}) ~ ${md(P.end)}(${dowOf(P.end)}) · 하루씩 따로 배정`;
+  document.getElementById("dates").innerHTML = ds.map(d=>{
+    const dw=dowOf(d), hn=XO.holidayOf(d), ex=XO.examsOf(d), n=XO.entriesOn(d).filter(r=>XO.typeOf(r)!=="배정").length;
+    const cls=["dch", sel===d?"on":"", (dw==="일"||dw==="토")?"wk":"", hn?"holi":"", d===t?"today":""].filter(Boolean).join(" ");
+    return `<button class="${cls}" data-d="${d}">${md(d)} (${dw})<small>${hn?esc(hn):(ex.length?`시험 ${ex.length}`:"")}${n?` · 임시 ${n}`:""}${(!hn&&!ex.length&&!n)?"—":""}</small></button>`;
+  }).join("");
+}
+
+function dayHeaderHTML(d, A){
+  const dw=dowOf(d), hn=XO.holidayOf(d), ex=XO.examsOf(d);
+  return `<div class="dhead"><h2>${md(d)} (${dw})</h2>
+    ${hn?`<span class="holi-b">🔴 ${esc(hn)}</span>`:""}
+    ${A.allOff?`<span class="alloff">전체 휴강일 — '정규'로 살린 반만 수업</span>`:""}
+    ${ex.map(e=>`<span class="ex ${e.kind}" title="${esc(e.subj||"")}">${esc(shortSchool(e.school))}${e.grade&&e.grade!=="전체"?" "+esc(e.grade.replace("학년","")):""} <i>${KIND[e.kind]}${e.total>1?` ${e.nth}/${e.total}`:""}</i></span>`).join("")}
+    <span class="stat">정규 ${A.items.length}개 · 휴강 ${A.items.filter(i=>i.off).length} · 임시 ${A.temps.length}건 · <b class="${(A.items.some(i=>i.conflict)||A.temps.some(b=>b.conflict))?"bad":""}">겹침 ${A.items.filter(i=>i.conflict).length+A.temps.filter(b=>b.conflict).length}건</b></span>
+  </div>`;
+}
+
+function gridFor(d, A){
+  return dayGridHTML({ day:A.day, title:`2026 다올105 · ${md(d)} (${A.day}) 시험기간 강의실 배정`, items:A.items, temps:A.temps });
+}
+
+const roomSel = (cur, extra) => `<select data-room ${extra||""}><option value="">자동</option>${CLASS_ROOMS.map(r=>`<option value="${r.key}" ${r.key===cur?"selected":""}>${r.label}</option>`).join("")}</select>`;
+const fmt = m => String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const roomLabel = k => (CLASS_ROOMS.find(r=>r.key===k)||{}).label || (k||"—");
+
+function editorHTML(d, A){
+  const seen=new Set(), rows=[];
+  A.items.forEach(it=>{ if(!seen.has(it.c.id)){ seen.add(it.c.id); rows.push(it); } });
+  const cfOf = it => A.items.filter(x=>x!==it && !x.off && x.room===it.room && x.s.start<it.s.end && it.s.start<x.s.end).concat(A.temps.filter(b=>b.room===it.room && b.start<it.s.end && it.s.start<b.end));
+  let h = `<table class="ed" id="editor"><thead><tr><th style="width:90px">강사</th><th>강좌</th><th style="width:120px">시간</th><th style="width:190px">이 날 강의실</th><th style="width:70px">휴강</th><th>확인</th></tr></thead><tbody>`;
+  rows.forEach(it=>{
+    const times = A.items.filter(x=>x.c.id===it.c.id).map(x=>`${fmt(x.s.start)}~${fmt(x.s.end)}`).join(", ");
+    const cf = it.off ? [] : cfOf(it);
+    h += `<tr class="${it.off?"off":""} ${cf.length?"cf":""}" data-cid="${it.c.id}">
+      <td><b>${esc(it.c.teacher)}</b></td>
+      <td>${esc(it.c.course_name)} <span class="tg">${esc(it.s.type)}</span>${it.overridden?'<span class="tg ovd">이날만 지정</span>':""}</td>
+      <td>${times}</td>
+      <td>${roomSel(it.overridden?it.room:"", `data-kind="class"`)} <span class="muted">자동: ${esc(roomLabel(it.autoRoom))}</span></td>
+      <td><label><input type="checkbox" data-off ${it.off?"checked":""}> 휴강</label></td>
+      <td>${cf.length?`<span class="cf">⚠ 겹침 · ${cf.map(x=>esc(x.c?x.c.course_name:x.name)).join(" / ")}</span>`:'<span class="muted">✓</span>'}</td>
+    </tr>`;
+  });
+  A.temps.forEach(b=>{
+    const cf = A.items.filter(x=>!x.off && x.room===b.room && x.s.start<b.end && b.start<x.s.end).concat(A.temps.filter(x=>x!==b && x.room===b.room && x.start<b.end && b.start<x.end));
+    h += `<tr class="${cf.length?"cf":""}" data-tid="${b.id}">
+      <td><b>${esc(b.teacher||"")}</b></td>
+      <td>${esc(b.school||"")} ${esc(b.subj||"")} <span class="tg temp">시험기간 ${esc(b.type)}</span></td>
+      <td>${fmt(b.start)}~${fmt(b.end)}${b.endGuessed?' <span class="muted">(종료 미정)</span>':""}</td>
+      <td>${roomSel(b.suggested?"":b.room, `data-kind="temp"`)} ${b.suggested?`<span class="muted">제안: ${esc(roomLabel(b.room))}</span>`:""}</td>
+      <td><button class="rowbtn" data-edit="${b.id}">수정</button></td>
+      <td>${cf.length?`<span class="cf">⚠ 겹침 · ${cf.map(x=>esc(x.c?x.c.course_name:x.name)).join(" / ")}</span>`:'<span class="muted">✓</span>'}</td>
+    </tr>`;
+  });
+  h += `</tbody></table>`;
+  const others = XO.entriesOn(d).filter(r=>["휴강","정규","보류","메모"].indexOf(XO.typeOf(r))>=0 && !XO.body(r).course_id);
+  h += `<div class="memo-list">${others.length?`<div class="muted" style="margin-bottom:4px">이 날의 메모·휴강·정규유지·보류 (대시보드 임시 일정표와 같은 항목)</div>`+XO.entriesHTML(d).replace(/<div class="xo-e/g,'<div class="xo-e" style="max-width:900px"'):""}</div>`;
+  h += `<button class="add" data-new="${d}">+ 이 날 일정 추가 (직보·휴강·정규·보류·메모)</button>`;
+  return h;
+}
+
+function renderDay(){
+  if(!sel) return;
+  const A = XO.assignForDate(sel);
+  document.getElementById("dayPanel").innerHTML = dayHeaderHTML(sel, A) + `<div class="sheet">${gridFor(sel, A)}</div>` + editorHTML(sel, A);
+}
+function renderAll(){ renderDates(); renderDay(); }
+
+document.getElementById("dates").addEventListener("click", e=>{ const b=e.target.closest("[data-d]"); if(!b) return; sel=b.dataset.d; renderAll(); document.getElementById("dayPanel").scrollIntoView({behavior:"smooth",block:"start"}); });
+document.getElementById("dayPanel").addEventListener("change", async e=>{
+  const tr=e.target.closest("tr"); if(!tr) return;
+  try{
+    if(e.target.matches("[data-room]")){
+      if(tr.dataset.cid){ const c=DATA.find(x=>x.id===tr.dataset.cid); await XO.setRoomOverride(sel, c, e.target.value); }
+      else if(tr.dataset.tid){ await XO.setTempRoom(tr.dataset.tid, e.target.value); }
+    } else if(e.target.matches("[data-off]") && tr.dataset.cid){
+      const c=DATA.find(x=>x.id===tr.dataset.cid); await XO.setOff(sel, c, e.target.checked);
+    }
+  }catch(err){ alert("저장 실패: "+err.message); renderAll(); }
+});
+document.getElementById("dayPanel").addEventListener("click", e=>{
+  const n=e.target.closest("[data-new]"); if(n){ XO.openForm(null, n.dataset.new); return; }
+  const ed=e.target.closest("[data-edit]"); if(ed){ const r=XO.rows.find(x=>x.id===ed.dataset.edit); if(r) XO.openForm(r); return; }
+});
+document.getElementById("printAll").addEventListener("click", ()=>{
+  const P=XO.period(), ds=XO.datesIn(P);
+  const host=document.getElementById("printAllHost");
+  host.innerHTML = ds.map(d=>{ const A=XO.assignForDate(d); return `<div class="print-day">${dayHeaderHTML(d,A).replace(/<span class="stat">.*?<\/span>/,"")}<div class="sheet">${gridFor(d,A)}</div></div>`; }).join("");
+  document.getElementById("dayPanel").classList.add("noprint");
+  setTimeout(()=>{ window.print(); setTimeout(()=>{ host.innerHTML=""; document.getElementById("dayPanel").classList.remove("noprint"); }, 500); }, 200);
+});
+load();
+</script>
+</body>
+</html>
