@@ -221,7 +221,7 @@
   }
 
   function bodyHtml() {
-    if (S.err === "nokey") return `<div class="ck-empty">인포데스크 접속 키를 넣어야 기록을 볼 수 있습니다. 오른쪽 위 <b>접속 키 넣기</b>를 누르세요.</div>`;
+    if (S.err === "nokey") return `<div class="ck-empty">원장님께 받은 <b>자동 로그인 링크</b>로 이 페이지를 한 번 열면 바로 보입니다(키를 외울 필요 없음). 키를 알면 오른쪽 위 <b>접속 키 넣기</b>로 넣어도 됩니다.</div>`;
     if (S.err === "badkey") return `<div class="ck-empty ck-bad">접속 키가 맞지 않습니다. <b>접속 키 바꾸기</b>로 다시 넣어 주세요.</div>`;
     if (S.err) return `<div class="ck-empty ck-bad">${esc(S.err)}</div>`;
     if (!S.week || (!S.plan && !S.role)) return `<div class="ck-empty">불러오는 중…</div>`;
@@ -331,7 +331,7 @@
   }
 
   function askKey() {
-    const k = prompt("인포데스크(또는 원장) 접속 키를 넣어 주세요.\n원장께 받은 키입니다. 이 컴퓨터에만 저장됩니다.", "");
+    const k = prompt("접속 키를 넣어 주세요.\n키를 모르면 원장님께 받은 「자동 로그인 링크」로 이 페이지를 한 번 열면 됩니다(키 입력 불필요).", "");
     if (k == null) return;
     ls.set(LS_KEY, k.trim());
     load(S.week || iso(mondayOf(new Date())));
@@ -400,6 +400,24 @@
     if (!S.week) load(iso(mondayOf(new Date())));
     else render();
   }
+
+  /* 자동 로그인 링크 — admin.html?k=<키>&tab=chk
+     원장·인포가 키를 몰라도 되게 한다(인포데스크 앱과 같은 방식). 키는 이 기기에 저장하고 주소창에서 즉시 지운다
+     — 주소에 남으면 방문 기록·화면 공유로 새기 때문이다. 키 자체를 없애지 않는 이유: 이 페이지는 공개 주소라
+     키가 없으면 누구나 학생 기록을 보고 고칠 수 있다. */
+  (function autoLogin() {
+    const u = new URL(location.href);
+    const k = u.searchParams.get("k");
+    if (k) {
+      ls.set(LS_KEY, k.trim());
+      u.searchParams.delete("k");
+      history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
+    }
+    if (u.searchParams.get("tab") === "chk") {
+      const open = () => document.querySelector('[data-tab="chk"]')?.click();
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", open); else setTimeout(open, 0);
+    }
+  })();
 
   window.addEventListener("beforeunload", (e) => {   // 저장 안 된 입력이 있으면 한 번 붙잡는다
     if (unsaved()) { e.preventDefault(); e.returnValue = ""; }
