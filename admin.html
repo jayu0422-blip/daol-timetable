@@ -1399,7 +1399,7 @@ function renderDash(){
     const subK = subOfTeacher(courses, key, sub);        // 이 달의 제출 기록 (스냅샷 도장 > 예전 방식)
     const hasSnap = courses.some(c=>snapOf(c,key));      // 이 달에 저장한 흔적
     const conf = HAS_SD ? courses.filter(c=>marksOf(c,key)) : [];
-    const sess = conf.reduce((a,c)=>a+regCount(marksOf(c,key)), 0);
+    const sess = conf.reduce((a,c)=>a+billCount(marksOf(c,key)), 0);   // 청구 회차 = 정규 + 직전보강 (2026-09-26 원장 지시)
     if(HAS_SD && window.DaolCourseCal && DaolCourseCal.count)
       conf.forEach(c=>{ const n=DaolCourseCal.count(marksOf(c,key)); totBo+=n.보||0; totHyu+=n.휴||0; });
     totalSess += sess; confCourses += conf.length; rosterCnt += cnt;
@@ -1486,7 +1486,7 @@ function renderDash(){
     <div class="kpi acc"><div class="lbx">${VIEW_YM.m}월 제출 완료</div><div class="v">${done}<small>/${ROSTER.length}</small></div><div class="sub">${nameList(doneNames)||"아직 없음"}</div></div>
     <div class="kpi bad"><div class="lbx">${VIEW_YM.m}월 미제출</div><div class="v">${badNames.length+unsubNames.length}<small>명</small></div><div class="sub">${nameList(badNames.concat(unsubNames))||"모두 제출 완료"}${unsubNames.length?` <span style="color:#92400e">(저장만 ${unsubNames.length})</span>`:""}</div></div>
     <div class="kpi"><div class="lbx">총 강좌</div><div class="v">${DATA.length}<small>개</small></div><div class="sub">중등 ${mid} · 고등 ${high}</div></div>
-    <div class="kpi hero"><div class="lbx">${VIEW_YM.m}월 정규 회차 합</div><div class="v">${totalSess||"—"}${totalSess?"<small>회</small>":""}</div><div class="sub">정산 근거 · 확정분만</div></div>`;
+    <div class="kpi hero"><div class="lbx">${VIEW_YM.m}월 청구 회차 합</div><div class="v">${totalSess||"—"}${totalSess?"<small>회</small>":""}</div><div class="sub">정규 + 직전보강 · 진행표 확정분만</div></div>`;
 
   // ── 오늘 할 일 ──
   const todo = [];
@@ -1509,13 +1509,13 @@ function renderDash(){
   const gRows = [
     ["제출 완료", `${done} / ${ROSTER.length}명`],
     ["진행표 확정 강좌", HAS_SD ? `${confCourses} / ${rosterCnt}개` : "—"],
-    ["확정 정규 회차", totalSess ? `${totalSess}회` : "—"],
+    ["확정 청구 회차", totalSess ? `${totalSess}회 (정규+직전보강)` : "—"],
   ];
-  if(totBo)  gRows.push(["직전보강 마킹", `${totBo}회`]);
+  if(totBo)  gRows.push(["그중 직전보강", `${totBo}회 (청구 포함)`]);
   if(totHyu) gRows.push(["휴강 마킹", `${totHyu}일`]);
   document.getElementById("glanceRows").innerHTML = gRows.map(([k,v])=>`<div class="row"><span>${k}</span><b>${v}</b></div>`).join("");
   document.getElementById("glanceNote").innerHTML =
-    `강의계획은 <b>전 달에</b> 냅니다. ‘진행표’는 선생님이 달력에서 실제 수업일을 확정한 것이고, <b>정규 회차 합이 정산 근거</b>가 됩니다.`;
+    `강의계획은 <b>전 달에</b> 냅니다(16일부터 다음 달). ‘진행표’는 선생님이 달력에서 확정한 실제 수업일이고, <b>정규 + 직전보강 = 청구 회차</b>입니다(조교 클리닉·휴강 제외). 수강료 탭의 청구액도 진행표가 있으면 그 값으로 계산됩니다.`;
 }
 document.getElementById("mPrev").addEventListener("click", ()=>shiftYM(-1));
 document.getElementById("mNext").addEventListener("click", ()=>shiftYM(1));
@@ -2170,7 +2170,8 @@ function renderFee(){
           ? `<div style="font-size:9.5px;font-weight:800;color:#065f46">진행표${mb.src.boost?` (정규 ${mb.src.reg}+보강 ${mb.src.boost})`:""}${mb.src.off?` · 휴강 ${mb.src.off} 제외`:""}</div>`
           : (c.division==="중등"||c.course_type==="특강" ? ""
              : `<div style="font-size:9.5px;font-weight:800;color:${mb.src&&mb.src.from==="진행표 0회"?"#b91c1c":"#b45309"}">${mb.src&&mb.src.from==="진행표 0회"?"⚠ 진행표 0회 — 확인 필요(요일로 계산)":"요일 추정 · 진행표 미확정"}</div>`)}</td>
-      <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}${mb.disc?`<br><span style="font-size:10px;color:#059669;font-weight:700">재원생 20%↓</span>`:""}</td>
+      <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}${mb.disc?`<br><span style="font-size:10px;color:#059669;font-weight:700">재원생 20%↓</span>`:""}
+        ${(mb.amount!=null && c.tuition!=null && mb.amount>c.tuition) ? `<br><span style="font-size:9.5px;color:#b91c1c;font-weight:800" title="교습비는 신고액 안에서만 청구할 수 있습니다">⚠ 기준액 초과 (신고액 확인)</span>` : ""}</td>
       <td><select class="fee-in matsel${window.daolIsLegacyMaterial(c.material_fee)?" legacy":""}" data-k="material_fee">${window.daolMaterialOptions(c.material_fee)}</select></td>
       <td>${window.daolHandoutCell(c,"fee-in matsel hand")}</td>
       <td style="font-weight:800;color:#7c2d12;text-align:right">${won(window.daolTotalFee(mb.amount,c.material_fee,hf))}</td>
