@@ -766,10 +766,10 @@ table.dash td b{color:var(--navy)}
         <div class="ph"><h2>강사별 현황</h2><span class="cnt" id="dashCnt">—</span>
           <span class="rtx">진행표 = 그 달 실제 수업일을 확정한 강좌 수</span></div>
         <div class="tblwrap" style="overflow-x:auto"><table class="dash">
-          <thead><tr><th>강사</th><th>강좌</th><th id="thPlan">진행표</th><th id="thSess">정규 회차</th><th>상태</th><th>최근 제출</th><th class="noprint"></th></tr></thead>
+          <thead><tr><th>강사</th><th>강좌</th><th id="thPlan">진행표</th><th id="thSess">청구 회차</th><th>상태</th><th>최근 제출</th><th class="noprint"></th></tr></thead>
           <tbody id="dashBody"></tbody>
         </table></div>
-        <p class="muted" style="padding:10px 18px;margin:0;border-top:1px solid var(--line);font-size:12px">강사에게는 “링크 복사”로 나온 <b>전용 입력 링크</b>만 전달하세요. 링크에는 토큰만 있어 다른 강사 명단·내용은 보이지 않습니다.</p>
+        <p class="muted" style="padding:10px 18px;margin:0;border-top:1px solid var(--line);font-size:12px">📘 <a href="guide-desk-plans.html" target="_blank" style="color:#1d4ed8;font-weight:700">인포 점검 가이드</a> · <a href="guide-teacher.html" target="_blank" style="color:#1d4ed8;font-weight:700">선생님 설명서</a> — 강사에게는 “링크 복사”로 나온 <b>전용 입력 링크</b>만 전달하세요. 링크에는 토큰만 있어 다른 강사 명단·내용은 보이지 않습니다.</p>
       </div>
 
       <div class="side noprint">
@@ -1469,7 +1469,7 @@ function renderDash(){
   document.getElementById("dashCnt").textContent = ROSTER.length + "명";
   document.getElementById("mLabel").textContent = `${VIEW_YM.y}년 ${VIEW_YM.m}월`;
   document.getElementById("thPlan").textContent = `${VIEW_YM.m}월 진행표`;
-  document.getElementById("thSess").textContent = `${VIEW_YM.m}월 정규 회차`;
+  document.getElementById("thSess").textContent = `${VIEW_YM.m}월 청구 회차`;
   document.getElementById("mHint").innerHTML = HAS_SD
     ? `계획은 <b>전 달에</b> 냅니다(16일부터 다음 달 계획). 달마다 기록이 남아 아래 <b>월별 기록</b>에서 지난 달 것도 볼 수 있습니다.`
     : `계획은 <b>전 달에</b> 냅니다. ⚠ courses.session_dates 컬럼이 없어 ‘진행표’ 칸은 아직 비어 있습니다.`;
