@@ -250,8 +250,9 @@ label{font-weight:700;color:#5c6a80}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="scholars.js?v=c4d7a4a3"></script>
 <script src="config.js?v=72ddcbd2"></script>
+<script src="academic.js?v=c0032fba"></script>   <!-- 2027 이후 공휴일(DAOL_HOLIDAYS) — course-cal 이 폴백으로 본다 -->
 <script src="schedule-cal.js?v=c089dcd2"></script>
-<script src="course-cal.js?v=608e4ed7"></script>
+<script src="course-cal.js?v=3864d16d"></script>
 <script>
 /* ---------- 설정/상수 ---------- */
 const GRADES = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -380,11 +381,35 @@ async function save(){
     });
   }
   if(useSupa){
+    /* 저장 직전 서버 값을 다시 읽어 합친다.
+       예전엔 화면에 들고 있던 행을 통째로 upsert 해서, 다른 기기·다른 탭에서 저장한 진행표(session_dates)와
+       원장이 고친 수강료(tuition·sessions)가 한 글자 수정 한 번에 되돌아갔다. (2026-09-26) */
+    let fresh = {};
+    try{
+      const ids = rows.map(r=>r.id).filter(Boolean);
+      if(ids.length){
+        const {data} = await sb.from("courses").select("id,session_dates,monthly_plans").in("id", ids);
+        (data||[]).forEach(x=>{ fresh[x.id]=x; });
+      }
+    }catch(e){ /* 못 읽으면 화면 값 그대로 — 아래 병합이 최소한 지난 달 키는 지킨다 */ }
+    const asObj = v => { if(!v) return {}; if(typeof v==="string"){ try{ return JSON.parse(v||"{}")||{}; }catch(e){ return {}; } } return v; };
+    const mergeMonths = (serverV, localV) => {
+      const a = asObj(serverV), b = asObj(localV), out = Object.assign({}, a);
+      Object.keys(b).forEach(k=>{                       // 이 화면에서 만진 달만 덮고, 서버에만 있는 달은 그대로 둔다
+        out[k] = (k === TARGET.key) ? Object.assign({}, a[k]||{}, b[k]||{}) : (out[k] || b[k]);
+      });
+      return out;
+    };
+    /* 강사가 실제로 편집하는 칸만 보낸다 — 수강료·회차·강의실 지정은 원장 화면 소관이라 아예 싣지 않는다 */
+    const TEACHER_COLS = ["id","grade","subject","course_name","schedule_text","target_school","audience","content",
+                          "course_type","material_fee","session_notes","textbook","sort_order"];
     const build = (withDates, withPlans)=> rows.map(r=>{
-      const o={...r, teacher:TEACHER, division:divisionOf(r.grade||"중1"),
-        material_fee:(r.material_fee===''||r.material_fee==null)?null:(parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null)};
-      if(!withDates) delete o.session_dates;
-      if(!withPlans) delete o.monthly_plans;
+      const o = { teacher:TEACHER, division:divisionOf(r.grade||"중1") };
+      TEACHER_COLS.forEach(k=>{ if(k in r) o[k]=r[k]; });
+      o.material_fee = (r.material_fee===''||r.material_fee==null) ? null : (parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null);
+      const f = fresh[r.id] || {};
+      if(withDates) o.session_dates = JSON.stringify(mergeMonths(f.session_dates, r.session_dates));
+      if(withPlans) o.monthly_plans = mergeMonths(f.monthly_plans, r.monthly_plans);
       return o;
     });
     let {error} = await sb.from("courses").upsert(build(HAS_DATES,HAS_PLANS),{onConflict:"id"});
@@ -442,6 +467,18 @@ function renderPreview(){
 
 /* ---------- 강사 프로필(수업 원칙·전략) ---------- */
 let profTimer=null;
+/* 프로필 저장 — 디바운스 타이머와 '앱 전환 시 즉시 저장' 이 같은 함수를 쓴다 */
+async function flushProfile(){
+  profTimer=null;
+  const st=document.getElementById("profStat"); if(!st) return;
+  const patch={};
+  document.querySelectorAll("[data-p]").forEach(x=>patch[x.dataset.p]=x.value);
+  if(!useSupa){ st.textContent="저장됨 ✓ (데모)"; return; }
+  const {error}=await sb.from("teachers").update(patch).eq("name",TEACHER);
+  st.textContent = error ? ("저장 오류: "+error.message) : "저장됨 ✓";
+  if(!error && me) Object.assign(me,patch);
+  const pv=document.getElementById("prevBox"); if(pv && !pv.classList.contains("hide")) renderPreview();
+}
 function initProfile(){
   document.getElementById("profName").textContent = TEACHER ? `— ${TEACHER} 선생님` : "";
   const img=document.getElementById("profPhoto");
@@ -458,16 +495,18 @@ function initProfile(){
     const el=e.target.closest("[data-p]"); if(!el) return;
     const st=document.getElementById("profStat"); st.textContent="입력 중…";
     clearTimeout(profTimer);
-    profTimer=setTimeout(async()=>{
-      const patch={};
-      document.querySelectorAll("[data-p]").forEach(x=>patch[x.dataset.p]=x.value);
-      if(!useSupa){ st.textContent="저장됨 ✓ (데모)"; return; }
-      const {error}=await sb.from("teachers").update(patch).eq("name",TEACHER);
-      st.textContent = error ? ("저장 오류: "+error.message) : "저장됨 ✓";
-      if(!error && me) Object.assign(me,patch);
-      if(!document.getElementById("prevBox").classList.contains("hide")) renderPreview();
-    },600);
+    profTimer=setTimeout(flushProfile,600);
   });
+}
+
+/* 담당 학교 저장 — 디바운스와 '앱 전환 시 즉시 저장' 공용 */
+async function flushDuty(){
+  try{ schoolsTimer=null; }catch(e){}
+  const inp=document.getElementById('schoolsInput'); if(!inp) return;
+  if(!useSupa){ document.getElementById('dutyStat').textContent='저장됨 ✓ (데모)'; return; }
+  const {error}=await sb.from('teachers').update({schools:inp.value}).eq('name',TEACHER);
+  document.getElementById('dutyStat').textContent = error ? ('저장 오류: '+error.message) : '저장됨 ✓';
+  if(!error && me) me.schools=inp.value;
 }
 
 /* ---------- 담당 학교 + 기출분석 시즌 ---------- */
@@ -527,12 +566,7 @@ function initDuty(){
     document.getElementById('dutyStat').textContent='입력 중…'; renderGichul();
     if(calApi) calApi.setSchools(teacherSchools());
     clearTimeout(schoolsTimer);
-    schoolsTimer=setTimeout(async()=>{
-      if(!useSupa){ document.getElementById('dutyStat').textContent='저장됨 ✓ (데모)'; return; }
-      const {error}=await sb.from('teachers').update({schools:inp.value}).eq('name',TEACHER);
-      document.getElementById('dutyStat').textContent = error ? ('저장 오류: '+error.message) : '저장됨 ✓';
-      if(!error && me) me.schools=inp.value;
-    },600);
+    schoolsTimer=setTimeout(flushDuty,600);
   });
 }
 function updateCount(){ document.getElementById("countStat").textContent = `총 ${rows.length}개 강좌`;  if(typeof renderPlanBanner==='function') renderPlanBanner(); }
@@ -591,11 +625,18 @@ function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
 /* ---------- 강좌별 실제 수업일 ----------
    session_dates 는 월별로 쌓는다: {"2026-09":{"2026-09-01":"정", ...}, "2026-10":{...}}
    지난달 기록을 덮어쓰지 않아야 정산 근거가 남는다. */
-/* 계획 달. 평소에는 오늘 날짜로 정해지고(15일까지 이번 달·16일부터 다음 달), 연습 모드에서만 ?ym= 로 바꾼다. */
-const TARGET = (function(){
-  if(DEMO && DEMO_YM){ const y=+DEMO_YM.slice(0,4), m=+DEMO_YM.slice(5,7); return {y, m, key:DEMO_YM}; }
-  return window.DaolCourseCal ? window.DaolCourseCal.targetYM() : {y:new Date().getFullYear(), m:new Date().getMonth()+1, key:""};
-})();
+/* 계획 달. 기본은 오늘 날짜로 정해지고(15일까지 이번 달·16일부터 다음 달),
+   선생님이 [이번 달]/[다음 달] 로 바꿀 수 있다 — 16일이 지나면 이번 달 진행표(월중 휴강·보강)를
+   아무도 고칠 수 없던 문제 때문. (2026-09-26) */
+function ymOf(y, m){ if(m>12){m-=12;y++;} if(m<1){m+=12;y--;} return {y, m, key:`${y}-${String(m).padStart(2,"0")}`}; }
+function autoYM(){
+  if(DEMO && DEMO_YM) return ymOf(+DEMO_YM.slice(0,4), +DEMO_YM.slice(5,7));
+  return window.DaolCourseCal ? window.DaolCourseCal.targetYM() : (()=>{ const d=new Date(); return ymOf(d.getFullYear(), d.getMonth()+1); })();
+}
+let TARGET = autoYM();
+function thisMonthYM(){ const d=new Date(); return ymOf(d.getFullYear(), d.getMonth()+1); }
+function nextMonthYM(){ const d=new Date(); return ymOf(d.getFullYear(), d.getMonth()+2); }
+function setTarget(t){ if(t.key===TARGET.key) return; TARGET = t; render(); }
 function datesOf(r){
   try{ const o = typeof r.session_dates==="string" ? JSON.parse(r.session_dates||"{}") : (r.session_dates||{}); return o||{}; }
   catch(e){ return {}; }
@@ -608,12 +649,41 @@ function calBtnHTML(r){
   const c = window.DaolCourseCal.count(marks);
   const done = !!saved;
   return `<button type="button" class="btn sm ${done?"":"primary"}" data-act="cal" style="width:100%;justify-content:flex-start;min-height:48px">
-      📅 ${TARGET.m}월 수업 진행표 ${done?"수정":"확인"} — 정규 <b>${c.정}회</b>${c.클?` · 클리닉 ${c.클}일`:""}${c.보?` · 직전보강 ${c.보}`:""}
+      📅 ${TARGET.m}월 수업 진행표 ${done?"수정":"확인"} — 청구 회차 <b>${(c.정||0)+(c.보||0)}회</b>${c.보?` <span style="font-weight:600">(정규 ${c.정} + 직전보강 ${c.보})</span>`:""}${c.클?` · 조교 클리닉 ${c.클}일(회차 제외)`:""}${c.휴?` · 휴강 ${c.휴}`:""}
     </button>
     <div class="hint" style="margin-top:4px;color:${done?"#059669":"#b45309"};font-weight:700">
       ${done?"확인 완료 ✓ (저장됨)":"아직 확인하지 않았습니다 — 요일 규칙으로 임시 계산한 값입니다"}</div>`;
 }
-function openCal(r, card){
+/* 원장이 「시험기간 임시 일정표」에서 잡은 휴강(ops_calendar) — 강사 달력에도 그대로 보여준다.
+   예전엔 두 장부가 서로를 몰라, 원장이 휴강으로 확정한 날이 강사 진행표에는 수업으로 남아 회차에 들어갔다. */
+let OPS_OFF = null;        // {"2026-10-03": "원장 휴강 사유" …} — 강좌별로 다르므로 {courseId:{date:label}}
+async function loadOpsOff(){
+  if(OPS_OFF || !useSupa) return OPS_OFF || {};
+  OPS_OFF = {};
+  try{
+    const from = `${TARGET.y}-${String(TARGET.m).padStart(2,"0")}-01`;
+    const to   = `${TARGET.y}-${String(TARGET.m).padStart(2,"0")}-31`;
+    const {data} = await sb.from("ops_calendar").select("d,kind,who,school,body").eq("kind","memo").gte("d",from).lte("d",to);
+    (data||[]).forEach(row=>{
+      let b={}; try{ b=JSON.parse(row.body||"{}")||{}; }catch(e){}
+      if(b.t==="휴강") OPS_OFF[row.d] = { who:row.who, school:row.school, course_id:b.course_id, memo:b.memo||"" };
+      else if(b.t==="메모" && /전체\s*휴강/.test(b.memo||"")) OPS_OFF[row.d] = { all:true, memo:b.memo };
+    });
+  }catch(e){ OPS_OFF = {}; }
+  return OPS_OFF;
+}
+function opsOffFor(r){
+  const out = {};
+  Object.keys(OPS_OFF||{}).forEach(d=>{
+    const o = OPS_OFF[d];
+    if(o.all){ out[d] = "원장: 전체 휴강"; return; }
+    if(o.course_id && o.course_id === r.id){ out[d] = "원장: 휴강"; return; }
+    if(!o.course_id && o.who === TEACHER){ out[d] = "원장: 휴강 " + (o.school||""); }
+  });
+  return out;
+}
+async function openCal(r, card){
+  await loadOpsOff();
   const saved = marksOf(r);
   window.DaolCourseCal.open({
     title: r.course_name || "강좌",
@@ -621,10 +691,14 @@ function openCal(r, card){
     mySchools: teacherSchools(),
     ym: {y:TARGET.y, m:TARGET.m},
     marks: saved || undefined,
-    onSave: (marks)=>{
+    opsOff: opsOffFor(r),
+    onSave: async (marks)=>{
       const all = datesOf(r); all[TARGET.key] = marks;
       r.session_dates = JSON.stringify(all);
-      DIRTY = true; render(); save();
+      DIRTY = true; render();
+      const err = await save();                       // 저장 결과를 기다린다 — 실패인데 "저장됨 ✓" 을 띄우지 않기 위해
+      if(err) alert("진행표가 서버에 저장되지 않았습니다.\n(" + (err.message||err) + ")\n인터넷 확인 후 다시 저장해 주세요.");
+      render();
     }
   });
 }
@@ -646,9 +720,27 @@ document.getElementById("list").addEventListener("click", e=>{
   const btn = e.target.closest("[data-act]"); if(!btn) return;
   const card = e.target.closest(".card"); const id = card.dataset.id;
   const idx = rows.findIndex(x=>x.id===id);
-  if(btn.dataset.act==="dup"){ const c={...rows[idx], id:uid()}; rows.splice(idx+1,0,c); DIRTY=true; render(); save(); }
+  if(btn.dataset.act==="dup"){
+    /* 복제는 '내용'만 — 진행표(session_dates)와 제출 도장(monthly_plans)까지 복사하면 회차가 두 번 청구된다 */
+    const c={...rows[idx], id:uid()}; delete c.session_dates; delete c.monthly_plans; delete c.updated_at;
+    c.course_name = (c.course_name||"") + " (복제)";
+    rows.splice(idx+1,0,c); DIRTY=true; render(); save();
+  }
   if(btn.dataset.act==="cal"){ openCal(rows[idx], btn.closest(".card")); return; }
-  if(btn.dataset.act==="del"){ if(rows.length<=1 || confirm("이 강좌를 삭제할까요?")){ const removed=rows.splice(idx,1)[0]; if(useSupa&&removed) sb.from("courses").delete().eq("id",removed.id); if(!rows.length) rows=[blankRow()]; DIRTY=true; render(); save(); } }
+  if(btn.dataset.act==="del"){
+    /* 삭제는 되돌릴 수 없고 과거 달 정산 근거까지 사라진다 — 강좌가 1개여도 반드시 확인한다 */
+    const r0 = rows[idx];
+    const months = Object.keys(datesOf(r0)).length;
+    const msg = `“${(r0.course_name||"이름 없는 강좌")}” 을(를) 삭제할까요?`
+      + (months ? `\n\n⚠ 이 강좌에 저장된 ${months}개월치 수업 진행표(수강료 정산 근거)도 함께 사라집니다.` : "")
+      + `\n삭제는 되돌릴 수 없습니다.`;
+    if(confirm(msg)){
+      const removed=rows.splice(idx,1)[0];
+      if(useSupa&&removed) sb.from("courses").delete().eq("id",removed.id);
+      if(!rows.length) rows=[blankRow()];
+      DIRTY=true; render(); save();
+    }
+  }
 });
 function addRow(){ rows.push(blankRow()); DIRTY=true; render(); document.querySelector(".card:last-child")?.scrollIntoView({behavior:"smooth",block:"center"}); save(); }
 document.getElementById("addTop").addEventListener("click",addRow);
@@ -656,6 +748,16 @@ document.getElementById("addBottom").addEventListener("click",addRow);
 document.getElementById("submitBtn").addEventListener("click", async ()=>{
   /* 제출 도장은 강좌마다 "그 달 스냅샷" 안에 찍는다 — teachers.submitted_at 은 칸이 하나뿐이라
      다음 달 제출이 이번 달 기록을 덮지만, 스냅샷 안의 도장은 달마다 남는다 (대시보드 월별 기록의 근거). */
+  /* 진행표(실제 수업일)가 정산 근거다. 한 번도 안 열고 제출하면 대시보드만 초록이고 회차는 0이 된다. */
+  const named = rows.filter(r=>(r.course_name||"").trim());
+  const notConf = named.filter(r=>!marksOf(r));
+  if(notConf.length){
+    alert(`아직 ${TARGET.m}월 수업 진행표를 확인하지 않은 강좌가 ${notConf.length}개 있습니다.\n\n`
+      + notConf.slice(0,6).map(r=>"· "+(r.course_name||"이름 없는 강좌")).join("\n")
+      + (notConf.length>6?`\n· 외 ${notConf.length-6}개`:"")
+      + `\n\n각 강좌의 [📅 ${TARGET.m}월 수업 진행표] 를 열어 실제 수업일을 확인·저장한 뒤 제출해 주세요.\n(이 표가 수강료 정산 근거입니다)`);
+    return;
+  }
   const stamp = new Date().toISOString();
   const btn = document.getElementById("submitBtn"); btn.disabled = true;
   try{
@@ -675,7 +777,14 @@ document.getElementById("submitBtn").addEventListener("click", async ()=>{
 });
 
 // 폰에서 앱 전환·화면 끄기 시 마지막 입력 즉시 저장
-document.addEventListener("visibilitychange", ()=>{ if(document.hidden && TEACHER && DIRTY) save(); });
+/* 폰에서 앱 전환·화면 끄기 — 강좌뿐 아니라 프로필·담당학교의 디바운스 대기분도 함께 넘긴다.
+   예전엔 프로필만 고치고 앱을 전환하면 조용히 사라졌다. (2026-09-26) */
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden || !TEACHER) return;
+  if(DIRTY) save();
+  if(profTimer){ clearTimeout(profTimer); flushProfile(); }
+  if(typeof schoolsTimer!=="undefined" && schoolsTimer){ clearTimeout(schoolsTimer); flushDuty(); }
+});
 
 /* 이 브라우저에 지금까지 쌓인 달 — "매달 누적되는지" 를 눈으로 확인하는 자리 */
 function savedMonths(){
@@ -706,10 +815,21 @@ function demoBannerHTML(){
 }
 function renderPlanBanner(){
   const el = document.getElementById("planBanner"); if(!el || !TARGET) return;
+  if(!el._ymWired){ el._ymWired = true; el.addEventListener("click", e=>{
+    const b = e.target.closest("[data-ym]"); if(!b) return;
+    const k = b.dataset.ym; OPS_OFF = null;           // 달이 바뀌면 원장 휴강도 다시 읽는다
+    setTarget({ y:+k.slice(0,4), m:+k.slice(5,7), key:k });
+  }); }
   const subs = rows.map(r=>{ const mp=(window.DaolPlan?DaolPlan.parse(r.monthly_plans):null)||{}; return (mp[TARGET.key]||{}).submitted_at; }).filter(Boolean).sort();
   const last = subs.length ? new Date(subs[subs.length-1]) : null;
   const conf = rows.filter(r=>marksOf(r)).length;
-  el.innerHTML = `📌 지금 입력하는 계획: <b>${TARGET.y}년 ${TARGET.m}월</b> — 강좌마다 <b>📅 ${TARGET.m}월 수업 진행표</b>에서 실제 수업일(시험 주간 보강·휴강 포함)을 확인하고, 마지막에 <b>✅ 작성 완료 제출</b>을 눌러주세요.`
+  const tm = thisMonthYM(), nm = nextMonthYM();
+  const mbtn = (t,label)=>`<button type="button" class="ymbtn${t.key===TARGET.key?" on":""}" data-ym="${t.key}">${label} ${t.m}월</button>`;
+  el.innerHTML = `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+      <span style="font-weight:800;color:#7c2d12">어느 달 계획인가요?</span>${mbtn(tm,"이번 달")}${mbtn(nm,"다음 달")}
+      <span style="font-size:12px;color:#92400e">· 월중에 생긴 휴강·직전보강은 <b>이번 달</b>을 눌러 고치시면 됩니다</span>
+    </div>`
+    + `📌 지금 입력하는 계획: <b>${TARGET.y}년 ${TARGET.m}월</b> — 강좌마다 <b>📅 ${TARGET.m}월 수업 진행표</b>에서 실제 수업일(시험 주간 보강·휴강 포함)을 확인하고, 마지막에 <b>✅ 작성 완료 제출</b>을 눌러주세요.`
     + ` <span style="color:#92400e">진행표 확정 ${conf}/${rows.filter(r=>(r.course_name||"").trim()).length}개</span>`
     + (last ? ` · <span style="color:#065f46;font-weight:700">${TARGET.m}월분 제출 ${last.toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})} ${last.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})} ✓</span>` : ` · <span style="color:#b91c1c;font-weight:700">${TARGET.m}월분 아직 제출 전</span>`);
   if(DEMO){

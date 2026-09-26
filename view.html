@@ -161,7 +161,22 @@ function render(me, courses){
   document.getElementById("keepBtn").addEventListener("click", async ()=>{
     const btn=document.getElementById("keepBtn"); btn.textContent="저장 중…"; btn.disabled=true;
     try{
-      await sb.from("teachers").upsert({name:me.name, submitted_at:new Date().toISOString(), course_count:valid.length},{onConflict:"name"});
+      /* teachers 도장만 찍으면 대시보드는 '제출완료' 인데 월별 기록에는 흔적이 없어
+         독촉 문자가 이미 낸 선생님께 나갔다. 그 달 스냅샷에도 같이 찍는다. (2026-09-26) */
+      const stamp = new Date().toISOString();
+      if(window.DaolPlan){
+        /* 계획 달 규칙은 강사 화면과 같다 — 15일까지 이번 달, 16일부터 다음 달 */
+        const nw=new Date(); let ky=nw.getFullYear(), km=nw.getMonth()+1;
+        if(nw.getDate()>15){ km++; if(km>12){ km=1; ky++; } }
+        const key = ky+"-"+String(km).padStart(2,"0");
+        for(const c of valid){
+          try{
+            const mp = DaolPlan.merge(c.monthly_plans, key, {submitted_at: stamp, kept_as_is: true});
+            await sb.from("courses").update({monthly_plans: mp}).eq("id", c.id);
+          }catch(e){ /* 한 강좌 실패해도 나머지는 진행 */ }
+        }
+      }
+      await sb.from("teachers").upsert({name:me.name, submitted_at:stamp, course_count:valid.length},{onConflict:"name"});
       btn.textContent="✅ 확인 완료";
       document.getElementById("keepNote").innerHTML="<b style='color:#10b981'>이번 달 시간표를 그대로 확정했습니다. 감사합니다!</b>";
     }catch(e){ btn.textContent="✅ 이대로 유지"; btn.disabled=false; document.getElementById("keepNote").textContent="저장 오류 — 다시 시도해 주세요."; }

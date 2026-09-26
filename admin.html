@@ -1154,13 +1154,13 @@ table.dash td b{color:var(--navy)}
 <script src="consulting.js?v=6442c949"></script>
 <script src="scholars_all.js?v=14cacc5b"></script>
 <script src="manual.js?v=f85b3973"></script>
-<script src="course-cal.js?v=608e4ed7"></script>
+<script src="course-cal.js?v=3864d16d"></script>
 <script src="consult-slots.js?v=309f1c68"></script>
 <script src="academic.js?v=c0032fba"></script>
 <script src="schedule-cal.js?v=c089dcd2"></script>
 <script src="ops-cal.js?v=9c323e07"></script>
 <script src="exam-ops.js?v=5b5512bd"></script>
-<script src="rooms.js?v=c72a1628"></script>
+<script src="rooms.js?v=68fee4f7"></script>
 <script>
 /* 수행도 체크표 화면 — 선생님 서버에서 불러온다(사본을 이 공개 저장소에 두지 않음). 로컬 검증 때만 ?chkapi=로컬 서버 */
 (function(){
@@ -1297,7 +1297,16 @@ function planMonthOf(iso){
    강사가 저장할 때마다 그 달 스냅샷이 남고, 제출 버튼을 누르면 스냅샷 안에 submitted_at 이 찍힌다.
    그래서 달을 바꿔도 그 달에 무엇을 냈는지 그대로 볼 수 있다. */
 function plansOf(c){ return (window.DaolPlan && DaolPlan.parse) ? (DaolPlan.parse(c.monthly_plans)||{}) : {}; }
-function snapOf(c,key){ const o=plansOf(c)[key]; return (o && Object.keys(o).length) ? o : null; }
+/* 내용이 하나도 없이 도장(submitted_at·legacy·saved_at)만 있는 스냅샷은 '그 달 계획'이 아니다.
+   예전엔 이런 껍데기가 「보기」에서 '이 달 기록 없음' 경고를 막고 현재(다음 달) 강좌 값을 그 달 계획인 양 보여줬다. (2026-09-26) */
+function snapOf(c,key){
+  const o=plansOf(c)[key]; if(!o || !Object.keys(o).length) return null;
+  const F=(window.DaolPlan&&DaolPlan.FIELDS)||["audience","content","textbook","session_notes"];
+  const M=(window.DaolPlan&&DaolPlan.META)||["course_name","grade","subject","schedule_text"];
+  const has = F.concat(M).some(k=>o[k]!=null && String(o[k]).trim()!=="");
+  return has ? o : Object.assign({}, o, {_stampOnly:true});
+}
+function snapHasContent(o){ return !!(o && !o._stampOnly); }
 function subOfTeacher(courses, key, legacyIso){
   const st = courses.map(c=>snapOf(c,key)).filter(o=>o && o.submitted_at).sort((a,b)=>a.submitted_at<b.submitted_at?-1:1);
   if(st.length){ const o=st[st.length-1]; return {iso:o.submitted_at, src:o.legacy?"legacy":"snap"}; }   // legacy = 9/19 이전 제출을 옮겨 적은 도장
@@ -1318,6 +1327,22 @@ function recordMonths(){
 function targetNowYM(){
   return (window.DaolCourseCal && DaolCourseCal.targetYM) ? DaolCourseCal.targetYM()
     : (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })();
+}
+/* 원장 휴강(ops_calendar) vs 강사 진행표(session_dates) 불일치 */
+function offMismatch(key){
+  const XO = window.DaolExamOps; if(!XO || !XO.rows) return [];
+  const out=[];
+  DATA.forEach(c=>{
+    const marks = marksOf(c,key); if(!marks) return;
+    Object.keys(marks).forEach(d=>{
+      if(!d.startsWith(key)) return;
+      const v = marks[d]; if(v!=="정" && v!=="정클" && v!=="보") return;
+      let off=false;
+      try{ off = XO.allOffThatDay(d) ? !XO.keepCourseIds(d).has(c.id) : XO.offCourseIds(d,[c]).has(c.id); }catch(e){ off=false; }
+      if(off) out.push({d, teacher:c.teacher, name:c.course_name});
+    });
+  });
+  return out;
 }
 function renderMonthStrip(){
   const el=document.getElementById("mStrip"); if(!el) return;
@@ -1343,11 +1368,20 @@ function marksOf(c, key){
   let o = c.session_dates;
   if(typeof o === "string"){ try{ o = JSON.parse(o||"{}"); }catch(e){ o = {}; } }
   const v = o && o[key];
-  return (v && Object.keys(v).length) ? v : null;
+  /* 빈 객체({})도 '확정' 이다 — 선생님이 그 달 수업을 전부 '없음' 으로 지운 경우.
+     예전엔 비었다고 미확정으로 봐서, 강사 화면은 '확인 완료' 인데 원장 화면은 '미확정' 으로 갈렸다. (2026-09-26) */
+  return v ? v : null;
 }
 function regCount(marks){
   if(window.DaolCourseCal && DaolCourseCal.count) return DaolCourseCal.count(marks).정 || 0;
   return Object.values(marks||{}).filter(v=>v==="정"||v==="정클").length;
+}
+/* 청구 회차 = 정규 + 직전보강. 클리닉(조교)·휴강은 뺀다.
+   원장 지시 2026-09-26: "직전보강도 1회차로 청구한다". 예전엔 '보' 가 카운터 단계에서 분리돼 금액에 한 번도 닿지 않았다. */
+function billCount(marks){
+  const c = (window.DaolCourseCal && DaolCourseCal.count) ? DaolCourseCal.count(marks) : null;
+  if(c) return (c.정||0) + (c.보||0);
+  return Object.values(marks||{}).filter(v=>v==="정"||v==="정클"||v==="보").length;
 }
 
 function renderDash(){
@@ -1458,6 +1492,12 @@ function renderDash(){
   const todo = [];
   if(badNames.length) todo.push({c:"r", h:`<b>미제출 ${badNames.length}명</b>에게 전용 링크 보내기 — ${badNames.join(" · ")}`});
   if(unsubNames.length) todo.push({c:"r", h:`<b>저장만 하고 제출 안 함 ${unsubNames.length}명</b> — ${unsubNames.join(" · ")} (제출 버튼 안내)`});
+  /* 원장이 「시험기간 임시 일정표」에서 휴강으로 잡은 날인데, 선생님 진행표에는 아직 수업으로 남아 있는 것 —
+     그대로 두면 그 날이 청구 회차에 들어간다. (2026-09-26) */
+  try{
+    const mm = offMismatch(key);
+    if(mm.length) todo.push({c:"r", h:`<b>원장 휴강인데 진행표는 수업 ${mm.length}건</b> — ${mm.slice(0,3).map(x=>`${x.d.slice(5)} ${x.teacher} ${x.name}`).join(" · ")}${mm.length>3?` 외 ${mm.length-3}건`:""} <span style="color:#b91c1c">(그대로 두면 청구 회차에 포함됩니다)</span>`});
+  }catch(e){}
   wipNames.filter(w=>!w.unsubmitted).forEach(w=> todo.push({c:"g", h:`${w.name} 선생님 <b>진행표 ${w.conf}/${w.cnt}</b> — 제출은 됐지만 나머지 강좌 진행표 확정 필요`}));
   zeroConf.forEach(z=> todo.push({c:"g", h:`${z.name} 선생님 <b>진행표 0/${z.cnt}</b> — 제출은 됐지만 실제 수업일 미확정`}));
   if(!todo.length) todo.push({c:"b", h:`${VIEW_YM.m}월 계획 관련 남은 일이 없습니다 👍`});
@@ -1510,12 +1550,12 @@ function openPlanView(name){
   const F=[["schedule_text","시간"],["audience","대상"],["content","수업 내용"],["textbook","교재"],["session_notes","회차 메모"],["material_fee","교재비"]];
   const back=document.createElement("div"); back.className="pm-back";
   const cards = courses.length ? courses.map(c=>{
-    const snap=snapOf(c,key);
+    const snapRaw=snapOf(c,key); const snap=snapHasContent(snapRaw)?snapRaw:null;
     const marks=marksOf(c,key);
     const cnt = marks && window.DaolCourseCal && DaolCourseCal.count ? DaolCourseCal.count(marks) : null;
     const name_ = (snap&&snap.course_name)||c.course_name||"(이름 없음)";
     const tags = `<span class="tg">${esc((snap&&snap.grade)||c.grade||"")}</span><span class="tg">${esc((snap&&snap.subject)||c.subject||"")}</span><span class="tg">${esc((snap&&snap.course_type)||c.course_type||"")}</span>`
-      + (snap ? (snap.saved_at?`<span class="tg fb">저장 ${new Date(snap.saved_at).toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})}</span>`:"") : `<span class="tg miss">이 달 기록 없음 — 현재 강좌 정보로 표시</span>`);
+      + (snap ? (snap.saved_at?`<span class="tg fb">저장 ${new Date(snap.saved_at).toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})}</span>`:"") : `<span class="tg miss">이 달 계획 기록 없음${snapRaw&&snapRaw.submitted_at?" (제출 도장만 있음)":""} — 아래는 현재 강좌 정보</span>`);
     const rowsH = F.map(([k,l])=>{
       const fromSnap = snap && snap[k]!=null && String(snap[k]).trim()!=="";
       let v = fromSnap ? snap[k] : c[k];
@@ -2064,15 +2104,32 @@ function feeMonthYM(){ const el=document.getElementById("feeMonth");
   const v=(el||{}).value||thisYM(); const p=v.split("-").map(Number); return {y:p[0], m0:p[1]-1, m:p[1]}; }
 function countInMonth(y,m0,dayChars){ const map={"일":0,"월":1,"화":2,"수":3,"목":4,"금":5,"토":6}; const want=new Set(dayChars.map(d=>map[d])); let n=0; const d=new Date(y,m0,1); while(d.getMonth()===m0){ if(want.has(d.getDay())) n++; d.setDate(d.getDate()+1); } return n; }
 function regularDays(c){ const p=parseDayTimes(c.schedule_text); const s=new Set(); p.sessions.forEach(x=>{ if(x.type==="정규"||x.type==="직보") s.add(x.day); }); return [...s]; }
+/* 그 달 진행표(선생님이 확정한 실제 수업일)가 있으면 그것이 청구 근거다.
+   없으면 예전처럼 요일 텍스트 × 달력으로 계산한다(그 경우 화면에 '요일 추정' 으로 표시). */
+function billSessOf(c,y,m0){
+  const key = `${y}-${String(m0+1).padStart(2,"0")}`;
+  const marks = marksOf(c,key);
+  if(!marks) return null;
+  const n = billCount(marks);
+  const d = (window.DaolCourseCal && DaolCourseCal.count) ? DaolCourseCal.count(marks) : {정:n,보:0,클:0,휴:0};
+  return { sess:n, from:"진행표", reg:d.정||0, boost:d.보||0, clinic:d.클||0, off:d.휴||0 };
+}
 function monthlyBill(c,y,m0){
   if(c.course_type==="특강"){                                                 // 특강 전체(1회성·미납분)
     const disc = /재원생/.test(c.tuition_note||"") && /20\s*%|할인/.test(c.tuition_note||"");  // 재원생 20%할인 특강(유용권 등) → 할인가 청구
     return {sess:c.sessions, amount:(c.tuition!=null&&disc)?Math.round(c.tuition*0.8):c.tuition, disc};
   }
   if(c.division==="중등"){ return {sess:null, amount:c.tuition}; }            // 월정액(회차 무관)
-  const days=regularDays(c), sess=days.length?countInMonth(y,m0,days):null;
+  let act=billSessOf(c,y,m0);
+  const days=regularDays(c);
+  const ruleSess = days.length?countInMonth(y,m0,days):null;
+  /* 진행표가 0회인데 요일상으로는 수업이 있는 달 — 선생님이 표를 비워 둔 것일 수 있어 청구를 0원으로 떨구지 않는다.
+     요일 추정으로 되돌리고 화면에 '진행표 0회 — 확인 필요' 로 띄운다. (2026-09-26) */
+  if(act && act.sess===0 && ruleSess){ act = null; var zeroMark = true; }
+  const sess = act ? act.sess : ruleSess;
+  const src = act ? act : {from: zeroMark ? "진행표 0회" : "요일 추정", rule:ruleSess};
   const base=c.tuition, baseSess=c.sessions;
-  if(base==null||!baseSess||sess==null) return {sess, amount:base};
+  if(base==null||!baseSess||sess==null) return {sess, amount:base, src};
   const ps=Math.round(base/baseSess);                    // 회차당 단가
   let amount;
   if(c.subject==="수학"){ amount=Math.min(base, sess*ps); }   // 수학: 기준 초과 시 동일(상한), 미달 시 비례 차감
@@ -2080,7 +2137,7 @@ function monthlyBill(c,y,m0){
     amount=sess*ps;
     if(c.subject==="영어" && ggf(c.grade)==="고3") amount=Math.min(amount,450000);  // 영어 고3 최대 45만
   }
-  return {sess, amount};
+  return {sess, amount, src};
 }
 function renderFee(){
   // 강사별 필터 칩
@@ -2100,13 +2157,19 @@ function renderFee(){
     const cat=c.course_type==="특강"?"특강":(c.division==="중등"?"월":"회차");
     const midReg=(c.division==="중등"&&c.course_type!=="특강");
     const mb=monthlyBill(c,y,m0); const hf=window.daolHandoutAllowed(c)?(c.handout_fee||0):0;
-    monthTotal+=(mb.amount||0); matTotal+=(c.material_fee||0); handTotal+=hf;
+    /* 강좌명이 빈 행(작성하다 만 카드)은 합계에서 뺀다 — 예전엔 이런 행이 월 합계를 부풀렸다 */
+    const counted = !!(c.course_name||"").trim();
+    if(counted){ monthTotal+=(mb.amount||0); matTotal+=(c.material_fee||0); handTotal+=hf; }
     return `<tr data-id="${c.id}">
       <td><b>${esc(c.teacher)}</b></td><td>${cat}</td><td>${esc(c.grade||"")}</td><td>${esc(c.subject||"")}</td>
       <td>${esc(c.course_name||"")}</td>
       <td><input type="number" class="fee-in" data-k="sessions" value="${c.sessions??""}" style="width:56px" ${midReg?'disabled':''}></td>
       <td><input type="text" inputmode="numeric" class="fee-in fee-won" data-k="tuition" value="${won(c.tuition)}" style="width:108px"></td>
-      <td style="text-align:center;font-weight:700">${mb.sess!=null?mb.sess:(c.division==="중등"?"월":"—")}</td>
+      <td style="text-align:center;font-weight:700">${mb.sess!=null?mb.sess:(c.division==="중등"?"월":"—")}
+        ${mb.src&&mb.src.from==="진행표"
+          ? `<div style="font-size:9.5px;font-weight:800;color:#065f46">진행표${mb.src.boost?` (정규 ${mb.src.reg}+보강 ${mb.src.boost})`:""}${mb.src.off?` · 휴강 ${mb.src.off} 제외`:""}</div>`
+          : (c.division==="중등"||c.course_type==="특강" ? ""
+             : `<div style="font-size:9.5px;font-weight:800;color:${mb.src&&mb.src.from==="진행표 0회"?"#b91c1c":"#b45309"}">${mb.src&&mb.src.from==="진행표 0회"?"⚠ 진행표 0회 — 확인 필요(요일로 계산)":"요일 추정 · 진행표 미확정"}</div>`)}</td>
       <td style="font-weight:800;color:var(--brand-ink)">${won(mb.amount)}${mb.disc?`<br><span style="font-size:10px;color:#059669;font-weight:700">재원생 20%↓</span>`:""}</td>
       <td><select class="fee-in matsel${window.daolIsLegacyMaterial(c.material_fee)?" legacy":""}" data-k="material_fee">${window.daolMaterialOptions(c.material_fee)}</select></td>
       <td>${window.daolHandoutCell(c,"fee-in matsel hand")}</td>

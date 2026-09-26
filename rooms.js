@@ -24,6 +24,7 @@ function korToMin(str){ const m=String(str).match(/(오전|오후)\s*(\d{1,2})�
 // 요일 추출 (단어 속 글자 오인식 방지: "수업"의 수, "목표"의 목 제외)
 function extractDays(seg){
   const set=new Set();
+  seg=String(seg||"").replace(/주\s*\d+\s*(일|회|번)/g," ");   // '주 3일'·'주2회' 의 '일' 을 일요일로 오인하던 것 (2026-09-26)
   (seg.match(/[월화수목금토일]요일/g)||[]).forEach(m=>set.add(m[0]));          // 화요일 → 화
   (seg.match(/[월화수목금토일]{2,}/g)||[]).forEach(run=>{ for(const ch of run) set.add(ch); }); // 월수금, 화목토
   for(let i=0;i<seg.length;i++){ const ch=seg[i]; if("월화수목금토일".includes(ch)){ const nxt=seg[i+1]||"", prev=seg[i-1]||""; if(!/[가-힣]/.test(nxt)&&!/[가-힣]/.test(prev)) set.add(ch); } } // 단독 요일: 앞뒤가 한글이 아님

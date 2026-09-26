@@ -19,17 +19,25 @@
   const dim = (y, m) => new Date(y, m, 0).getDate();
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  /* 공휴일은 schedule-cal.js가 들고 있는 검증본을 그대로 쓴다(중복 정의 금지) */
+  /* 공휴일 = schedule-cal.js 검증본(2026) + academic.js DAOL_HOLIDAYS(2027 이후 포함).
+     예전엔 앞엣것만 봐서 2026-12-16 이후 1월 계획을 열면 신정·설날이 평일처럼 '수업' 으로 깔렸다. (2026-09-26) */
   function holidays() {
     const H = {};
     ((window.DaolScheduleCal && window.DaolScheduleCal.HOLIDAYS) || []).forEach(([d, n]) => { H[d] = n; });
+    (window.DAOL_HOLIDAYS || []).forEach(h => { if (h && h.date && !H[h.date]) H[h.date] = h.name || "공휴일"; });
     return H;
+  }
+  /* 그 달 공휴일 데이터가 아예 없으면(= 아직 안 넣은 연도) 화면에 알린다 — 조용히 0건이면 회차가 과다 계산된다 */
+  function holidayDataMissing(y, m) {
+    const H = holidays(), pre = `${y}-`;
+    return !Object.keys(H).some(k => k.startsWith(pre));
   }
 
   /* 그 달의 지필평가 — {일: "학교 학년 기간"} (mySchools 있으면 담당학교만) */
   function examsOf(y, m, mySchools) {
     const SC = window.DaolScheduleCal;
     if (!SC || !SC.EXAMS) return {};
+    if (SC.YEAR && y !== SC.YEAR) return {};      // 2026 시험 날짜를 2027 달력에 찍지 않는다
     const E = {};
     SC.EXAMS.forEach(e => {
       if (e.month !== m) return;
@@ -46,6 +54,7 @@
      "화요일"의 '일'을 일요일로 오인하면 회차가 2배가 된다. 세 규칙을 모두 쓴다. */
   function extractDays(seg) {
     const set = new Set();
+    seg = String(seg || "").replace(/주\s*\d+\s*(일|회|번)/g, " ");   // '주 3일'·'주2회' 의 '일' 을 일요일로 오인하던 것
     (seg.match(/[월화수목금토일]요일/g) || []).forEach(m => set.add(m[0]));
     (seg.match(/[월화수목금토일]{2,}/g) || []).forEach(run => { for (const ch of run) set.add(ch); });
     for (let i = 0; i < seg.length; i++) {
@@ -63,12 +72,18 @@
     const plan = {};
     String(scheduleText || "").split(/\n|\//).forEach(seg => {
       seg = seg.trim(); if (!seg) return;
-      const days = extractDays(seg); if (!days.length) return;
-      const kind = /클리닉/.test(seg) ? "클" : "정";        // 관리·직보도 출근이므로 정규로 본다
-      days.forEach(ch => {
-        const w = (DAYS.indexOf(ch) + 1) % 7;               // 월=1 … 일=0
-        const prev = plan[w];
-        plan[w] = !prev ? kind : (prev === kind ? kind : "정클");
+      /* 한 줄에 "화목 20:00~22:00 토 12:00~14:00 클리닉" 처럼 섞이면, 예전엔 그 줄 전체가 클리닉이 돼
+         정규 회차가 0 이 됐다. '클리닉' 글자가 붙은 조각만 클리닉으로 본다. (2026-09-26) */
+      const parts = seg.split(/[,·]|\s{2,}/).map(x => x.trim()).filter(Boolean);
+      const chunks = (parts.length > 1 && parts.some(x => /클리닉/.test(x)) && parts.some(x => !/클리닉/.test(x))) ? parts : [seg];
+      chunks.forEach(chunk => {
+        const days = extractDays(chunk); if (!days.length) return;
+        const kind = /클리닉/.test(chunk) ? "클" : "정";      // 관리·직보도 출근이므로 정규로 본다
+        days.forEach(ch => {
+          const w = (DAYS.indexOf(ch) + 1) % 7;             // 월=1 … 일=0
+          const prev = plan[w];
+          plan[w] = !prev ? kind : (prev === kind ? kind : "정클");
+        });
       });
     });
     return plan;
@@ -188,7 +203,10 @@
     const { y, m } = opts.ym || targetYM();
     const H = holidays();
     const EX = examsOf(y, m, opts.mySchools);
+    const OFF = opts.opsOff || {};                 // 원장이 「시험기간 임시 일정표」에서 잡은 휴강 {날짜: 사유}
+    /* 처음 여는 달은 원장 휴강을 기본 '휴' 로 깔아 준다(이미 저장한 표는 선생님 표시를 존중한다) */
     let marks = Object.assign({}, opts.marks || seed(opts.scheduleText, y, m));
+    if (!opts.marks) Object.keys(OFF).forEach(d => { if (marks[d]) marks[d] = "휴"; });
     const original = JSON.stringify(marks);
     let picked = null;
     dirtyFn = () => JSON.stringify(marks) !== original;
@@ -244,7 +262,8 @@
         <div class="cc-hdl"></div>
         <div class="cc-t">📅 ${esc(opts.title || "강좌")} — ${y}년 ${m}월 수업 진행표</div>
         <div class="cc-s">실제 수업일을 눌러 표시해 주세요. 이 표가 <b>수강료 정산 근거</b>가 됩니다.<br>
-          공휴일(🔴)도 <b>기본은 수업</b>입니다. 쉬시는 날만 <b>휴강</b>으로 바꿔주세요.</div>
+          공휴일(🔴)도 <b>기본은 수업</b>입니다. 쉬시는 날만 <b>휴강</b>으로 바꿔주세요.<br>
+          <b>직전보강도 1회차로 청구</b>됩니다. 조교 클리닉만 회차에서 빠집니다.</div>
       </div>
       <div class="cc-body">
         <div class="cc-mrow"><span class="m">${y}. ${m}</span>
@@ -269,7 +288,7 @@
           `<button type="button" class="cc-chip ${marks[picked] === v || (v === null && !marks[picked]) ? "on" : ""}" data-k="${v === null ? "" : v}">${t}</button>`).join("")}</div>
       </div>` : ""}
       <div class="cc-ft">
-        <div class="cc-sum"><b>정규 ${c.정}회</b>${c.보 ? ` + 직전보강 ${c.보}` : ""}${c.클 ? ` · 조교 클리닉 ${c.클}일(회차 제외)` : ""}${c.휴 ? ` · 휴강 ${c.휴}` : ""}${note ? `<br><span style="color:#b45309">🔴 ${note}</span>` : ""}</div>
+        <div class="cc-sum"><b>청구 회차 ${(c.정||0)+(c.보||0)}회</b>${c.보 ? ` <span style="font-weight:600">(정규 ${c.정} + 직전보강 ${c.보})</span>` : ""}${c.클 ? ` · 조교 클리닉 ${c.클}일(회차 제외)` : ""}${c.휴 ? ` · 휴강 ${c.휴}` : ""}${note ? `<br><span style="color:#b45309">🔴 ${note}</span>` : ""}</div>
         <button type="button" class="cc-b gh" id="ccCancel">닫기</button>
         <button type="button" class="cc-b pri" id="ccSave">저장</button>
       </div>`;
