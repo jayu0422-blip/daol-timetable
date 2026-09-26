@@ -231,6 +231,7 @@ label{font-weight:700;color:#5c6a80}
   <div id="monthlyCal" style="margin:14px 0"></div>
 
   <!-- 지금 입력하는 계획 달 — 15일이 지나면 다음 달 계획으로 넘어간다 -->
+  <div id="demoBanner"></div>
   <div id="planBanner" style="margin:0 0 10px;padding:12px 14px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;font-size:13.5px;color:#713f12;line-height:1.5"></div>
 
   <div class="savebar">
@@ -259,19 +260,30 @@ const SCHOOLS = ["공통","미사고","미사강변고","하남고","풍산고",
 const TYPES = ["정규","특강"];
 const divisionOf = g => g.startsWith("중") ? "중등" : "고등";
 
+/* ---------- 연습 모드 (?demo=1) ----------
+   원장·강사가 실제 데이터를 건드리지 않고 "다음 달 강의계획 작성"을 그대로 해 보는 모드.
+   · 저장은 이 브라우저에만(localStorage), Supabase 에 한 글자도 쓰지 않는다.
+   · &ym=2026-11 로 계획 달을 바꿔 여러 달을 연속으로 작성해 보고 "달마다 쌓이는지" 눈으로 확인한다.
+   · 샘플 강좌 3개(주3회·주3회+클리닉·주2회)를 미리 깔아 둔다. */
+const params = new URLSearchParams(location.search);
+const DEMO = params.get("demo") === "1";
+const DEMO_YM = /^\d{4}-\d{2}$/.test(params.get("ym") || "") ? params.get("ym") : "";
+const DEMO_KEY = "daol_demo_rows";
+
 /* ---------- 백엔드: Supabase 있으면 사용, 없으면 localStorage ---------- */
 const cfg = window.DAOL_CONFIG || {};
 const intendSupa = !!(cfg.url && cfg.anonKey);
-const useSupa = intendSupa && !!window.supabase;
+const useSupa = intendSupa && !!window.supabase && !DEMO;     // 연습 모드는 절대 서버에 쓰지 않는다
 let sb = null;
 if(useSupa){ sb = window.supabase.createClient(cfg.url, cfg.anonKey); document.getElementById("demoNote").style.display="none"; }
+if(DEMO){ document.getElementById("demoNote").innerHTML = "🧪 <b>연습 모드</b> — 저장은 이 브라우저에만 됩니다. 실제 강사 데이터·대시보드에는 전혀 반영되지 않습니다."; }
 
 /* ---------- 강사 식별 (?t=토큰 → DB에서 본인 1명만 조회) ---------- */
-const params = new URLSearchParams(location.search);
 const token = params.get("t") || "";
 let me = null, TEACHER = "";
-function lskey(){ return "daol_courses_" + TEACHER; }
+function lskey(){ return DEMO ? DEMO_KEY : ("daol_courses_" + TEACHER); }
 async function resolveTeacher(){
+  if(DEMO){ me = { name:"연습용 선생님", subject:"영어", schools:"미사강변고 / 윤슬중 / 은가람중" }; return "ok"; }
   if(intendSupa && !window.supabase) return "error"; // supabase 라이브러리 로드 실패(네트워크 등)
   if(useSupa){
     // ① 안전한 경로: 토큰을 서버 함수에 넘겨 본인 정보만 받는다. 토큰은 응답에 실리지 않는다.
@@ -311,6 +323,17 @@ function uid(){ return (window.crypto&&crypto.randomUUID) ? crypto.randomUUID()
   : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16)); }
 function blankRow(){ return {id:uid(), grade:"", subject:(me&&me.subject)||"", course_name:"", schedule_text:"", target_school:"공통", audience:"", content:"", course_type:"정규", material_fee:null, session_notes:"", textbook:"", sort_order:rows.length}; }
 
+/* 연습용 샘플 강좌 — 실제 학원 강좌와 같은 형태(주3회·주3회+토 클리닉·주2회) */
+function demoSeedRows(){
+  const mk = (n,g,sc,sub,extra)=>Object.assign(blankRow(), {grade:g, subject:sub||"영어", course_name:n, schedule_text:sc,
+    target_school:"공통", audience:"중간고사 대비", content:"교과서 본문 + 학교 기출 유형", textbook:"학교 교과서 / 자체교재", course_type:"정규"}, extra||{});
+  return [
+    mk("중3 영어정규반 (월수금)","중3","월수금 20:00~22:00"),
+    mk("중2 영어정규반 (화목토)","중2","화목 18:00~20:00\n토 12:00~14:00 클리닉"),
+    mk("고1 영어 정규반","고1","토 15:00~17:30", {target_school:"미사강변고"}),
+  ];
+}
+
 /* ---------- 로드 ---------- */
 async function load(){
   if(useSupa){
@@ -328,6 +351,7 @@ async function load(){
     }
   } else {
     try{ rows = JSON.parse(localStorage.getItem(lskey())||"[]"); }catch(e){ rows=[]; }
+    if(DEMO && !rows.length) rows = demoSeedRows();
   }
   if(!rows.length) rows=[blankRow()];
   render();
@@ -345,16 +369,17 @@ function scheduleSave(){
 let HAS_DATES = true, HAS_PLANS = true;
 async function save(){
   rows.forEach((r,i)=>r.sort_order=i);
+  /* 이번 계획 달 스냅샷을 함께 남긴다. (서버·연습 모드 둘 다 — 예전엔 서버 저장일 때만 해서
+     연습 모드에서는 달별 계획이 쌓이지 않았다. 2026-09-26)
+     강좌 카드는 칸이 하나뿐이라 다음 달 계획을 저장하면 이번 달 내용이 덮인다.
+     월별로 쌓아 두어야 상담자료·과목안내가 "가장 최근 달" 기준으로 나갈 수 있다. */
+  if(window.DaolPlan && TARGET && TARGET.key){
+    rows.forEach(r=>{
+      /* merge: 같은 달에 먼저 찍힌 제출 시각(submitted_at)을 지우지 않는다 */
+      r.monthly_plans = DaolPlan.merge(r.monthly_plans, TARGET.key, DaolPlan.snapshot(r));
+    });
+  }
   if(useSupa){
-    /* 이번 계획 달 스냅샷을 함께 남긴다.
-       강좌 카드는 칸이 하나뿐이라 다음 달 계획을 저장하면 이번 달 내용이 덮인다.
-       월별로 쌓아 두어야 상담자료·과목안내가 "가장 최근 달" 기준으로 나갈 수 있다. */
-    if(window.DaolPlan && TARGET && TARGET.key){
-      rows.forEach(r=>{
-        /* merge: 같은 달에 먼저 찍힌 제출 시각(submitted_at)을 지우지 않는다 */
-        r.monthly_plans = DaolPlan.merge(r.monthly_plans, TARGET.key, DaolPlan.snapshot(r));
-      });
-    }
     const build = (withDates, withPlans)=> rows.map(r=>{
       const o={...r, teacher:TEACHER, division:divisionOf(r.grade||"중1"),
         material_fee:(r.material_fee===''||r.material_fee==null)?null:(parseInt(String(r.material_fee).replace(/[^0-9]/g,''))||null)};
@@ -566,7 +591,11 @@ function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
 /* ---------- 강좌별 실제 수업일 ----------
    session_dates 는 월별로 쌓는다: {"2026-09":{"2026-09-01":"정", ...}, "2026-10":{...}}
    지난달 기록을 덮어쓰지 않아야 정산 근거가 남는다. */
-const TARGET = (window.DaolCourseCal ? window.DaolCourseCal.targetYM() : {y:new Date().getFullYear(), m:new Date().getMonth()+1, key:""});
+/* 계획 달. 평소에는 오늘 날짜로 정해지고(15일까지 이번 달·16일부터 다음 달), 연습 모드에서만 ?ym= 로 바꾼다. */
+const TARGET = (function(){
+  if(DEMO && DEMO_YM){ const y=+DEMO_YM.slice(0,4), m=+DEMO_YM.slice(5,7); return {y, m, key:DEMO_YM}; }
+  return window.DaolCourseCal ? window.DaolCourseCal.targetYM() : {y:new Date().getFullYear(), m:new Date().getMonth()+1, key:""};
+})();
 function datesOf(r){
   try{ const o = typeof r.session_dates==="string" ? JSON.parse(r.session_dates||"{}") : (r.session_dates||{}); return o||{}; }
   catch(e){ return {}; }
@@ -648,6 +677,33 @@ document.getElementById("submitBtn").addEventListener("click", async ()=>{
 // 폰에서 앱 전환·화면 끄기 시 마지막 입력 즉시 저장
 document.addEventListener("visibilitychange", ()=>{ if(document.hidden && TEACHER && DIRTY) save(); });
 
+/* 이 브라우저에 지금까지 쌓인 달 — "매달 누적되는지" 를 눈으로 확인하는 자리 */
+function savedMonths(){
+  const plan = {}, dates = {};
+  rows.forEach(r=>{
+    const mp = (window.DaolPlan ? DaolPlan.parse(r.monthly_plans) : null) || {};
+    Object.keys(mp).forEach(k=>{ if(/^\d{4}-\d{2}$/.test(k)) plan[k] = (plan[k]||0) + 1; });
+    const sd = datesOf(r);
+    Object.keys(sd).forEach(k=>{ if(sd[k] && Object.keys(sd[k]).length) dates[k] = (dates[k]||0) + 1; });
+  });
+  return { plan, dates, keys:[...new Set(Object.keys(plan).concat(Object.keys(dates)))].sort() };
+}
+function demoBannerHTML(){
+  const now = window.DaolCourseCal ? DaolCourseCal.targetYM() : TARGET;
+  const months = [];
+  let y = now.y, m = now.m;
+  for(let i=0;i<4;i++){ months.push(`${y}-${String(m).padStart(2,"0")}`); m++; if(m>12){ m=1; y++; } }
+  const S = savedMonths();
+  const url = ym => { const u=new URL(location.href); u.searchParams.set("demo","1"); u.searchParams.set("ym",ym); return u.pathname+u.search; };
+  const cnt = k => { const p=S.plan[k]||0, d=S.dates[k]||0; return p||d ? `계획 ${p} · 진행표 ${d}` : "아직 없음"; };
+  return `<div style="margin:0 0 10px;padding:12px 14px;border-radius:12px;background:#eef6ff;border:1px solid #bfdbfe;font-size:13px;color:#1e3a5f;line-height:1.6">
+    🧪 <b>연습 모드</b> — 저장은 이 브라우저에만 됩니다(실제 강사 데이터·대시보드 영향 없음). 달을 바꿔 가며 작성해 보고, 아래 <b>쌓인 달</b>이 지워지지 않고 늘어나는지 확인하세요.
+    <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${months.map(k=>`<a href="${url(k)}" style="text-decoration:none;border:1px solid ${k===TARGET.key?"#1e3a5f":"#bfdbfe"};background:${k===TARGET.key?"#1e3a5f":"#fff"};color:${k===TARGET.key?"#fff":"#1e3a5f"};border-radius:8px;padding:4px 10px;font-weight:800;font-size:12px">${+k.slice(5,7)}월 계획</a>`).join("")}</div>
+    <div style="margin-top:6px;font-size:12.5px"><b>이 브라우저에 쌓인 달:</b> ${S.keys.length ? S.keys.map(k=>`<span style="display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:6px;background:#fff;border:1px solid #cfe0fb">${k} <span style="color:#5b7095">${cnt(k)}</span></span>`).join(" ") : "<span style='color:#5b7095'>아직 없음 — 진행표를 한 번 저장해 보세요</span>"}</div>
+    <div style="margin-top:6px"><button type="button" id="demoReset" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:8px;padding:4px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer">연습 데이터 초기화</button>
+      <span style="color:#5b7095;font-size:12px">· 실제 링크는 <b>?demo=1 없이</b> 여는 것입니다</span></div>
+  </div>`;
+}
 function renderPlanBanner(){
   const el = document.getElementById("planBanner"); if(!el || !TARGET) return;
   const subs = rows.map(r=>{ const mp=(window.DaolPlan?DaolPlan.parse(r.monthly_plans):null)||{}; return (mp[TARGET.key]||{}).submitted_at; }).filter(Boolean).sort();
@@ -656,6 +712,16 @@ function renderPlanBanner(){
   el.innerHTML = `📌 지금 입력하는 계획: <b>${TARGET.y}년 ${TARGET.m}월</b> — 강좌마다 <b>📅 ${TARGET.m}월 수업 진행표</b>에서 실제 수업일(시험 주간 보강·휴강 포함)을 확인하고, 마지막에 <b>✅ 작성 완료 제출</b>을 눌러주세요.`
     + ` <span style="color:#92400e">진행표 확정 ${conf}/${rows.filter(r=>(r.course_name||"").trim()).length}개</span>`
     + (last ? ` · <span style="color:#065f46;font-weight:700">${TARGET.m}월분 제출 ${last.toLocaleDateString("ko-KR",{month:"numeric",day:"numeric"})} ${last.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})} ✓</span>` : ` · <span style="color:#b91c1c;font-weight:700">${TARGET.m}월분 아직 제출 전</span>`);
+  if(DEMO){
+    const db = document.getElementById("demoBanner");
+    if(db){
+      db.innerHTML = demoBannerHTML();
+      db.querySelector("#demoReset").onclick = ()=>{
+        if(!confirm("이 브라우저의 연습 데이터를 모두 지울까요? (실제 데이터와 무관)")) return;
+        localStorage.removeItem(DEMO_KEY); localStorage.removeItem("daol_submitted_"+TEACHER); location.reload();
+      };
+    }
+  }
 }
 async function init(){
   const st = await resolveTeacher();
