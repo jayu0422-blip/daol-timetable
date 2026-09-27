@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>수업계획·일지 (인포·강사 공용)</title>
+<!-- 수업계획대로 그 날 수업이 자동으로 뜨고, 인포·강사가 같은 화면에서 일지를 입력한다.
+     · 수업 목록 = 강의계획 진행표(courses.session_dates) + 시험기간 임시 일정(ops_calendar kind=memo)
+     · 저장 = Supabase class_logs (표가 없으면 이 브라우저에만 임시 저장하고 위에 안내가 뜬다)
+     · [SYSTEM 붙여넣기] = 킵코드 수업일지에 그대로 붙일 수 있는 형식으로 복사 -->
+<style>
+:root{--navy:#1e3a5f;--line:#e5e7eb;--muted:#6b7280;--ok:#059669;--warn:#b45309;--danger:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;background:#eef2f7;color:#1f2430;line-height:1.6}
+.top{background:var(--navy);color:#fff;padding:11px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.top h1{margin:0;font-size:16px;font-weight:900}
+.top .sub{font-size:12.5px;opacity:.88}
+.top a{color:#fde68a;font-weight:700;text-decoration:none}
+.top .btn{border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:8px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:12px 14px 60px}
+.bar{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar input[type=date]{font:inherit;font-size:13.5px;padding:6px 9px;border:1px solid #dde3ec;border-radius:8px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;user-select:none}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:800}
+.btn{border:1px solid #dde3ec;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-size:12.5px;font-weight:700;color:#31405a;cursor:pointer}
+.btn.p{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.g{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;font-size:13px;color:#7c2d12;margin-bottom:10px}
+.note b{color:#78350f}
+.cards{display:grid;gap:10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card.done{border-color:#a7f3d0;box-shadow:0 0 0 2px #ecfdf5 inset}
+.card.off{opacity:.62}
+.ch{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:10px 13px;background:#f8fafc;border-bottom:1px solid var(--line)}
+.ch .nm{font-weight:900;font-size:14.5px}
+.ch .tm{font-size:12.5px;color:#475569;font-weight:700}
+.ch .who{font-size:12px;color:#5b7095}
+.tag{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;border:1px solid}
+.t-정{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+.t-클{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
+.t-정클{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
+.t-보{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.t-휴{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.cb{padding:11px 13px;display:grid;gap:8px}
+.f{display:grid;gap:3px}
+.f label{font-size:11.5px;font-weight:800;color:#5b7095}
+.f label small{font-weight:600;color:#94a3b8}
+textarea{font:inherit;font-size:13.5px;padding:8px 10px;border:1px solid #dde3ec;border-radius:9px;min-height:54px;resize:vertical;width:100%;background:#fff}
+textarea.open{background:#f0fdf4;border-color:#bbf7d0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row .st{font-size:12px;color:var(--muted);margin-left:auto}
+.sum{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:#5b7095;padding:2px 2px 8px}
+.sum b{color:var(--navy)}
+.empty{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:26px;text-align:center;color:var(--muted)}
+@media(max-width:700px){.top h1{font-size:15px}.cb{padding:10px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>📝 수업계획 · 수업일지</h1>
+  <span class="sub" id="who">인포·강사 공용</span>
+  <span style="flex:1"></span>
+  <button class="btn" id="copyAll">📋 전체 복사(SYSTEM 붙여넣기)</button>
+  <a href="admin.html">← 대시보드</a>
+</div>
+
+<div class="wrap">
+  <div id="setup"></div>
+  <div class="bar">
+    <button class="btn" id="dPrev">‹</button>
+    <input type="date" id="dPick">
+    <button class="btn" id="dNext">›</button>
+    <button class="btn" id="dToday">오늘</button>
+    <button class="btn" id="dYest">어제</button>
+    <span style="width:8px"></span>
+    <span class="chip" data-t="">전체 강사</span><span id="tChips"></span>
+    <span style="flex:1"></span>
+    <label style="font-size:12.5px;color:#5b7095"><input type="checkbox" id="hideOff"> 휴강 숨기기</label>
+    <button class="btn" id="reload">새로 고침</button>
+  </div>
+  <div class="sum" id="sum"></div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="schedule-cal.js"></script>
+<script src="course-cal.js"></script>
+<script>
+/* ── 기본 ── */
+const cfg = window.DAOL_CONFIG || {};
+const sb = (cfg.url && cfg.anonKey && window.supabase) ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
+const P = new URLSearchParams(location.search);
+const TOKEN = P.get("t") || "";
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const DOW = ["일","월","화","수","목","금","토"];
+const pad = n => (n<10?"0":"")+n;
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const todayISO = () => iso(new Date());
+const dowOf = s => { const p=s.split("-").map(Number); return DOW[new Date(p[0],p[1]-1,p[2]).getDay()]; };
+const md = s => (+s.slice(5,7))+"/"+(+s.slice(8,10));
+
+let DATA=[], ROSTER=[], LOGS={}, DAY=todayISO(), TEACHER="", ME=null, HAS_TABLE=true, hideOff=false;
+
+/* ── 저장소: class_logs (없으면 이 브라우저에만) ── */
+const LKEY = d => "daol_logs_"+d;
+function localLoad(d){ try{ return JSON.parse(localStorage.getItem(LKEY(d))||"{}"); }catch(e){ return {}; } }
+function localSave(d,obj){ try{ localStorage.setItem(LKEY(d), JSON.stringify(obj)); }catch(e){} }
+
+async function loadLogs(){
+  LOGS = {};
+  if(sb && HAS_TABLE){
+    const {data,error} = await sb.from("class_logs").select("*").eq("d", DAY);
+    if(error){ HAS_TABLE=false; }
+    else { (data||[]).forEach(r=>{ LOGS[r.key] = r; }); }
+  }
+  if(!HAS_TABLE){ LOGS = localLoad(DAY); }
+  renderSetup();
+}
+let saveTimer = {};
+function saveLog(key, patch, statEl){
+  const cur = Object.assign({ key, d:DAY }, LOGS[key]||{}, patch);
+  LOGS[key] = cur;
+  if(statEl) statEl.textContent = "입력 중…";
+  clearTimeout(saveTimer[key]);
+  saveTimer[key] = setTimeout(async ()=>{
+    if(sb && HAS_TABLE){
+      const row = { key:cur.key, d:cur.d, teacher:cur.teacher||null, course_id:cur.course_id||null,
+                    course_name:cur.course_name||null, slot:cur.slot||null, kind:cur.kind||null,
+                    open_memo:cur.open_memo||null, inner_memo:cur.inner_memo||null,
+                    homework:cur.homework||null, note:cur.note||null, done:!!cur.done,
+                    updated_at:new Date().toISOString() };
+      const {error} = await sb.from("class_logs").upsert(row,{onConflict:"key"});
+      if(error){ HAS_TABLE=false; localSave(DAY, LOGS); renderSetup();
+                 if(statEl) statEl.textContent="이 브라우저에만 저장됨"; return; }
+      if(statEl) statEl.textContent = "저장됨 ✓";
+    } else {
+      localSave(DAY, LOGS);
+      if(statEl) statEl.textContent = "이 브라우저에만 저장됨";
+    }
+    renderSum();
+  }, 600);
+}
+function renderSetup(){
+  document.getElementById("setup").innerHTML = HAS_TABLE ? "" :
+    `<div class="note"><b>아직 공유 저장소가 준비되지 않았습니다</b> — 지금 입력하시는 내용은 <b>이 브라우저에만</b> 저장됩니다.<br>
+      Supabase <a href="https://supabase.com/dashboard/project/sqogiblaagmmkpwwodgf/sql/new" target="_blank">SQL 편집기</a> 에
+      <code>supabase_class_logs.sql</code> 을 한 번 실행하면 인포·강사가 <b>같은 내용을 실시간으로</b> 보게 됩니다.</div>`;
+}
+
+/* ── 그 날 수업 목록 = 진행표 + 시험기간 임시 일정 ── */
+function marksOf(c, ym){
+  let o=c.session_dates; if(typeof o==="string"){ try{ o=JSON.parse(o||"{}"); }catch(e){ o={}; } }
+  return (o||{})[ym] || {};
+}
+function slotText(c, dow){
+  const segs = String(c.schedule_text||"").split(/\n|\//).map(s=>s.trim()).filter(Boolean);
+  const hit = segs.filter(s=>s.indexOf(dow)>=0);
+  return (hit.length?hit:segs).join(" / ");
+}
+let OPS=[];
+async function loadOps(){
+  OPS=[];
+  if(!sb) return;
+  const {data} = await sb.from("ops_calendar").select("d,kind,who,school,subjects,slots,room,body").eq("kind","memo").eq("d",DAY);
+  OPS = data||[];
+}
+function opsItems(){
+  return OPS.map(r=>{ let b={}; try{ b=JSON.parse(r.body||"{}")||{}; }catch(e){}
+    return { t:b.t||"메모", memo:b.memo||"", who:r.who, school:r.school, subjects:r.subjects, slots:r.slots, course_id:b.course_id };
+  });
+}
+function buildList(){
+  const ym = DAY.slice(0,7), dow = dowOf(DAY), out = [];
+  const ops = opsItems();
+  DATA.forEach(c=>{
+    if(!(c.course_name||"").trim()) return;
+    if(TEACHER && c.teacher!==TEACHER) return;
+    const kind = marksOf(c,ym)[DAY];
+    const offRow = ops.find(o=>o.t==="휴강" && o.course_id===c.id);
+    const memoRow = ops.find(o=>(o.t==="직보"||o.t==="정규"||o.t==="보류") && o.course_id===c.id);
+    if(!kind && !offRow && !memoRow) return;
+    out.push({ id:"c:"+c.id, course_id:c.id, teacher:c.teacher, name:c.course_name, grade:c.grade,
+      kind: offRow ? "휴" : (kind||"정"), slot: slotText(c,dow),
+      plan: [c.audience?("대상 "+c.audience.split("\n")[0]):"", c.content?c.content.split("\n")[0]:""].filter(Boolean).join(" · "),
+      extra: (offRow?("원장 휴강 "+(offRow.memo||"")):"") || (memoRow?(memoRow.t+" "+(memoRow.memo||"")):"") });
+  });
+  /* 강좌에 못 붙는 임시 수업(직보 등)도 카드로 */
+  ops.filter(o=>!o.course_id && (o.t==="직보"||o.t==="정규"||o.t==="보류")).forEach((o,i)=>{
+    if(TEACHER && o.who!==TEACHER) return;
+    out.push({ id:"o:"+DAY+":"+i, course_id:null, teacher:o.who, name:[o.school,o.subjects].filter(Boolean).join(" ")||"임시 수업",
+      grade:"", kind: o.t==="직보"?"보":"정", slot:(o.slots||"").replace("-","~"), plan:"", extra:o.t+" "+(o.memo||"") });
+  });
+  const ord = {"보":0,"정":1,"정클":2,"클":3,"휴":4};
+  out.sort((a,b)=> (ord[a.kind]-ord[b.kind]) || String(a.slot).localeCompare(String(b.slot)) || String(a.name).localeCompare(String(b.name),"ko"));
+  return out;
+}
+
+/* ── SYSTEM 붙여넣기 형식 ── */
+function sysText(it, L){
+  const lines = [];
+  lines.push(`[${md(DAY)}(${dowOf(DAY)})] ${it.name}${it.slot?" "+it.slot:""}`);
+  if(L.open_memo) lines.push("[오픈] "+L.open_memo);
+  if(L.homework)  lines.push("[과제] "+L.homework);
+  if(L.inner_memo)lines.push("[내부] "+L.inner_memo);
+  if(L.note)      lines.push("[특이] "+L.note);
+  if(it.kind==="휴") lines.push("[휴강] 이 날 수업 없음");
+  return lines.join("\n");
+}
+function copy(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    if(!btn) return;
+    const o=btn.textContent; btn.textContent="✓ 복사됨";
+    setTimeout(()=>btn.textContent=o, 1400);
+  });
+}
+
+/* ── 그리기 ── */
+function renderSum(){
+  const list = buildList().filter(x=>!(hideOff && x.kind==="휴"));
+  const need = list.filter(x=>x.kind!=="휴");
+  const done = need.filter(x=>(LOGS[x.id]||{}).done).length;
+  const typed = need.filter(x=>{ const L=LOGS[x.id]||{}; return (L.open_memo||L.inner_memo||L.homework||L.note); }).length;
+  document.getElementById("sum").innerHTML =
+    `<span>${md(DAY)}(${dowOf(DAY)}) 수업 <b>${list.length}</b>개</span>`
+    + `<span>일지 작성 <b>${typed}</b> / ${need.length}</span>`
+    + `<span>완료 체크 <b>${done}</b> / ${need.length}</span>`
+    + (list.filter(x=>x.kind==="휴").length?`<span>휴강 <b>${list.filter(x=>x.kind==="휴").length}</b></span>`:"");
+}
+function render(){
+  const list = buildList().filter(x=>!(hideOff && x.kind==="휴"));
+  renderSum();
+  const box = document.getElementById("cards");
+  if(!list.length){ box.innerHTML = `<div class="empty">이 날짜에 잡힌 수업이 없습니다.<br><span style="font-size:12.5px">강의계획 진행표에 표시가 없으면 여기에도 뜨지 않습니다.</span></div>`; return; }
+  box.innerHTML = list.map(it=>{
+    const L = LOGS[it.id] || {};
+    return `<div class="card ${L.done?"done":""} ${it.kind==="휴"?"off":""}" data-id="${esc(it.id)}">
+      <div class="ch">
+        <span class="nm">${esc(it.name)}</span>
+        <span class="tag t-${esc(it.kind)}">${it.kind==="보"?"직전보강":it.kind==="휴"?"휴강":it.kind==="클"?"클리닉":it.kind==="정클"?"수업+클리닉":"수업"}</span>
+        ${it.slot?`<span class="tm">${esc(it.slot)}</span>`:""}
+        <span class="who">${esc(it.teacher||"")}${it.grade?" · "+esc(it.grade):""}</span>
+        ${it.extra?`<span class="who" style="color:#b45309">· ${esc(it.extra)}</span>`:""}
+        <span style="flex:1"></span>
+        <label style="font-size:12.5px;font-weight:800;color:${L.done?"#065f46":"#5b7095"}">
+          <input type="checkbox" data-k="done" ${L.done?"checked":""}> 작성 완료</label>
+      </div>
+      <div class="cb">
+        ${it.plan?`<div style="font-size:12px;color:#5b7095">계획: ${esc(it.plan)}</div>`:""}
+        <div class="f"><label>오픈 메모 <small>학부모·학생 앱에 그대로 공개됩니다</small></label>
+          <textarea class="open" data-k="open_memo" placeholder="예: 계획한 진도·과제를 예정대로 마쳤습니다.">${esc(L.open_memo||"")}</textarea></div>
+        <div class="f"><label>과제 <small>낸 과제·확인 결과</small></label>
+          <textarea data-k="homework" placeholder="예: 워크북 3~4과 / 단어 12~14 재시">${esc(L.homework||"")}</textarea></div>
+        <div class="f"><label>내부 메모 <small>우리끼리만 봅니다</small></label>
+          <textarea data-k="inner_memo" placeholder="예: 어휘 결과 이번 주 기록 생략">${esc(L.inner_memo||"")}</textarea></div>
+        <div class="f"><label>특이사항 <small>학생별 지각·미진행 등</small></label>
+          <textarea data-k="note" placeholder="예: ○○○ 학교 보강으로 20:20 도착 — 진행 못 함">${esc(L.note||"")}</textarea></div>
+        <div class="row">
+          <button class="btn g" data-act="copy">📋 SYSTEM 붙여넣기용 복사</button>
+          <button class="btn" data-act="tpl-plan">계획대로 완료</button>
+          <button class="btn" data-act="tpl-boost">직전보강(동형 3세트)</button>
+          <span class="st"></span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ── 이벤트 ── */
+document.getElementById("cards").addEventListener("input", e=>{
+  const card = e.target.closest(".card"); if(!card) return;
+  const k = e.target.dataset.k; if(!k) return;
+  saveLog(card.dataset.id, {[k]: e.target.value}, card.querySelector(".st"));
+});
+document.getElementById("cards").addEventListener("change", e=>{
+  const card = e.target.closest(".card"); if(!card) return;
+  if(e.target.dataset.k!=="done") return;
+  const list = buildList(); const it = list.find(x=>x.id===card.dataset.id) || {};
+  saveLog(card.dataset.id, {done:e.target.checked, teacher:it.teacher, course_id:it.course_id,
+    course_name:it.name, slot:it.slot, kind:it.kind}, card.querySelector(".st"));
+  card.classList.toggle("done", e.target.checked);
+});
+document.getElementById("cards").addEventListener("click", e=>{
+  const b = e.target.closest("[data-act]"); if(!b) return;
+  const card = e.target.closest(".card"); const id = card.dataset.id;
+  const it = buildList().find(x=>x.id===id) || {name:"", slot:""};
+  const L = LOGS[id] || {};
+  if(b.dataset.act==="copy"){ copy(sysText(it, L), b); return; }
+  if(b.dataset.act==="tpl-plan"){
+    const t = card.querySelector('[data-k="open_memo"]');
+    t.value = "수업계획대로 진도·과제를 예정대로 마쳤습니다."; t.dispatchEvent(new Event("input",{bubbles:true})); return;
+  }
+  if(b.dataset.act==="tpl-boost"){
+    const t = card.querySelector('[data-k="open_memo"]');
+    t.value = "시험 직전 보강입니다. 학교 출제 범위에 맞춘 동형 모의고사 3세트를 실전과 같은 순서로 풀고, 세트마다 바로 채점 → 오답 확인 → 재풀이까지 진행했습니다. 전원 출석했고 3세트 모두 계획대로 마쳤습니다.";
+    t.dispatchEvent(new Event("input",{bubbles:true})); return;
+  }
+});
+document.getElementById("copyAll").addEventListener("click", e=>{
+  const list = buildList().filter(x=>x.kind!=="휴");
+  const all = list.map(it=>sysText(it, LOGS[it.id]||{})).join("\n\n");
+  copy(all, e.target);
+});
+function setDay(d){ DAY=d; document.getElementById("dPick").value=d; reload(); }
+document.getElementById("dPick").addEventListener("change", e=>setDay(e.target.value));
+document.getElementById("dPrev").addEventListener("click", ()=>{ const d=new Date(DAY); d.setDate(d.getDate()-1); setDay(iso(d)); });
+document.getElementById("dNext").addEventListener("click", ()=>{ const d=new Date(DAY); d.setDate(d.getDate()+1); setDay(iso(d)); });
+document.getElementById("dToday").addEventListener("click", ()=>setDay(todayISO()));
+document.getElementById("dYest").addEventListener("click", ()=>{ const d=new Date(); d.setDate(d.getDate()-1); setDay(iso(d)); });
+document.getElementById("hideOff").addEventListener("change", e=>{ hideOff=e.target.checked; render(); });
+document.getElementById("reload").addEventListener("click", ()=>reload());
+document.querySelector('.bar .chip[data-t=""]').addEventListener("click", ()=>{ TEACHER=""; buildChips(); render(); });
+
+function buildChips(){
+  document.querySelector('.bar .chip[data-t=""]').classList.toggle("on", !TEACHER);
+  document.getElementById("tChips").innerHTML = ROSTER.map(t=>
+    `<span class="chip ${TEACHER===t.name?"on":""}" data-t="${esc(t.name)}">${esc(t.name)}</span>`).join(" ");
+}
+document.getElementById("tChips").addEventListener("click", e=>{
+  const c=e.target.closest(".chip"); if(!c) return; TEACHER=c.dataset.t; buildChips(); render();
+});
+
+async function reload(){
+  await loadOps(); await loadLogs(); render();
+}
+async function boot(){
+  document.getElementById("dPick").value = DAY;
+  if(!sb){ document.getElementById("cards").innerHTML = `<div class="empty">Supabase 연결이 없습니다.</div>`; return; }
+  if(TOKEN){
+    try{ const {data} = await sb.rpc("resolve_teacher",{p_token:TOKEN});
+      if(Array.isArray(data) && data.length){ ME=data[0]; TEACHER=ME.name;
+        document.getElementById("who").textContent = ME.name+" 선생님"; } }catch(e){}
+  }
+  const [{data:cs},{data:tt}] = await Promise.all([
+    sb.from("courses").select("*"), sb.from("teachers").select("name,subject")
+  ]);
+  DATA = cs||[]; ROSTER = tt||[];
+  buildChips();
+  await reload();
+}
+boot();
+</script>
+</body>
+</html>
