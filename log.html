@@ -157,7 +157,7 @@ function marksOf(c, ym){
 function slotText(c, dow){
   const segs = String(c.schedule_text||"").split(/\n|\//).map(s=>s.trim()).filter(Boolean);
   const hit = segs.filter(s=>s.indexOf(dow)>=0);
-  return (hit.length?hit:segs).join(" / ");
+  return hit.join(" / ");   /* 그 요일에 없는 시간대는 안 보여준다(보강은 시간이 따로다) */
 }
 let OPS=[];
 async function loadOps(){
