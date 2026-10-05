@@ -28,7 +28,7 @@ body{font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;color:#1f2430
 .bar .clk{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
 .bar .tag{font-size:16px;font-weight:700;opacity:.75}
 #fit{flex:1;position:relative;overflow:hidden}
-#inner{position:absolute;top:0;left:0;transform-origin:top left}
+#inner{position:absolute;top:0;left:0;transform-origin:top left;width:1500px}
 .sheet{background:#fff}
 .err{padding:40px;font-size:28px;color:#b91c1c;font-weight:800}
 #dot{position:absolute;right:10px;bottom:8px;width:10px;height:10px;border-radius:50%;
@@ -72,6 +72,7 @@ const P = new URLSearchParams(location.search);
 const PIN = P.get("d") || "";
 const ROTATE = Math.max(0, parseInt(P.get("rotate")||"0",10));   // 초. 0이면 안 돌린다
 const ZOOM = parseFloat(P.get("zoom")||"0") || 0;
+const BASEW = parseInt(P.get("w")||"1500",10) || 1500;   // 설계 폭
 
 const cfg = window.DAOL_CONFIG || {};
 const sb = (cfg.url && cfg.anonKey && window.supabase) ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
@@ -107,20 +108,22 @@ function paint(){
   document.getElementById("inner").innerHTML =
     `<div class="sheet">${dayGridHTML({day:A.day, title:`${md(d)} (${dowOf(d)}) 강의실 배정`, items:A.items, temps:A.temps})}</div>`;
   shown = d;
-  fit();
+  fit(); setTimeout(fit, 120);
 }
 
 /* 화면 크기에 맞춰 통째로 확대·축소 — TV 해상도가 뭐든 꽉 찬다 */
 function fit(){
   const box = document.getElementById("fit"), inner = document.getElementById("inner");
-  inner.style.transform = "none";
-  const w = inner.scrollWidth, h = inner.scrollHeight;
-  if(!w || !h) return;
+  inner.style.width = BASEW + "px";
+  inner.style.transform = "none"; inner.style.left = "0px";
+  const w = BASEW, h = inner.offsetHeight;
+  if(!h) return;
   const k = ZOOM || Math.min(box.clientWidth / w, box.clientHeight / h);
   inner.style.transform = `scale(${k})`;
   inner.style.left = Math.max(0, (box.clientWidth - w*k) / 2) + "px";
+  inner.style.top  = Math.max(0, (box.clientHeight - h*k) / 2) + "px";
 }
-addEventListener("resize", fit);
+addEventListener("resize", ()=>{ fit(); setTimeout(fit,250); });
 
 async function pull(){
   if(!sb){ document.getElementById("inner").innerHTML = `<div class="err">연결 설정이 없습니다</div>`; return; }
