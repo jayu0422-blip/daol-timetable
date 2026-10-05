@@ -227,8 +227,8 @@ document.getElementById("dayPanel").addEventListener("click", e=>{
 function printSheet(d){
   const A=XO.assignForDate(d);
   const head=dayHeaderHTML(d,A)
-    .replace(/<span class="stat">[\s\S]*?<\/span>\s*<\/div>/, "</div>")
-    .replace(/<button[\s\S]*?<\/button>/g, "");
+    .replace(/<button[\s\S]*?<\/button>/g, "")          // 버튼 먼저 걷어내고
+    .replace(/<span class="stat">[\s\S]*?<\/span>/, "");  // 내부 통계 줄 제거
   return `<div class="print-day">${head}<div class="sheet">${gridFor(d,A)}</div></div>`;
 }
 function printDays(ds){
