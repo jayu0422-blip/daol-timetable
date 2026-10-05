@@ -53,10 +53,18 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 .add:hover{background:#f7f9fc;color:var(--navy)}
 .memo-list{margin-top:8px}
 .muted{color:var(--muted);font-size:12px}
+.btn-print{margin-left:auto;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:9px;
+  font:inherit;font-size:13px;font-weight:800;padding:7px 14px;cursor:pointer}
+.btn-print:hover{filter:brightness(1.12)}
 @media print{
-  .top,.dates,.legend,#editor,.noprint{display:none!important}
-  body{background:#fff}.wrap{max-width:none;padding:0}
-  .print-day{page-break-after:always;margin-bottom:6mm}
+  @page{ size:A4 landscape; margin:6mm }
+  .top,.dates,.legend,#editor,.noprint,.panel>.muted{display:none!important}
+  body{background:#fff}.wrap{max-width:none;padding:0;margin:0}
+  .panel{border:0;box-shadow:none;padding:0;margin:0}
+  /* 하루치가 한 장을 넘겨 2쪽으로 쪼개지던 것 — 축소해서 한 장에 담는다 */
+  .print-day{page-break-after:always;break-after:page;break-inside:avoid;margin:0;zoom:.72}
+  .print-day:last-child{page-break-after:auto;break-after:auto}
+  .print-day .dhead{margin:0 0 4px}
   .sheet{border:0}
 }
 </style>
@@ -141,6 +149,7 @@ function dayHeaderHTML(d, A){
     ${A.allOff?`<span class="alloff">전체 휴강일 — '정규'로 살린 반만 수업</span>`:""}
     ${ex.map(e=>`<span class="ex ${e.kind}" title="${esc(e.subj||"")}">${esc(shortSchool(e.school))}${e.grade&&e.grade!=="전체"?" "+esc(e.grade.replace("학년","")):""} <i>${KIND[e.kind]}${e.total>1?` ${e.nth}/${e.total}`:""}</i></span>`).join("")}
     <span class="stat">정규 ${A.items.length}개 · 휴강 ${A.items.filter(i=>i.off).length} · 임시 ${A.temps.length}건 · <b class="${(A.items.some(i=>i.conflict)||A.temps.some(b=>b.conflict))?"bad":""}">겹침 ${A.items.filter(i=>i.conflict).length+A.temps.filter(b=>b.conflict).length}건</b></span>
+    <button class="btn-print noprint" data-printday="${d}" title="이 날짜만 가로 A4 한 장으로 인쇄합니다">🖨️ 이 날짜만 인쇄</button>
   </div>`;
 }
 
@@ -209,15 +218,30 @@ document.getElementById("dayPanel").addEventListener("change", async e=>{
   }catch(err){ alert("저장 실패: "+err.message); renderAll(); }
 });
 document.getElementById("dayPanel").addEventListener("click", e=>{
+  const pd=e.target.closest("[data-printday]"); if(pd){ printDays([pd.dataset.printday]); return; }
   const n=e.target.closest("[data-new]"); if(n){ XO.openForm(null, n.dataset.new); return; }
   const ed=e.target.closest("[data-edit]"); if(ed){ const r=XO.rows.find(x=>x.id===ed.dataset.edit); if(r) XO.openForm(r); return; }
 });
-document.getElementById("printAll").addEventListener("click", ()=>{
-  const P=XO.period(), ds=XO.datesIn(P);
+
+/* 인쇄용 조각 — 통계·버튼은 빼고 제목+표만 남긴다 */
+function printSheet(d){
+  const A=XO.assignForDate(d);
+  const head=dayHeaderHTML(d,A)
+    .replace(/<span class="stat">[\s\S]*?<\/span>\s*<\/div>/, "</div>")
+    .replace(/<button[\s\S]*?<\/button>/g, "");
+  return `<div class="print-day">${head}<div class="sheet">${gridFor(d,A)}</div></div>`;
+}
+function printDays(ds){
   const host=document.getElementById("printAllHost");
-  host.innerHTML = ds.map(d=>{ const A=XO.assignForDate(d); return `<div class="print-day">${dayHeaderHTML(d,A).replace(/<span class="stat">.*?<\/span>/,"")}<div class="sheet">${gridFor(d,A)}</div></div>`; }).join("");
+  host.innerHTML = ds.map(printSheet).join("");
   document.getElementById("dayPanel").classList.add("noprint");
-  setTimeout(()=>{ window.print(); setTimeout(()=>{ host.innerHTML=""; document.getElementById("dayPanel").classList.remove("noprint"); }, 500); }, 200);
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{ host.innerHTML=""; document.getElementById("dayPanel").classList.remove("noprint"); }, 500);
+  }, 250);
+}
+document.getElementById("printAll").addEventListener("click", ()=>{
+  printDays(XO.datesIn(XO.period()));
 });
 load();
 </script>

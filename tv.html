@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>강의실 배치표</title>
+<!-- 복도 TV 전용 화면. 주소만 띄워 두면 앱에서 고친 배정이 알아서 반영된다.
+     ?d=2026-10-05  그 날짜로 고정 (없으면 오늘)
+     ?rotate=20     오늘↔내일을 20초마다 번갈아 보여줌
+     ?zoom=0.9      배율 수동 지정 (없으면 화면에 맞춰 자동) -->
+<style>
+:root{--navy:#1e3a5f;--line:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#fff;cursor:none}
+body{font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;color:#1f2430}
+#stage{position:absolute;inset:0;display:flex;flex-direction:column}
+.bar{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:14px 26px;
+     background:var(--navy);color:#fff}
+.bar .d{font-size:34px;font-weight:900;letter-spacing:-1px}
+.bar .w{font-size:26px;font-weight:800;opacity:.9}
+.bar .hol{font-size:20px;font-weight:800;background:#fee2e2;color:#991b1b;border-radius:8px;padding:4px 12px}
+.bar .ex{font-size:19px;font-weight:800;border-radius:8px;padding:4px 12px;background:#fff;color:#1e3a5f}
+.bar .ex.start{background:#dbeafe;color:#1e40af}
+.bar .ex.mid{background:#ffedd5;color:#9a3412}
+.bar .ex.end{background:#fce7f3;color:#9d174d}
+.bar .sp{flex:1}
+.bar .clk{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
+.bar .tag{font-size:16px;font-weight:700;opacity:.75}
+#fit{flex:1;position:relative;overflow:hidden}
+#inner{position:absolute;top:0;left:0;transform-origin:top left}
+.sheet{background:#fff}
+.err{padding:40px;font-size:28px;color:#b91c1c;font-weight:800}
+#dot{position:absolute;right:10px;bottom:8px;width:10px;height:10px;border-radius:50%;
+     background:#22c55e;opacity:.55;transition:opacity .3s}
+#dot.off{background:#ef4444;opacity:.9}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bar">
+    <span class="d" id="bd">—</span><span class="w" id="bw"></span>
+    <span id="bex"></span>
+    <span class="sp"></span>
+    <span class="tag">다올105 강의실 배치</span>
+    <span class="clk" id="clk">--:--</span>
+  </div>
+  <div id="fit"><div id="inner"></div></div>
+</div>
+<div id="dot" title="데이터 연결 상태"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="schedule-cal.js"></script>
+<script src="exam-ops.js"></script>
+<script src="rooms.js"></script>
+<script>
+const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
+let DATA = [];
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const DOW = ["일","월","화","수","목","금","토"];
+const dowOf = d => { const p=d.split("-").map(Number); return DOW[new Date(p[0],p[1]-1,p[2]).getDay()]; };
+const md = d => (+d.slice(5,7))+"/"+(+d.slice(8,10));
+const pad = n => String(n).padStart(2,"0");
+const todayISO = () => { const n=new Date(); return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`; };
+const addDays = (iso,k) => { const p=iso.split("-").map(Number); const x=new Date(p[0],p[1]-1,p[2]+k);
+  return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`; };
+const shortSchool = s => String(s).replace("미사강변","미강").replace("고등학교","고").replace("중학교","중").replace("학교","");
+const KIND = { start:"시작", mid:"시험중", end:"종료", one:"하루" };
+
+const P = new URLSearchParams(location.search);
+const PIN = P.get("d") || "";
+const ROTATE = Math.max(0, parseInt(P.get("rotate")||"0",10));   // 초. 0이면 안 돌린다
+const ZOOM = parseFloat(P.get("zoom")||"0") || 0;
+
+const cfg = window.DAOL_CONFIG || {};
+const sb = (cfg.url && cfg.anonKey && window.supabase) ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
+const XO = window.DaolExamOps;
+document.head.appendChild(Object.assign(document.createElement("style"), {textContent: DAOL_ROOM_GRID_CSS}));
+
+let ROSTER = [], shown = null, flip = 0;
+const dot = document.getElementById("dot");
+
+function clock(){
+  const n=new Date();
+  document.getElementById("clk").textContent = pad(n.getHours())+":"+pad(n.getMinutes());
+}
+setInterval(clock, 10000); clock();
+
+function targetDate(){
+  if(PIN) return PIN;
+  const t = todayISO();
+  return (ROTATE && flip % 2) ? addDays(t,1) : t;      // 번갈아 보기
+}
+
+function paint(){
+  const d = targetDate();
+  let A;
+  try { A = XO.assignForDate(d); }
+  catch(e){ document.getElementById("inner").innerHTML = `<div class="err">일정을 불러오지 못했습니다</div>`; return; }
+  const hn = XO.holidayOf(d), ex = XO.examsOf(d);
+  document.getElementById("bd").textContent = md(d);
+  document.getElementById("bw").textContent = "(" + dowOf(d) + ")" + (d===todayISO() ? "" : " · 내일");
+  document.getElementById("bex").innerHTML =
+    (hn ? `<span class="hol">🔴 ${esc(hn)}</span>` : "") +
+    ex.map(e=>`<span class="ex ${e.kind}">${esc(shortSchool(e.school))}${e.grade&&e.grade!=="전체"?" "+esc(e.grade.replace("학년","")):""} ${KIND[e.kind]||""}</span>`).join("");
+  document.getElementById("inner").innerHTML =
+    `<div class="sheet">${dayGridHTML({day:A.day, title:`${md(d)} (${dowOf(d)}) 강의실 배정`, items:A.items, temps:A.temps})}</div>`;
+  shown = d;
+  fit();
+}
+
+/* 화면 크기에 맞춰 통째로 확대·축소 — TV 해상도가 뭐든 꽉 찬다 */
+function fit(){
+  const box = document.getElementById("fit"), inner = document.getElementById("inner");
+  inner.style.transform = "none";
+  const w = inner.scrollWidth, h = inner.scrollHeight;
+  if(!w || !h) return;
+  const k = ZOOM || Math.min(box.clientWidth / w, box.clientHeight / h);
+  inner.style.transform = `scale(${k})`;
+  inner.style.left = Math.max(0, (box.clientWidth - w*k) / 2) + "px";
+}
+addEventListener("resize", fit);
+
+async function pull(){
+  if(!sb){ document.getElementById("inner").innerHTML = `<div class="err">연결 설정이 없습니다</div>`; return; }
+  try{
+    const [{data:cs},{data:tt}] = await Promise.all([
+      sb.from("courses").select("*"), sb.from("teachers").select("name,subject")
+    ]);
+    DATA = window.DaolPlan ? DaolPlan.applyAll(cs||[]) : (cs||[]);
+    ROSTER = tt||[];
+    XO.init({ sb, teachers:ROSTER, rooms:CLASS_ROOMS, assignDay, orderByPref,
+              getCourses: ()=>DATA, onChange: ()=>paint() });
+    await XO.load();
+    dot.classList.remove("off");
+    paint();
+  }catch(e){ dot.classList.add("off"); }
+}
+
+/* 1분마다 데이터 다시 읽고, 자정이 지나면 날짜가 저절로 넘어간다 */
+setInterval(pull, 60*1000);
+setInterval(()=>{ if(!PIN && shown && shown !== targetDate()) paint(); }, 20*1000);
+if(ROTATE) setInterval(()=>{ flip++; paint(); }, ROTATE*1000);
+/* 하루 한 번(새벽 4시대) 통째로 새로고침 — 코드가 바뀌어도 알아서 따라온다 */
+setInterval(()=>{ const n=new Date(); if(n.getHours()===4 && n.getMinutes()<2) location.reload(); }, 60*1000);
+
+/* TV가 화면을 끄지 않게 */
+(async()=>{ try{ if(navigator.wakeLock) await navigator.wakeLock.request("screen"); }catch(e){} })();
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState === "visible"){
+    try{ if(navigator.wakeLock) await navigator.wakeLock.request("screen"); }catch(e){}
+    pull();
+  }
+});
+
+pull();
+</script>
+</body>
+</html>
