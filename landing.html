@@ -52,7 +52,8 @@
   .hero .who{display:inline-block;background:rgba(231,197,109,.12);border:1px solid rgba(231,197,109,.42);border-radius:999px;padding:6px 16px;font-size:13.5px;font-weight:800;color:var(--gold-bright)}
   .hero-duo{display:flex;align-items:flex-end;justify-content:center;gap:clamp(6px,3vw,22px)}
   .hero-pic{position:relative;display:flex;justify-content:center;align-items:flex-end}
-  .hero-pic img{width:min(100%,190px);height:auto;border-radius:14px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.45));position:relative;z-index:2}
+  .hero-duo:has(.hero-pic:nth-child(3)) .hero-pic img{width:min(100%,150px)}
+.hero-pic img{width:min(100%,190px);height:auto;border-radius:14px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.45));position:relative;z-index:2}
   .hero-pic .cap{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);z-index:3;background:rgba(12,26,54,.9);border:1px solid rgba(231,197,109,.4);border-radius:10px;padding:5px 12px;white-space:nowrap;font-size:12px;font-weight:800;color:var(--gold-bright)}
 
   /* 현재/제안 스트립 */
@@ -398,8 +399,9 @@ function render(courses,teachers){
   const ovl=(a,b)=>a.day===b.day&&a.start<b.end&&b.start<a.end;
 
   // 대표 강사(히어로 사진)
+  /* 안내 과목이 셋이면 선생님도 셋을 다 보여 준다. 2명으로 자르면 마지막 과목 선생님이 빠진다(2026-10-07 원장) */
   const heroT=[...new Set(mine.filter(c=>targets.includes(c.subject)).map(c=>c.teacher))]
-    .map(n=>teachers[n]).filter(t=>t&&t.photo_url).slice(0,2);
+    .map(n=>teachers[n]).filter(t=>t&&t.photo_url).slice(0,3);
 
   const cp1=targets.length===1?copyFor(targets[0],level):null;
   const headline=cp1?cp1.hero_headline:`${GRADE}, 한 과목만으로는 채워지지 않는 부분이 있습니다.`;
