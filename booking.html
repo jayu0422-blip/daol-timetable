@@ -216,6 +216,31 @@ function fromMin(x){return pad(Math.floor(x/60))+":"+pad(x%60);}
 function testMinutes(){ return CS.testMinutes([...picked.subjects]); }
 function arriveTime(){ return picked.time ? CS.arriveTime(picked.time, [...picked.subjects]) : null; }
 
+/* ===== 시험지 피드백 상담 모드 (?mode=exam, 2026-10-11 원장 지시) =====
+   원고28 랜딩(고1·2판)에서 들어온 학부모용. 레벨테스트 없이 중간고사 시험지만 가져오면
+   점수 향상 피드백 상담. 생년월일 대신 현재 학년(중1~고3)만 받는다. 기본 예약 화면은 그대로. */
+const EXAM = new URLSearchParams(location.search).get("mode") === "exam";
+if (EXAM) {
+  testMinutes = () => 0;
+  arriveTime = () => picked.time || null;
+  document.title = "시험지 피드백 상담 예약 · 다올105";
+  const hero = document.querySelector(".hero");
+  hero.querySelector(".k").textContent = "다올105 학원 · 중간고사 시험지 무료 피드백 컨설팅";
+  hero.querySelector("h1").textContent = "시험지만 가져오시면 바로 상담합니다";
+  hero.querySelector("p").textContent = "레벨테스트 없이, 이번 2학기 중간고사 시험지로 어디서 점수가 새는지와 다음 시험 점수를 올리는 방법을 짚어 드립니다.";
+  const b = $("birth").closest("div"); b.style.display = "none";
+  const g = $("grade");
+  g.innerHTML = '<option value="">선택</option>' + ["중1","중2","중3","고1","고2","고3"].map(x => "<option>" + x + "</option>").join("");
+  document.querySelector("#subs").closest(".card").querySelector(".lab").innerHTML = '<span class="n">2</span> 피드백 받을 시험지 과목 (복수 선택 가능)';
+  $("subs").innerHTML = ["국어","영어","수학","과학"].map(x =>
+    '<span class="sub" data-s="' + x + ' 시험지">' + x + '<span class="t">시험지 피드백 · 테스트 없음</span></span>').join("");
+  $("reason").placeholder = "예시\n· 고1 영어 중간고사 68점(3등급), 서술형에서 크게 깎였습니다.\n· 수학은 시간이 모자라 뒤 4문제를 못 풀었어요.\n· 목표는 서울 중위권 대학입니다. 몇 등급을 올려야 하는지 알고 싶습니다.";
+  const info = $("testInfo");
+  info.classList.add("show");
+  info.innerHTML = "📄 상담 당일 <b>이번 2학기 중간고사 시험지(선택한 과목)</b>를 꼭 가져와 주세요. 레벨테스트는 없고, <b>상담 시간에 맞춰</b> 오시면 됩니다.";
+  renderTestInfo = () => {};
+}
+
 /* 과목 선택 */
 $("subs").addEventListener("click",e=>{
   const c=e.target.closest(".sub"); if(!c) return;
@@ -314,7 +339,7 @@ let sigEmpty = true;
 function missing(){
   const m=[];
   if(!$("name").value.trim()) m.push("학생 이름");
-  if(!$("birth").value) m.push("생년월일");
+  if(!EXAM && !$("birth").value) m.push("생년월일");
   if(!$("gender").value) m.push("성별");
   if(!/^01\d{8,9}$/.test($("phone").value.replace(/\D/g,""))) m.push("학부모 연락처");
   if(!$("school").value.trim()) m.push("학교");
@@ -368,8 +393,8 @@ $("submit").addEventListener("click",async()=>{
     student_name:$("name").value.trim(), phone:$("phone").value.replace(/\D/g,""),
     school:$("school").value.trim(), grade:$("grade").value,
     subjects:[...picked.subjects].join(","), level_test_min:testMinutes(),
-    birth:$("birth").value, gender:$("gender").value, address:$("addr").value.trim(),
-    reason:$("reason").value.trim(),
+    birth:$("birth").value || null, gender:$("gender").value, address:$("addr").value.trim(),
+    reason:(EXAM ? "[시험지 피드백 상담 · 레벨테스트 없음] " : "") + $("reason").value.trim(),
     target_school:$("target").value.trim(), consent:true,
     signature:$("sig").toDataURL("image/png") };
   try{
@@ -397,7 +422,7 @@ $("submit").addEventListener("click",async()=>{
       +(tm>0?`⏰ <b>${arr}까지 도착</b> (레벨테스트 ${tm}분 포함)`:`⏰ <b>${rec.slot_time}까지 도착</b>`)
       +`</p></div>
         <div class="card">
-          <p style="margin:0 0 10px">소중한 정보를 기입해주셔서 감사합니다.</p>
+          ${EXAM ? '<p style="margin:0 0 10px;font-weight:700">📄 상담 당일 이번 2학기 중간고사 시험지를 꼭 가져와 주세요. 레벨테스트는 없습니다.</p>' : ''}<p style="margin:0 0 10px">소중한 정보를 기입해주셔서 감사합니다.</p>
           <p style="margin:0 0 10px;color:var(--sub);font-size:14px">작성해주신 상담원서를 바탕으로 학생의 현재 (국어·수학·영어·과학·수시/정시 컨설팅·관리형독서실 중 상담받는 과목·분야의) 학습 상태와 학원 이력을 종합 분석하여, <b>맞춤형 학습 방향을 설계</b>해드릴 예정입니다.</p>
           <p style="margin:0;color:var(--faint);font-size:12.5px">※ 상담 후 등록으로 이어지지 않을 경우, 기입하신 정보는 즉시 폐기됩니다.</p>
         </div>
