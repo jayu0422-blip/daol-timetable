@@ -1037,6 +1037,10 @@ table.dash td b{color:var(--navy)}
       <button class="btn sm" id="allPng">🖼️ 전체 이미지저장</button>
       <span class="muted" id="gradeStat"></span>
     </div>
+    <div class="panel noprint" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px">
+      <span class="muted" style="font-weight:700">👤 선생님별</span>
+      <div class="chips" id="tChips"></div>
+    </div>
     <div id="gradeSheet"><div class="empty">학년을 선택하세요.</div></div>
     <div class="panel noprint" style="margin-top:14px;padding:9px 14px">
       <b>📖 2페이지 — 수업 방식·안내</b>
@@ -2433,8 +2437,16 @@ const DAY_ORDER_ALL=["월","수","금","화","목","토","일"];
 const GRADES_ALL=["중1","중2","중3","미사고1","미사강변고1","하남고1","풍산고2","미사고2","미사강변고2","고3"];
 const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
 let selGrade="미사고1";
-function buildGradeChips(){ document.getElementById("gChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join(""); }
-document.getElementById("gChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); });
+/* 선생님별 시간표 — selGrade 를 "T:이름" 으로 두면 같은 화면·인쇄 틀을 그대로 쓴다 */
+const T_PREFIX="T:";
+function teacherNames(t){ return String(t||"").split(/[·,\/&]|\s+및\s+/).map(x=>x.replace(/\s*(T|쌤|선생님)$/,"").trim()).filter(Boolean); }
+function gradeLabel(key){ return String(key).startsWith(T_PREFIX) ? key.slice(T_PREFIX.length)+" 선생님" : key; }
+function buildGradeChips(){
+  document.getElementById("gChips").innerHTML=GRADE_BUTTONS.map(g=>`<span class="chip ${g===selGrade?"on":""}" data-g="${g}">${g}</span>`).join("");
+  const names=[...new Set(DATA.filter(c=>(c.schedule_text||"").trim()).flatMap(c=>teacherNames(c.teacher)))].sort((a,b)=>a.localeCompare(b,"ko"));
+  document.getElementById("tChips").innerHTML=names.map(n=>`<span class="chip ${selGrade===T_PREFIX+n?"on":""}" data-g="${esc(T_PREFIX+n)}">${esc(n)} T</span>`).join("") || '<span class="muted">시간이 입력된 강좌가 없습니다.</span>';
+}
+["gChips","tChips"].forEach(id=>document.getElementById(id).addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c||!c.dataset.g) return; selGrade=c.dataset.g; buildGradeChips(); renderGrade(); }));
 /* ===== 수학 단원 인식 (시간표에 배지로 시각화) ===== */
 // 색은 서로 다른 계열로 — 한눈에 단원이 구분되도록(흰 글씨 대비 확보)
 const MATH_UNITS=[
@@ -2515,6 +2527,10 @@ function midEngDetail(day){
 // 학년: grade값 우선, 비어있으면 강좌명에서 보완
 function cGrade(c){ let g=ggf(c.grade); if(!g){ const m=(c.course_name||"").match(/(중[123]|고[123]|수능)/); if(m) g=ggf(m[1]); } return g; }
 function coursesForGrade(key){
+  if(String(key).startsWith(T_PREFIX)){
+    const name=key.slice(T_PREFIX.length);
+    return DATA.filter(c=>(c.schedule_text||"").trim() && !/자습|써머스쿨|섬머스쿨|서머스쿨/.test(c.course_name||"") && teacherNames(c.teacher).includes(name));
+  }
   return DATA.filter(c=>{
     if(!(c.schedule_text||"").trim()) return false;
     if(/자습|써머스쿨|섬머스쿨|서머스쿨/.test(c.course_name||"")) return false;   // 자습(써머스쿨)은 학년별 시간표에 표시 안 함
@@ -2616,7 +2632,7 @@ function renderGrade(){
   // 헤더
   let html=`<div class="gg-top">
     <div class="gg-brand">📘 다올105<br><span style="font-size:9px;color:#9ca3af">미사학원</span></div>
-    <div class="gg-title"><div class="tt">T I M E &nbsp; T A B L E</div><div class="gn">${esc(selGrade)}</div></div>
+    <div class="gg-title"><div class="tt">T I M E &nbsp; T A B L E</div><div class="gn">${esc(gradeLabel(selGrade))}</div></div>
     ${noteHtml}
   </div>`;
   html+=`<div class="ggrid">`;
@@ -2643,7 +2659,9 @@ function renderGrade(){
           ? `background:repeating-linear-gradient(135deg,${col} 0 7px,#ffffff 7px 14px);border:1.5px dashed ${bcol};z-index:1`
           : `background:${col};border:1px solid rgba(0,0,0,.12);z-index:1`;
       const style=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);${box}`;
-      const schoolTag=`[${selGrade}]`;   // 학부모용 — 선택한 학년·학교로 표기(합반 등 내부 사정 비노출)
+      const tView=String(selGrade).startsWith(T_PREFIX);
+      // 학부모용 — 선택한 학년·학교로 표기(합반 등 내부 사정 비노출). 선생님별 보기는 강좌마다 학교·학년
+      const schoolTag=tView ? `[${b.school&&/^고/.test(b.grade||"") ? b.school+(b.grade||"").slice(1) : (b.grade||b.school||"")}]` : `[${selGrade}]`;
       const teamTag=b.teacher?` <span class="gteach">${esc(b.teacher)} T</span>`:"";   // 전 과목 담당 강사 표기
       const detail=b.detail?`<div class="gdet">${esc(b.detail)}</div>`:"";
       const unitBadge=b.unit?`<span class="gunit" style="background:${b.unit.color}">${b.unit.label}</span>`:"";
@@ -2754,7 +2772,7 @@ function subjectCardsHtml(){
 }
 function renderGuide(){
   const hasMidEng=coursesForGrade(selGrade).some(c=>c.subject==="영어" && (c.division==="중등"||/^중/.test(cGrade(c)||"")) && !/1:1/.test(c.course_name||""));
-  let html=`<div class="gu-head"><div class="t1">D A O L 1 0 5 &nbsp; G U I D E</div><div class="t2">${esc(selGrade)} 수업 방식 안내</div></div>`;
+  let html=`<div class="gu-head"><div class="t1">D A O L 1 0 5 &nbsp; G U I D E</div><div class="t2">${esc(gradeLabel(selGrade))} 수업 방식 안내</div></div>`;
 
   // ① 과목별 강좌 안내 (강사가 입력한 대상·내용·목표 기반)
   html+=`<div class="gu-sec"><h3>과목별 강좌 안내</h3></div>`+subjectCardsHtml();
