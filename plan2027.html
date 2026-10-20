@@ -372,70 +372,10 @@ const DUE = "2026-10-27", DUE_LABEL = "10월 27일(화)";
 
 const T = (id, name, time, kind, extra) => Object.assign({id, name, time, kind}, extra || {});
 // survey(개강 확정 — 학원 가안 → 학생 시간 조사 후 확정) · own(맡을 반) · tbd(시간 미정) · opt(희망하면 지원) · m3(미강고3 방식 선택) · fixed(개강 확정 — 요일·시간만 입력)
-const MID_ENG = [
-  T("me_m1a","중1 영어 (월수금)","월·수·금 16:30~18:00","opt"),
-  T("me_m1b","중1 영어 (화목토)","화·목·토 17:00~18:30","opt"),
-  T("me_m2","중2 영어 (화목토)","화·목·토 18:30~20:00","opt",{note:"학부모 안내에는 18:00~20:00으로 나갑니다."}),
-  T("me_m3","중3 영어 (화목토)","화·목·토 20:00~22:00","opt"),
-  T("me_top","중등 상위권 월금반 (무학년)","월·금 18:00~20:00","opt"),
-];
-const NEW_ENG = [
-  T("he_hn1","하남고1 영어","시간 미정","opt"),
-  T("he_ps1","풍산고1 영어","시간 미정","opt"),
-  T("he_ca1","청아고1 영어","시간 미정","opt",{note:"원장이 진행할 예정이지만, 선생님이 원하시면 선생님께 우선권이 있습니다."}),
-];
-const PROFILES = {
-  kyh:{subject:"국어", groups:[{title:"개강 확정 반 — 중3·미강고2는 시간 확정, 중2·미강고1은 학생 시간 조사 후 확정",
-    intro:"중3·미강고2 국어는 2027 시간이 확정되어 기본으로 선택되어 있습니다. 중2·미강고1 국어는 학원 가안을 보시고 학생·학부모와 시간 조사를 하신 뒤 " + DUE_LABEL + "까지 확정해 주세요. 조사 중에도 저장해 두실 수 있고, 제출은 모두 확정된 뒤에 됩니다.", rows:[
-    T("k_m3","중3 국어","토 13:00~15:00","own",{note:"2027 확정 시간입니다."}),
-    T("k_m2","중2 국어","토 11:00~13:00 또는 18:00~20:30","survey",{note:"미강고1 국어 시간과 맞물려 둘 중 하나로 정해집니다.", slots:["토 11:00~13:00","토 18:00~20:30"]}),
-    T("k_mg2","미강고2 국어","토 15:00~17:30","own",{note:"2027 확정 시간입니다(지금 미강고1 국어 시간을 그대로 이어 갑니다)."}),
-    T("k_mg1","미강고1 국어","토 11:00~13:00 또는 18:00~20:30","survey",{note:"중2 국어 시간과 맞물려 둘 중 하나로 정해집니다.", slots:["토 11:00~13:00","토 18:00~20:30"]}),
-  ]}]},
-  kjh:{subject:"국어", brief:true, groups:[{title:"확정 시간표", rows:[T("j_ms1","미사고1 국어","토 15:30~18:00","own",{note:"2027 확정 시간입니다."})]}],
-    others:[["수학","월·수·금 가능성 — 아직 미정"],["영어","스케줄 미정"],["통합과학","스케줄 미정"]]},
-  ljk:{subject:"국어", groups:[{title:"개강 확정 반 — 요일·시간만 적어 주세요", rows:[
-    T("l_hpc1","하남고·풍산고·청아고1 국어 (합반)","요일·시간 입력","fixed",{note:"세 학교 1학년이 한 반으로 수업합니다."}), T("l_sn","수능 국어","요일·시간 입력","fixed"),
-  ]}]},
-  mgh:{subject:"영어", groups:[
-    {title:"맡아 주실 반", rows:[
-      T("g_mg2","미강고2 영어","목 18:00~21:00 / 목 21:00~22:00 클리닉 / 일 14:00~17:00 클리닉","own",{note:"지금 미강고1 아이들이 그대로 올라가므로, 지금 미강고1 시간표를 이어 갑니다."}),
-      T("g_mg3","미강고3 영어","일 14:00~17:00 / 목 18:00~21:00 클리닉","m3",{note:"지금 미강고2 아이들이 그대로 올라가므로, 지금 미강고2 시간표를 이어 갑니다. 고3이 되어도 학교 내신까지 계속 끌고 가셔도 되고, 수능영어반으로 넘기셔도 됩니다. 진행하시면 미강고3은 선생님께 우선 배정합니다."}),
-      T("g_mg1","미강고1 영어","시간 미정","tbd"),
-    ]},
-    {title:"새로 여는 고1 영어 — 원하시면 추가 개강", intro:"원하시는 반만 「추가 개강 원합니다」를 누르고 희망 요일·시간을 골라 주세요. 아무것도 누르지 않으면 기존 시간표로만 구성됩니다.", rows:NEW_ENG},
-    {title:"중등 영어 — 강사 확정이지만 원하시면 추가 개강", intro:"원하시는 반만 「추가 개강 원합니다」를 누르고 희망 요일·시간을 골라 주세요. 아무것도 누르지 않으면 기존 시간표로만 구성됩니다.", rows:MID_ENG},
-  ]},
-  hw:{subject:"영어", groups:[
-    {title:"맡아 주실 반", rows:[
-      T("h_ms3","미사고3 영어","토 10:00~13:00 / 화 18:00~21:00 클리닉","m3",{note:"지금 미사고2 아이들이 그대로 올라가므로, 지금 미사고2 시간표를 이어 갑니다. 고3이 되어도 학교 내신까지 계속 끌고 가셔도 되고, 수능영어반으로 넘기셔도 됩니다. 진행하시면 미사고3은 선생님께 우선 배정합니다."}),
-      T("h_ms2","미사고2 영어","화 18:00~21:00 / 토 10:00~13:00 클리닉","own",{note:"지금 미사고1 아이들이 그대로 올라가므로, 지금 미사고1 시간표를 이어 갑니다."}),
-      T("h_ms1","미사고1 영어","시간 미정","tbd"),
-    ]},
-    {title:"새로 여는 고1 영어 — 원하시면 추가 개강", intro:"원하시는 반만 「추가 개강 원합니다」를 누르고 희망 요일·시간을 골라 주세요. 아무것도 누르지 않으면 기존 시간표로만 구성됩니다.", rows:NEW_ENG},
-    {title:"중등 영어 — 강사 확정이지만 원하시면 추가 개강", intro:"원하시는 반만 「추가 개강 원합니다」를 누르고 희망 요일·시간을 골라 주세요. 아무것도 누르지 않으면 기존 시간표로만 구성됩니다.", rows:MID_ENG},
-  ]},
-  math:{subject:"수학", math:true, groups:[
-    {title:"중등 수학 정규반 (월수금)", rows:[
-      T("m_m1","중1 수학 정규반","월·수·금 16:30~18:00","own"),
-      T("m_m2","중2 수학 정규반","월·수·금 18:00~20:00","own"),
-      T("m_m3","중3 수학 정규반","월·수·금 20:00~22:00","own"),
-    ]},
-    {title:"중등 수학 무학년 선행반 (화목, 2타임)", rows:[
-      T("m_s1","선행반 1타임 (중1·2·3 무학년)","화·목 17:00~19:30","own",{subjects:true}),
-      T("m_s2","선행반 2타임 (중1·2·3 무학년)","화·목 19:30~22:00","own",{subjects:true}),
-    ]},
-  ]},
-  // 고1·고2 수학 — 학원 가안(확정 아님). 담당 선생님 화면에는 나오지 않고, 다른 과목 선생님 시간표에만 '가안'으로 보인다
-  math_hs:{subject:"수학", hidden:true, groups:[{title:"고등 수학 (학원 가안)", rows:[
-    T("mh_1","고1 수학 (공통수학1)","월·수·금 18:00~22:00","plan"),
-    T("mh_2","고2 수학","월·수·금 18:00~22:00","plan"),
-  ]}]},
-  sci:{subject:"과학", groups:[{title:"맡아 주실 반", rows:[
-    T("s_ts1","고1 통합과학","시간 미정","tbd"), T("s_ph","물리","시간 미정","tbd"), T("s_ch","화학","시간 미정","tbd"),
-    T("s_bi","생명과학","시간 미정","tbd"), T("s_ts3","고3 통합과학","시간 미정","tbd"),
-  ]}]},
-};
+/* 선생님별 반 목록·메모·근무 조건은 페이지에 두지 않는다 — 다른 선생님이 소스를 열어도 보이지 않게.
+   운영: 링크 열쇠로 서버(plan27_profiles)에서 본인 것 전체 + 다른 선생님은 시간표용 뼈대(반 이름·시간)만 받는다.
+   원장: plan27_admin_profiles 로 전체. 미리보기 빌드: window.PLAN27_DEMO_PROFILES. 원본: supabase 표 plan2027_profiles */
+let PROFILES = window.PLAN27_DEMO_PROFILES || {};
 const ROW_GRADES = {"mh_1": ["미사고1", "미강고1", "하남고1", "풍산고1", "청아고1"], "mh_2": ["미사고2", "미강고2"], "me_m1a": ["중1"], "me_m1b": ["중1"], "me_m2": ["중2"], "me_m3": ["중3"], "me_top": ["중1", "중2", "중3"], "he_hn1": ["하남고1"], "he_ps1": ["풍산고1"], "he_ca1": ["청아고1"], "k_m3": ["중3"], "k_m2": ["중2"], "k_mg2": ["미강고2"], "k_mg1": ["미강고1"], "j_ms1": ["미사고1"], "l_hpc1": ["하남고1", "풍산고1", "청아고1"], "l_sn": ["수능"], "g_mg2": ["미강고2"], "g_mg3": ["미강고3"], "g_mg1": ["미강고1"], "h_ms3": ["미사고3"], "h_ms2": ["미사고2"], "h_ms1": ["미사고1"], "m_m1": ["중1"], "m_m2": ["중2"], "m_m3": ["중3"], "m_s1": ["중1", "중2", "중3"], "m_s2": ["중1", "중2", "중3"], "s_ts1": ["미사고1", "미강고1", "하남고1", "풍산고1", "청아고1"], "s_ph": ["미사고2", "미강고2"], "s_ch": ["미사고2", "미강고2"], "s_bi": ["미사고2", "미강고2"], "s_ts3": ["미사고3", "미강고3"]};
 const GRADE_KEYS = ["중1","중2","중3","미사고1","미강고1","하남고1","풍산고1","청아고1","미사고2","미강고2","미사고3","미강고3","수능"];
 const PROFILE_LABEL = {kyh:"국어 · 김영하 반", kjh:"국어 · 미사고1", ljk:"국어 · 하남·풍산·청아·수능", mgh:"영어 · 미사강변고", hw:"영어 · 미사고", math:"수학", sci:"과학"};
@@ -521,6 +461,16 @@ const store = {
     if (r.error) throw r.error;
     return r.data || [];
   },
+  async profiles(token){
+    if (!LIVE) return PROFILES;
+    const {data, error} = await sb.rpc("plan27_profiles", {p_token: token});
+    if (error) throw error; return data || {};
+  },
+  async adminProfiles(key){
+    if (!LIVE) return PROFILES;
+    const {data, error} = await sb.rpc("plan27_admin_profiles", {p_key: key});
+    if (error) throw error; return data || {};
+  },
   async rename(key, token, teacher){
     if (!LIVE) throw new Error("미리보기에서는 이름을 바꿀 수 없습니다.");
     const {error} = await sb.rpc("plan27_admin_rename", {p_key:key, p_token:token, p_teacher:teacher});
@@ -578,7 +528,7 @@ function letterBrief(){
   <p class="sig">다올105 원장 드림</p></div>`;
   return L;
 }
-function letter(name, isMath){
+function letter(name, mathHtml){
   const L = h("details",{class:"card letter", id:"s-letter", open: !IS_MOBILE()});
   L.innerHTML = `<summary><div class="sum-row"><span class="num">1</span><h2>공통 메시지</h2><span class="tog">접기 · 펼치기</span></div>
   <div class="gist"><b>핵심만 먼저</b><ul><li>11/7·11/14 설명회 총 200명 — 올해는 분위기가 다릅니다.</li><li>일정은 학원이 먼저 정하고, 요일 변경은 원장 미팅으로.</li><li>수업계획은 매달 15일까지(= 정확한 강사료 정산), 일지는 다음 날 오후까지.</li></ul><span class="gist-more">눌러서 전문 읽기 ▾</span></div></summary><div class="body">
@@ -615,16 +565,7 @@ function letter(name, isMath){
     <li><b>클리닉은 숙련된 조교나 선생님이 직접 관리하는 방식으로.</b> 그렇지 않은 방식은 지양해 주시길 부탁드립니다. 학생끼리 하는 자기주도형 클리닉으로 운영되면 분위기 관련 민원이 학원에 많이 들어옵니다. 그래서 자기주도형 클리닉은 학원에서 진행이 어려울 수도 있으니 양해 부탁드립니다.</li>
     <li><b>선생님이 원하는 대로 바꿔 드립니다.</b> 수업계획·일지·리포트 화면은 선생님이 상상하는 대로 고칠 수 있습니다. 기술적으로 불가능한 경우를 빼고 원하시는 수정은 모두 반영합니다. 학생·학부모가 보는 화면도 샘플 아이디를 하나 만들어 드려, 실제로 어떻게 나가는지 실시간으로 보실 수 있게 하겠습니다. 매주 수정·개선할 점을 말씀해 주시면 반영해 두겠습니다.</li>
   </ol>
-  ${isMath ? `
-  <p class="sec">수학 선생님께 — 근무 조건</p>
-  <p><b>주 6일 풀타임</b>으로 함께하시면 기존 페이 조건을 그대로 유지하고, 그렇지 않으면 <b>비율제</b>로 진행합니다.</p>
-  <ol>
-    <li>선생님의 다른 학원 출강을 억지로 막고 싶지는 않습니다. 다른 학원이 눈에 들어오지 않을 만큼의 비전을 보여 드리는 것이 학원의 몫이라고 생각합니다. 그럼에도 에너지를 한곳에 모으고 아이들 이탈을 줄이려면 이 방식이 맞다고 판단했습니다.
-      <br>학원에는 수업 말고도 함께 기획해야 할 일이 많습니다. 학원 DB를 활용한 설명회 기획, 미디어 콘텐츠 제작, 교재 작업, 학부모·학생 상담, 피드백 일지 고도화 같은 일들입니다. 수업 직전에 와서 수업이 끝나자마자 퇴근하는 식으로 학원에 머무는 시간이 짧으면 학원과의 소통이 줄고, 이런 수업 외 업무를 진행하기 어려워집니다. 그만큼 성장도 더뎌집니다. (수학은 과목 특성상, 두 곳을 함께 하면서 성공한 경우를 본 적이 없습니다.)</li>
-    <li>위 조건이 아닌 방식으로 다른 학원에 출강하실 수도 있습니다. 다만 나중에 계약 위반처럼 드러나기보다, 처음부터 학원에 알려 주세요. 나중에 알게 되면 운영자로서 신뢰가 떨어지고, 함께 일하기 어려워집니다.</li>
-    <li>학원은 지금의 프로그램과 앞으로의 그림을 함께 그릴 수 있는 분과 올인하고 싶습니다. 그게 어렵다면, 올해는 시간을 흘려보내기에는 너무 중요한 해입니다. <b>선생님의 선택에 따라 학원에서 추가 채용을 진행할 수 있다는 점</b>도 확인 부탁드립니다.</li>
-    <li>선생님별 차등은 없습니다. 학원 입장에서 앞으로의 기준을 정리하는 것입니다. 늘 헌신해 주셔서 감사하고, 결단해 주시면 그 선생님이 주축이 되도록 학원이 할 수 있는 모든 방법을 동원해 전폭 지원하겠습니다.</li>
-  </ol>` : ""}
+  ${mathHtml || ""}
   <p class="muted">모든 수업은 오후 수업입니다. 시간은 24시간제로 적었습니다(16:30 = 오후 4시 30분).</p>
   <p class="sig">다올105 원장 드림</p></div>`;
   return L;
@@ -755,7 +696,7 @@ const PLAN_EV = [
   ["2026-11-23","2026-11-25","ex3","은가람중 기말","은가람중 중3 기말고사","2학기 2차 지필"],
   ["2026-11-23","2026-11-26","exh","하남고3 기말","하남고 고3 기말고사","2학기 2차 지필(고3)"],
   ["2026-12-05","2026-12-05","key","고교 배정 확정","고교 배정(학교) 모두 확정 (12/5 토)","이전에는 예비고1 개강이 사실상 의미가 없음 → 개강은 12월 말 또는 1월 초."],
-  ["2026-12-07","2026-12-11","exh","미사고 기말","미사고 기말고사","2학기 2차 지필 (전 학년). ※ 나이스에는 12/4(금)·12/7~10으로 올라 있어 최신 가정통신문 확인이 필요합니다."],
+  ["2026-12-04","2026-12-10","exh","미사고 기말","미사고 기말고사","2학기 2차 지필 (12/4·7·8·9·10). 학교 학사일정 기준(나이스·학교 공개 일정 일치, 10/20 확인).","",["2026-12-04","2026-12-07","2026-12-08","2026-12-09","2026-12-10"]],
   ["2026-12-07","2026-12-11","exh","풍산고 기말","풍산고 기말고사","2학기 2차 지필 (전 학년)"],
   ["2026-12-08","2026-12-14","exh","미사강변고 기말","미사강변고 기말고사","2학기 2차 지필 (12/8~11·14)","",["2026-12-08","2026-12-09","2026-12-10","2026-12-11","2026-12-14"]],
   ["2026-12-10","2026-12-16","exh","하남고1·2 기말","하남고 고1·2 기말고사","2학기 2차 지필 (12/10·11·14·15·16)","",["2026-12-10","2026-12-11","2026-12-14","2026-12-15","2026-12-16"]],
@@ -843,7 +784,7 @@ function plannerSection(){
 /* ───── 강사 화면 ───── */
 async function teacherView(token){
   let rec;
-  try { rec = await store.get(token); }
+  try { rec = await store.get(token); if (rec) PROFILES = await store.profiles(token); }
   catch(e){ app.replaceChildren(h("div",{class:"err",text:"연결이 불안정합니다. 인터넷을 확인하고 새로고침해 주세요."})); return; }
   if (!rec || !PROFILES[rec.profile]){ app.replaceChildren(h("h1",{text:"링크를 확인해 주세요"}), h("p",{class:"muted",text:"본인 전용 링크가 아닙니다. 원장님께 링크를 다시 요청해 주세요."})); return; }
   const P = PROFILES[rec.profile];
@@ -1048,7 +989,7 @@ async function teacherView(token){
     const main = h("div",{class:"main"}), side = h("aside",{class:"side"});
     const push = n => { if (n) main.append(n); };
     const secHead = (num, title, meta) => h("div",{class:"sechead"},[h("span",{class:"num",text:num}), h("h2",{text:title}), meta ? h("span",{class:"meta",text:meta}) : null].filter(Boolean));
-    push(letter(rec.teacher, !!P.math));
+    push(letter(rec.teacher, P.math ? P.mathHtml : ""));
     push(plannerSection());
 
     const ack = h("section",{class:"card ack", id:"s-ack"},[secHead("2","공통 원칙 확인","4개 모두 체크")]);
@@ -1073,7 +1014,7 @@ async function teacherView(token){
       function mathSec(){
         const s = h("section",{class:"card", id:"s-math"},[secHead("4","수학 근무 조건")]);
         s.append(h("div",{class:"sub",text:"근무 방식"}));
-        s.append(optGroup([["full","주 6일 풀타임 (기존 페이 유지)",""],["ratio","비율제",""],["talk","원장님과 이야기하고 정할게요","t"]], m.pay, v => { m.pay = v; touch(); s.replaceWith(mathSec()); }));
+        s.append(optGroup(P.mathPay || [], m.pay, v => { m.pay = v; touch(); s.replaceWith(mathSec()); }));
         s.append(h("div",{class:"sub",text:"다른 학원 출강"}));
         s.append(optGroup([["none","출강하지 않습니다",""],["yes","출강합니다 (아래에 적기)","u"]], m.outside, v => { m.outside = v; touch(); s.replaceWith(mathSec()); }));
         if (m.outside === "yes"){
@@ -1083,7 +1024,7 @@ async function teacherView(token){
         }
         const cb = h("input",{type:"checkbox"}); cb.checked = !!m.agree;
         cb.onchange = () => { m.agree = cb.checked; touch(); };
-        s.append(h("label",{class:"agree"},[cb, h("span",{text:"위 근무 조건과, 선택에 따라 학원이 추가 채용을 진행할 수 있다는 점을 확인했습니다."})]));
+        s.append(h("label",{class:"agree"},[cb, h("span",{text:P.mathAgree || ""})]));
         return s;
       }
       push(mathSec());
@@ -1412,7 +1353,7 @@ async function adminView(key){
   let rows = [], err = "";
   const base = location.origin + location.pathname;
   async function load(){
-    try { rows = await store.list(key); err = ""; }
+    try { rows = await store.list(key); if (!Object.keys(PROFILES).length || LIVE) PROFILES = await store.adminProfiles(key); err = ""; }
     catch(e){ err = /not_admin/.test(e.message || "") ? "원장 열쇠가 맞지 않습니다. 받은 원장 링크로 다시 열어 주세요." : "불러오지 못했습니다. (" + (e.message || "연결 오류") + ")"; }
     render();
   }
@@ -1475,7 +1416,7 @@ async function adminView(key){
     extra.append(h("h3",{text:"수학 근무 조건 · 다른 학원 출강"}));
     const mr = rows.filter(r => r.profile === "math");
     mr.forEach(r => { const m = (r.answers || {}).math || {};
-      extra.append(line(r.teacher, ({full:"주 6일 풀타임", ratio:"비율제", talk:"원장과 상의"}[m.pay] || "미응답") + " · " + ({none:"출강 안 함", yes:"출강함 — " + (m.outsideDetail || "내용 미기재")}[m.outside] || "출강 미응답") + " · " + (m.agree ? "조건 확인함" : "조건 미확인"))); });
+      extra.append(line(r.teacher, (((PROFILES.math && PROFILES.math.mathPay) || []).find(o => o[0] === m.pay) || [0, "미응답"])[1] + " · " + ({none:"출강 안 함", yes:"출강함 — " + (m.outsideDetail || "내용 미기재")}[m.outside] || "출강 미응답") + " · " + (m.agree ? "조건 확인함" : "조건 미확인"))); });
     extra.append(h("h3",{text:"수업계획·일지·리포트 화면 수정 요청"}));
     const wishes = rows.filter(r => (r.answers || {}).wish);
     wishes.length ? wishes.forEach(r => extra.append(line(r.teacher, r.answers.wish))) : extra.append(h("p",{class:"muted",text:"없음"}));

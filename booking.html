@@ -241,6 +241,24 @@ if (EXAM) {
   info.innerHTML = "📄 상담 당일 <b>이번 2학기 중간고사 시험지(선택한 과목)</b>를 꼭 가져와 주세요. 레벨테스트는 없고, <b>상담 시간에 맞춰</b> 오시면 됩니다.";
   renderTestInfo = () => {};
 }
+/* 2026-10-20 원장 지시: 시험지 컨설팅 온라인 예약 마감.
+   온라인 신청 알림이 원장에게 가지 않아 재원생 신청 2건이 누락됐다 — 알림 경로가 확실해질 때까지
+   이 모드는 신청서를 닫고, 학원으로 연락하면 가능 여부를 확인해 주는 안내만 보여 준다. 다시 열려면 false 로. */
+const EXAM_CLOSED = true;
+if (EXAM && EXAM_CLOSED) {
+  const appEl = document.getElementById("app");
+  [...appEl.children].forEach(c => { c.style.display = "none"; });   // 원래 신청서는 숨기기만(아래 코드가 요소를 찾으므로 지우지 않는다)
+  appEl.insertAdjacentHTML("afterbegin",
+    '<div style="max-width:600px;margin:30px auto;padding:0 4px">' +
+    '<div class="hero" style="text-align:center"><div class="k">다올105 학원 · 중간고사 시험지 무료 컨설팅</div>' +
+    '<h1 style="font-size:22px">예약이 마감되었습니다</h1>' +
+    '<p>많은 관심 감사합니다. 온라인 예약은 마감되었지만, 학원으로 연락 주시면 가능한 시간이 있는지 확인해 드리겠습니다.</p></div>' +
+    '<div class="card" style="display:flex;flex-direction:column;gap:10px">' +
+    '<a href="tel:01083378158" style="display:block;padding:14px;border-radius:12px;border:1px solid var(--line,#ddd);text-align:center;font-weight:700;font-size:17px;text-decoration:none;color:inherit">📞 010-8337-8158 <span style="font-weight:400;font-size:14px">(문자 상담 가능)</span></a>' +
+    '<a href="tel:0316998111" style="display:block;padding:14px;border-radius:12px;border:1px solid var(--line,#ddd);text-align:center;font-weight:700;font-size:17px;text-decoration:none;color:inherit">📞 031-699-8111</a>' +
+    '<p style="margin:4px 0 0;font-size:14px;color:var(--sub,#666)">다올105 재원생은 담당 선생님이나 데스크로 말씀해 주셔도 됩니다.</p>' +
+    '</div></div>');
+}
 
 /* 과목 선택 */
 $("subs").addEventListener("click",e=>{
@@ -451,7 +469,7 @@ $("submit").addEventListener("click",async()=>{
 });
 
 async function init(){ await Promise.all([loadTaken(), loadVacations()]); buildDays(); updateBtn(); }
-init();
+if (!(EXAM && EXAM_CLOSED)) init();   // 마감 화면에서는 예약 달력을 만들지 않는다
 </script>
 </body>
 </html>
