@@ -56,9 +56,14 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 .btn-print{margin-left:auto;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:9px;
   font:inherit;font-size:13px;font-weight:800;padding:7px 14px;cursor:pointer}
 .btn-print:hover{filter:brightness(1.12)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;align-items:start}
+.side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
+.dch em{font-style:normal;color:#b91c1c;font-weight:900}
+@media (max-width:1100px){.cols{grid-template-columns:1fr}.side{position:static;max-height:none}}
 @media print{
   @page{ size:A4 landscape; margin:6mm }
-  .top,.dates,.legend,#editor,.noprint,.panel>.muted{display:none!important}
+  .top,.dates,.legend,#editor,.noprint,.panel>.muted,.side,.xp-alert,.xp-pred{display:none!important}
+  .cols{display:block}
   body{background:#fff}.wrap{max-width:none;padding:0;margin:0}
   .panel{border:0;box-shadow:none;padding:0;margin:0}
   /* 하루치가 한 장을 넘겨 2쪽으로 쪼개지던 것 — 축소해서 한 장에 담는다 */
@@ -90,15 +95,19 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
     </div>
     <div class="dates" id="dates" style="margin-top:10px"></div>
   </div>
-  <div class="panel" id="dayPanel"><div class="muted">불러오는 중…</div></div>
+  <div class="cols">
+    <div class="panel" id="dayPanel"><div class="muted">불러오는 중…</div></div>
+    <aside class="panel side noprint" id="side"><div class="muted">월간 일정표 불러오는 중…</div></aside>
+  </div>
   <div id="printAllHost"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=72ddcbd2"></script>
-<script src="schedule-cal.js?v=c089dcd2"></script>
+<script src="schedule-cal.js?v=b0250ad9"></script>
 <script src="exam-ops.js?v=5b5512bd"></script>
 <script src="rooms.js?v=68fee4f7"></script>
+<script src="exam-prep.js?v=cfb2f69e"></script>
 <script>
 /* rooms.js 가 기대하는 전역 */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -114,6 +123,8 @@ const KIND = { start:"시작", mid:"시험중", end:"종료", one:"하루" };
 const cfg = window.DAOL_CONFIG || {};
 const sb = (cfg.url && cfg.anonKey && window.supabase) ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
 const XO = window.DaolExamOps;
+const XP = window.DaolExamPrep;
+let predOn = null;   // 직보 예측을 펼친 날짜
 const st = document.createElement("style"); st.textContent = DAOL_ROOM_GRID_CSS; document.head.appendChild(st);
 
 let ROSTER = [], sel = null;
@@ -125,6 +136,8 @@ async function load(){
   ROSTER = (tt||[]);
   XO.init({ sb, teachers: ROSTER, rooms: CLASS_ROOMS, assignDay, orderByPref, getCourses: ()=>DATA, onChange: ()=>renderAll() });
   await XO.load();
+  XP.init({ sb, XO, rooms: CLASS_ROOMS, orderByPref, getCourses: ()=>DATA, onChange: ()=>renderAll() });
+  await XP.load();
   const P = XO.period(), t = todayISO();
   sel = (t>=P.start && t<=P.end) ? t : P.start;
   renderAll();
@@ -136,9 +149,9 @@ function renderDates(){
   const P = XO.period(), ds = XO.datesIn(P), t = todayISO();
   document.getElementById("periodSub").textContent = `${termLabel(P)} · ${md(P.start)}(${dowOf(P.start)}) ~ ${md(P.end)}(${dowOf(P.end)}) · 하루씩 따로 배정`;
   document.getElementById("dates").innerHTML = ds.map(d=>{
-    const dw=dowOf(d), hn=XO.holidayOf(d), ex=XO.examsOf(d), n=XO.entriesOn(d).filter(r=>XO.typeOf(r)!=="배정").length;
+    const dw=dowOf(d), hn=XO.holidayOf(d), ex=XO.examsOf(d), n=XO.entriesOn(d).filter(r=>XO.typeOf(r)!=="배정").length, pend=XP.pendingCount(d);
     const cls=["dch", sel===d?"on":"", (dw==="일"||dw==="토")?"wk":"", hn?"holi":"", d===t?"today":""].filter(Boolean).join(" ");
-    return `<button class="${cls}" data-d="${d}">${md(d)} (${dw})<small>${hn?esc(hn):(ex.length?`시험 ${ex.length}`:"")}${n?` · 임시 ${n}`:""}${(!hn&&!ex.length&&!n)?"—":""}</small></button>`;
+    return `<button class="${cls}" data-d="${d}">${md(d)} (${dw})${pend?` <em title="내일 시험 — 직전보강 강의실 입력 필요">🔔${pend}</em>`:""}<small>${hn?esc(hn):(ex.length?`시험 ${ex.length}`:"")}${n?` · 임시 ${n}`:""}${(!hn&&!ex.length&&!n)?"—":""}</small></button>`;
   }).join("");
 }
 
@@ -201,9 +214,19 @@ function editorHTML(d, A){
 function renderDay(){
   if(!sel) return;
   const A = XO.assignForDate(sel);
-  document.getElementById("dayPanel").innerHTML = dayHeaderHTML(sel, A) + `<div class="sheet">${gridFor(sel, A)}</div>` + editorHTML(sel, A);
+  document.getElementById("dayPanel").innerHTML = dayHeaderHTML(sel, A) + XP.dayAlertHTML(sel, predOn===sel) + (predOn===sel ? XP.predictHTML(sel) : "")
+    + `<div class="sheet">${gridFor(sel, A)}</div>` + editorHTML(sel, A);
 }
-function renderAll(){ renderDates(); renderDay(); }
+/* 오른쪽: 월간 일정표(시험일·🔔 전날 직보) + 시험 과목 입력 */
+function renderSide(){
+  const side=document.getElementById("side"), open=[...side.querySelectorAll("details[open]")].map(x=>x.querySelector("summary").textContent);
+  const ae=document.activeElement, fk=(ae && side.contains(ae) && ae.dataset) ? (ae.dataset.xpu||null) : null, fv=fk ? ae.value : null, top=side.scrollTop;
+  side.innerHTML = XP.calendarHTML(sel) + XP.inputHTML();
+  side.querySelectorAll("details").forEach(x=>{ if(open.includes(x.querySelector("summary").textContent)) x.open=true; });
+  if(fk){ const el=side.querySelector(`[data-xpu="${CSS.escape(fk)}"]`); if(el){ el.value=fv; el.focus(); } }   // 저장 중에 다음 칸에 치던 글자 보존
+  side.scrollTop=top;
+}
+function renderAll(){ renderDates(); renderDay(); renderSide(); }
 
 document.getElementById("dates").addEventListener("click", e=>{ const b=e.target.closest("[data-d]"); if(!b) return; sel=b.dataset.d; renderAll(); document.getElementById("dayPanel").scrollIntoView({behavior:"smooth",block:"start"}); });
 document.getElementById("dayPanel").addEventListener("change", async e=>{
@@ -219,6 +242,18 @@ document.getElementById("dayPanel").addEventListener("change", async e=>{
 });
 document.getElementById("dayPanel").addEventListener("click", e=>{
   const pd=e.target.closest("[data-printday]"); if(pd){ printDays([pd.dataset.printday]); return; }
+  const sk=e.target.closest("[data-xpskip]"); if(sk){ sk.disabled=true; XP.toggleSkip(sk.dataset.xpskip, sk.dataset.xpkey).then(renderAll).catch(err=>{ alert(err.message); renderAll(); }); return; }
+  const pr=e.target.closest("[data-xppred]"); if(pr){ predOn = predOn===pr.dataset.xppred ? null : pr.dataset.xppred; renderDay(); return; }
+  const ap=e.target.closest("[data-xpapply]"); if(ap){
+    if(XP.isApplying()) return;
+    const D=ap.dataset.xpapply, R=XP.predict(D), n=R.props.filter(p=>p.savable).length;
+    if(!n){ alert("저장할 직보가 없습니다. 과목이 정해지지 않았거나(미리보기만), 방이 없거나, 강사 수업이 겹치는 직보뿐입니다."); return; }
+    if(!confirm(`${md(D)} 직보 ${n}건을 저장할까요?\n자리를 만들기 위해 정규반 일부를 이날만 다른 강의실로 옮길 수 있습니다.\n(저장한 직보는 수업일지·정산에도 잡힙니다)`)) return;
+    ap.disabled=true; ap.textContent="저장 중…";
+    XP.applyPrediction(D).then(r=>{ predOn=null; renderAll(); alert(`저장했습니다 — 직보 ${r.saved}건 · 정규반 이동 ${r.moves}건${r.skipped?` (미리보기만 ${r.skipped}건은 저장 안 함)`:""}`); })
+      .catch(err=>{ alert("저장 실패: "+err.message+"\n화면을 다시 읽었습니다. 이미 저장된 것은 ✓로 보입니다."); renderAll(); });
+    return;
+  }
   const n=e.target.closest("[data-new]"); if(n){ XO.openForm(null, n.dataset.new); return; }
   const ed=e.target.closest("[data-edit]"); if(ed){ const r=XO.rows.find(x=>x.id===ed.dataset.edit); if(r) XO.openForm(r); return; }
 });
@@ -243,6 +278,11 @@ function printDays(ds){
 document.getElementById("printAll").addEventListener("click", ()=>{
   printDays(XO.datesIn(XO.period()));
 });
+document.getElementById("side").addEventListener("click", e=>{
+  const d=e.target.closest("[data-xpd]"); if(d){ sel=d.dataset.xpd; renderAll(); document.getElementById("dayPanel").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  const a=e.target.closest("[data-xpadd]"); if(a){ XP.onAdd(a); }
+});
+document.getElementById("side").addEventListener("change", e=>{ XP.onInput(e); });
 load();
 </script>
 </body>
