@@ -730,6 +730,7 @@ table.dash td b{color:var(--navy)}
     <button class="tab" data-tab="grade">학년별 시간표</button>
     <button class="tab" data-tab="fee">수강료</button>
     <button class="tab" data-tab="day">요일별·강의실</button>
+    <button class="tab" data-tab="y27">2027년 시간표<small>모든 강사 입력 취합</small></button>
     <span class="tabsep"></span>
     <button class="tab" data-tab="edit">강좌 수정</button>
     <span class="tabsep"></span>
@@ -897,6 +898,9 @@ table.dash td b{color:var(--navy)}
   </section>
 
   <!-- ===== 리디자인 베타 ===== -->
+  <!-- ===== 2027 시간표(가안) — 선생님 개강 요청서 입력을 30초마다 반영. 화면은 plan2027.html?view=board (plan27-board.js) ===== -->
+  <section id="tab-y27" class="hide"><div class="panel" id="y27Box" style="padding:0;overflow:hidden"></div></section>
+
   <section id="tab-beta" class="hide">
     <div class="panel noprint">
       <b>🧪 상세페이지 리디자인 — 베타 테스트</b>
@@ -1909,10 +1913,36 @@ document.getElementById("dashBody").addEventListener("click", e=>{
   drawLog();
 })();
 
+/* ===== 2027 시간표 탭 =====
+   2027 개강 요청서의 원장 열쇠(plan2027 원장 대시보드 링크의 admin= 뒤 값)를 이 브라우저에 한 번 저장해 두고 보드를 띄운다.
+   열쇠는 이 컴퓨터의 브라우저에만 남는다 — 데스크 공용 PC 라면 저장하지 말 것. */
+function mountY27(){
+  const box=document.getElementById("y27Box");
+  let key=""; try{ key=localStorage.getItem("daol_plan27_key")||""; }catch(e){}
+  if(!key){
+    box.innerHTML='<div style="padding:22px;line-height:1.7"><h2 style="margin:0 0 6px">2027년 시간표 (가안)</h2>'
+      +'<p class="muted" style="margin:0 0 12px">선생님들이 개강 요청서에 입력하는 내용이 학년·학교별 / 강사별 / 요일별 강의실로 실시간 반영됩니다.<br>처음 한 번만 <b>2027 요청서 원장 열쇠</b>를 넣어 주세요(원장 대시보드 링크의 <code>admin=</code> 뒤 32자리). 이 컴퓨터의 브라우저에만 저장됩니다.</p>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="y27Key" type="password" placeholder="원장 열쇠 32자리" style="flex:1;min-width:260px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit">'
+      +'<button class="btn" id="y27Save" type="button">저장하고 열기</button></div><p id="y27Msg" class="muted"></p></div>';
+    document.getElementById("y27Save").onclick=()=>{
+      const v=(document.getElementById("y27Key").value||"").trim();
+      if(!/^[0-9a-f]{32}$/.test(v)){ document.getElementById("y27Msg").textContent="32자리(0~9, a~f) 열쇠를 넣어 주세요."; return; }
+      try{ localStorage.setItem("daol_plan27_key",v); }catch(e){}
+      mountY27();
+    };
+    return;
+  }
+  if(box.querySelector("iframe")) return;
+  box.innerHTML='<div style="display:flex;justify-content:flex-end;gap:8px;padding:8px 12px" class="noprint"><a class="chip" href="plan2027.html?admin='+key+'&view=board" target="_blank">새 창으로 크게 ↗</a><button class="chip" id="y27Forget" type="button">열쇠 지우기</button></div>'
+    +'<iframe id="y27Frame" title="2027 시간표" src="plan2027.html?admin='+key+'&view=board&embed=1" style="width:100%;border:0;display:block;min-height:900px"></iframe>';
+  document.getElementById("y27Forget").onclick=()=>{ if(!confirm("이 브라우저에 저장된 2027 원장 열쇠를 지울까요?")) return; try{ localStorage.removeItem("daol_plan27_key"); }catch(e){} box.innerHTML=""; mountY27(); };
+}
+window.addEventListener("message", e=>{ const f=document.getElementById("y27Frame"); if(f && e.source===f.contentWindow && e.data && e.data.plan27Height) f.style.height=(e.data.plan27Height+20)+"px"; });
+
 /* ===== 탭 ===== */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
-  ["dash","chk","gen","grade","fee","day","edit","pack","lp","susi","hs12","exam","links","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
+  ["dash","chk","gen","grade","fee","day","y27","edit","pack","lp","susi","hs12","exam","links","beta"].forEach(id=>document.getElementById("tab-"+id).classList.toggle("hide", t.dataset.tab!==id));
   if(t.dataset.tab==="dash" && window.DaolOpsCal) DaolOpsCal.mount(document.getElementById("opsCal"));
   if(t.dataset.tab==="dash" && window.DaolExamOps) DaolExamOps.mountTable(document.getElementById("examOps"));
   if(t.dataset.tab==="exam") loadExam();
@@ -1921,6 +1951,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   if(t.dataset.tab==="chk" && window.DaolChk) DaolChk.mount(document.getElementById("chkDesk"));
   if(t.dataset.tab==="fee") renderFee();
   if(t.dataset.tab==="day"){ buildDayChips(); renderDay(); }
+  if(t.dataset.tab==="y27") mountY27();
   if(t.dataset.tab==="grade"){ buildGradeChips(); renderGrade(); }
   if(t.dataset.tab==="edit"){ const f=document.getElementById("editFrame"); if(!f.getAttribute("src")) f.src="control.html?embed=1"; }  // 처음 열 때만 로드
   if(t.dataset.tab==="links") lkRender();

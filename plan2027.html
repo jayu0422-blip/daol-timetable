@@ -378,6 +378,8 @@ th{font-size:12px;color:var(--ink2);background:var(--raise);font-weight:600}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
+<script src="rooms.js"></script>
+<script src="plan27-board.js"></script>
 <script>
 "use strict";
 /* ───────── 2027 개강 의향 수합 ─────────
@@ -393,7 +395,7 @@ const T = (id, name, time, kind, extra) => Object.assign({id, name, time, kind},
 let PROFILES = window.PLAN27_DEMO_PROFILES || {};
 const ROW_GRADES = {"mh_1": ["미사고1", "미강고1", "하남고1", "풍산고1", "청아고1"], "mh_2": ["미사고2", "미강고2"], "me_m1a": ["중1"], "me_m1b": ["중1"], "me_m2": ["중2"], "me_m3": ["중3"], "me_top": ["중1", "중2", "중3"], "he_hn1": ["하남고1"], "he_ps1": ["풍산고1"], "he_ca1": ["청아고1"], "k_m3": ["중3"], "k_m2": ["중2"], "k_mg2": ["미강고2"], "k_mg1": ["미강고1"], "j_ms1": ["미사고1"], "l_hpc1": ["하남고1", "풍산고1", "청아고1"], "l_sn": ["수능"], "g_mg2": ["미강고2"], "g_mg3": ["미강고3"], "g_mg1": ["미강고1"], "h_ms3": ["미사고3"], "h_ms2": ["미사고2"], "h_ms1": ["미사고1"], "m_m1": ["중1"], "m_m2": ["중2"], "m_m3": ["중3"], "m_s1": ["중1", "중2", "중3"], "m_s2": ["중1", "중2", "중3"], "s_ts1": ["미사고1", "미강고1", "하남고1", "풍산고1", "청아고1"], "s_ph": ["미사고2", "미강고2"], "s_ch": ["미사고2", "미강고2"], "s_bi": ["미사고2", "미강고2"], "s_ts3": ["미사고3", "미강고3"]};
 const GRADE_KEYS = ["중1","중2","중3","미사고1","미강고1","하남고1","풍산고1","청아고1","미사고2","미강고2","미사고3","미강고3","수능"];
-const PROFILE_LABEL = {kyh:"국어 · 김영하 반", kjh:"국어 · 미사고1", ljk:"국어 · 하남·풍산·청아·수능", mgh:"영어 · 미사강변고", hw:"영어 · 미사고", math:"수학", sci:"과학"};
+const PROFILE_LABEL = {math_y:"수학 · 유용권(고1 선택 포함)", kyh:"국어 · 김영하 반", kjh:"국어 · 미사고1", ljk:"국어 · 하남·풍산·청아·수능", mgh:"영어 · 미사강변고", hw:"영어 · 미사고", math:"수학", sci:"과학"};
 const MATH_SUBJ = ["공통수학1","공통수학2","대수","미적분","확률과통계"];
 const CHOICES = {
   own:[["open","이 시간으로 개강",""],["changed","시간 변경하기",""],["unsure","개강 불확실","u"]],
@@ -422,7 +424,7 @@ const cfg = window.DAOL_CONFIG || {};
 // 운영 주소(설정 파일이 있는 곳)에서는 미리보기 모드를 아예 열지 않는다 — ?demo 를 붙여도 무시(다른 선생님 화면 전환 불가)
 const LIVE = !!(cfg.url && cfg.anonKey && window.supabase);
 const sb = LIVE ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
-const DEMO_TEACHERS = [["김영하","kyh"],["김재현","kjh"],["이정관","ljk"],["민귀홍","mgh"],["황웅","hw"],["유용권","math"],["임결","math"],["과학 선생님","sci"]];
+const DEMO_TEACHERS = [["김영하","kyh"],["김재현","kjh"],["이정관","ljk"],["민귀홍","mgh"],["황웅","hw"],["유용권","math_y"],["임결","math"],["과학 선생님","sci"]];
 const ls = {
   get(k){ try{ return JSON.parse(localStorage.getItem(k) || "null"); }catch(e){ return null; } },
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
@@ -1153,7 +1155,7 @@ async function teacherView(token){
    2027 기준 세 겹: 확정(학원 확정 시간·선생님이 확정한 시간) / 가안·조율 중(학원 가안, 아직 확정 전) / 내 반.
    2026 운영 시간표는 「작년 시간표 겹쳐 보기」를 켤 때만. 다른 선생님은 '시간'만 보이고 메모·조건은 안 보인다. */
 const DAYS = ["월","화","수","목","금","토","일"];
-const SUBJ_COLOR = {국어:"#c2417a", 영어:"#2f62c4", 수학:"#c9661c", 과학:"#6d4bc4"};
+const SUBJ_INK = {국어:"#c2417a", 영어:"#2f62c4", 수학:"#c9661c", 과학:"#6d4bc4"};
 const LAYER_NAME = {mine:"내 반", fixed:"확정", tent:"가안·조율 중", old:"2026 운영(참고)"};
 function gridRows(rows){
   // 서버 plan27_grid 와 같은 규칙: 지원(opt)·조사 중·협의 사유·메모는 내보내지 않는다
@@ -1383,7 +1385,7 @@ function weekGrid(blocks, days, compact){
     for (let t = Math.ceil(START/60)*60; t <= END; t += 60) col.append(h("i",{style:"top:" + ((t - START) * PX + 6) + "px"}));
     const list = blocks.filter(b => b.day === d); layoutLanes(list);
     list.forEach(b => {
-      const st = "top:" + ((b.start - START) * PX + 6) + "px;height:" + Math.max((b.end - b.start) * PX, 26) + "px;left:calc(" + (b.lane / b.cols * 100) + "% + 1px);width:calc(" + (100 / b.cols) + "% - 2px);--c:" + (SUBJ_COLOR[b.subj] || "#6b7280");
+      const st = "top:" + ((b.start - START) * PX + 6) + "px;height:" + Math.max((b.end - b.start) * PX, 26) + "px;left:calc(" + (b.lane / b.cols * 100) + "% + 1px);width:calc(" + (100 / b.cols) + "% - 2px);--c:" + (SUBJ_INK[b.subj] || "#6b7280");
       const who = String(b.owner || b.who || "").replace(/^학원 (확정|가안)$/, "학원");
       const top = compact ? b.subj + (b.layer === "mine" ? " · 내 반" : who ? " " + who : "") : (b.layer === "mine" ? b.subj + " · " + b.name : b.subj + " · " + who);
       col.append(h("div",{class:"blk " + b.layer + (b.clinic ? " cli" : ""), style:st, title:LAYER_NAME[b.layer] + " · " + b.name + " · " + b.who + " · " + fmtHM(b.start) + "~" + fmtHM(b.end)},[
@@ -1513,7 +1515,7 @@ async function adminView(key){
     extra.append(h("h3",{text:"변경 협의 요청 — 원장 미팅 잡기"}));
     talk.length ? talk.forEach(x => extra.append(line(x.r.teacher, nameOf(x.id) + (x.a.time ? " — " + x.a.time : "") + (x.a.memo ? " · " + x.a.memo : "")))) : extra.append(h("p",{class:"muted",text:"없음"}));
     extra.append(h("h3",{text:"수학 근무 조건 · 다른 학원 출강"}));
-    const mr = rows.filter(r => r.profile === "math");
+    const mr = rows.filter(r => (PROFILES[r.profile] || {}).math);
     mr.forEach(r => { const m = (r.answers || {}).math || {};
       extra.append(line(r.teacher, (((PROFILES.math && PROFILES.math.mathPay) || []).find(o => o[0] === m.pay) || [0, "미응답"])[1] + " · " + ({none:"출강 안 함", yes:"출강함 — " + (m.outsideDetail || "내용 미기재")}[m.outside] || "출강 미응답") + " · " + (m.agree ? "조건 확인함" : "조건 미확인"))); });
     extra.append(h("h3",{text:"윈터스쿨 특강 계획"}));
@@ -1547,6 +1549,7 @@ async function adminView(key){
 /* ───── 시작 ───── */
 (function start(){
   const k = qs.get("k"), admin = qs.get("admin");
+  if (admin && qs.get("view") === "board" && typeof boardView === "function") return boardView(admin);   // 2027 시간표 보드(admin.html 탭)
   if (admin) return adminView(admin);
   if (k) return teacherView(k);
   app.replaceChildren(...[demoBar(), h("h1",{text:"2027 개강 의향"}), h("p",{class:"muted",text: LIVE ? "본인 전용 링크로 열어 주세요." : "위 미리보기 줄에서 선생님 이름이나 원장 대시보드를 눌러 보세요."})].filter(Boolean));
