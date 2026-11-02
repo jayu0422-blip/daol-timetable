@@ -17,9 +17,9 @@
  */
 window.DaolExamOps = (function () {
   const DOW = ["일", "월", "화", "수", "목", "금", "토"];
-  const TYPES = ["직보", "휴강", "정규", "보류", "메모", "배정"];
+  const TYPES = ["직보", "휴강", "정규", "보류", "메모", "배정", "행사"];
   const TYPE_HELP = { 직보: "시험 직전 보강 — 시간·강의실 필요", 휴강: "그 날 그 반 수업 없음", 정규: "공휴일·연휴여도 평소대로 수업",
-                      보류: "아직 결정 안 됨(원장 확인)", 메모: "그 날 전체 안내(예: 추석 연휴 전체 휴강)", 배정: "그 날만 이 반의 강의실을 바꿈(전체 일정표에서 지정)" };
+                      보류: "아직 결정 안 됨(원장 확인)", 메모: "그 날 전체 안내(예: 추석 연휴 전체 휴강)", 배정: "그 날만 이 반의 강의실을 바꿈(전체 일정표에서 지정)", 행사: "설명회 등 학원 행사 — 적은 이름 그대로 표에 표시(시간·강의실 필요)" };
   let dep = null, rows = [], host = null, bannerHost = null, bannerDay = null, booted = false;
 
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -175,11 +175,11 @@ window.DaolExamOps = (function () {
 
   /* 요일 그리드에 덧입힐 블록 — 그 날짜 임시 일정 중 시간이 있는 것 */
   function blocksFor(d, roomKey) {
-    return entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류"].indexOf(typeOf(r)) >= 0).map(r => {
+    return entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류", "행사"].indexOf(typeOf(r)) >= 0).map(r => {
       const rm = r.room || suggestRoom(r, true);
       const t = timeOf(r);
       return { room: rm, start: t.start, end: t.end, type: typeOf(r), teacher: r.who, school: r.school, subj: r.subjects,
-               name: [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), conflict: conflictsOf(r, rm).length > 0, suggested: !r.room };
+               name: typeOf(r) === "행사" ? (r.school || r.subjects || "행사") : [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), conflict: conflictsOf(r, rm).length > 0, suggested: !r.room };
     }).filter(b => !roomKey || b.room === roomKey);
   }
   /* 그 날짜에 휴강으로 잡힌 강좌 id 집합 (그리드에서 흐리게) */
@@ -217,10 +217,10 @@ window.DaolExamOps = (function () {
       const off = (allOff && !keepIds.has(it.c.id)) || offIds.has(it.c.id);
       return { c: it.c, s: it.s, room: ov || it.room, autoRoom: it.room, overridden: !!ov, roomRole: it.roomRole, off, conflict: false };
     });
-    const temps = entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류"].indexOf(typeOf(r)) >= 0).map(r => {
+    const temps = entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류", "행사"].indexOf(typeOf(r)) >= 0).map(r => {
       const t = timeOf(r);
       return { id: r.id, room: r.room || suggestRoom(r, true), start: t.start, end: t.end, type: typeOf(r), teacher: r.who, school: r.school, subj: r.subjects,
-               name: [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), suggested: !r.room, conflict: false, bad: t.bad, endGuessed: t.endGuessed };
+               name: typeOf(r) === "행사" ? (r.school || r.subjects || "행사") : [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), suggested: !r.room, conflict: false, bad: t.bad, endGuessed: t.endGuessed };
     });
     /* 겹침 재계산 — 휴강인 반은 방을 비운 것으로 본다 */
     const live = items.filter(it => !it.off).map(it => ({ ref: it, room: it.room, s: it.s }))
@@ -464,7 +464,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
              : (hits.weak.length ? "\n→ 학교 혼합반 " + hits.weak.length + "개: " + hits.weak.map(c => c.course_name).join(" / ") + " (다른 학교 학생은 수업하므로 강의실은 그대로 잡아 둡니다)"
              : "\n⚠ 일치하는 강좌 없음 — 반 표기를 확인하세요 (예: 윤슬중3 · 미강고1 · 중3). 이대로 저장하면 휴강이 강의실 계산에 반영되지 않습니다.");
       }
-      if (["직보", "정규", "보류"].indexOf(o.t) >= 0 && timeOf(fake).start != null) {
+      if (["직보", "정규", "보류", "행사"].indexOf(o.t) >= 0 && timeOf(fake).start != null) {
         const rm = o.room || suggestRoom(fake, true);
         const cf = rm ? conflictsOf(fake, rm) : [];
         msg += "\n강의실: " + (rm ? roomLabel(rm) + (o.room ? "" : " (자동 제안)") : "빈 방 없음");

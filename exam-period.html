@@ -105,8 +105,8 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=72ddcbd2"></script>
 <script src="schedule-cal.js?v=b0250ad9"></script>
-<script src="exam-ops.js?v=5b5512bd"></script>
-<script src="rooms.js?v=68fee4f7"></script>
+<script src="exam-ops.js?v=db6b9148"></script>
+<script src="rooms.js?v=ae055b28"></script>
 <script src="exam-prep.js?v=cfb2f69e"></script>
 <script>
 /* rooms.js 가 기대하는 전역 */
@@ -195,7 +195,7 @@ function editorHTML(d, A){
     const cf = A.items.filter(x=>!x.off && x.room===b.room && x.s.start<b.end && b.start<x.s.end).concat(A.temps.filter(x=>x!==b && x.room===b.room && x.start<b.end && b.start<x.end));
     h += `<tr class="${cf.length?"cf":""}" data-tid="${b.id}">
       <td><b>${esc(b.teacher||"")}</b></td>
-      <td>${esc(b.school||"")} ${esc(b.subj||"")} <span class="tg temp">시험기간 ${esc(b.type)}</span></td>
+      <td>${b.type==="행사"?esc(b.name||b.school||""):esc(b.school||"")+" "+esc(b.subj||"")} <span class="tg temp">${b.type==="행사"?"학원 행사":"시험기간 "+esc(b.type)}</span></td>
       <td>${fmt(b.start)}~${fmt(b.end)}${b.endGuessed?' <span class="muted">(종료 미정)</span>':""}</td>
       <td>${roomSel(b.suggested?"":b.room, `data-kind="temp"`)} ${b.suggested?`<span class="muted">제안: ${esc(roomLabel(b.room))}</span>`:""}</td>
       <td><button class="rowbtn" data-edit="${b.id}">수정</button></td>
