@@ -162,6 +162,7 @@ function roomOptions(selKey){ return ['<option value="">자동</option>', ...CLA
 /* ===== 요일 그리드 HTML =====
    opts: { day:"월", title, items(assignDay 결과), temps(DaolExamOps.blocksFor), offIds(Set — 그 날 휴강 강좌 id), allOff(bool — 전체 휴강일), note }
    admin.html 의 renderDay 와 exam-period.html 이 같은 함수를 쓴다. */
+const RM_tempLabel=t=>({직보:"직전보강",행사:"학원 행사"})[t]||t;
 const RM_esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
 const RM_fmt = m => String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
 function dayGridHTML(opts){
@@ -187,7 +188,7 @@ function dayGridHTML(opts){
       const L=(b.lane/b.cols*100), W=(100/b.cols);
       const pos=`top:${top}px;height:${h}px;left:calc(${L}% + 2px);width:calc(${W}% - 4px);right:auto`;
       if(b.kind==="retest") html+=`<div class="rblk" style="${pos};background:#fee2e2;border:1px dashed #f87171"><div class="rt">${RM_esc(b.name)}</div><div class="rteam">재시 ${RM_fmt(b.start)}~${RM_fmt(b.end)}</div></div>`;
-      else if(b.kind==="temp") html+=`<div class="rblk temp ${b.conflict?"conflict":""}" style="${pos}"><div class="rt">${RM_esc(b.name)}</div><div class="rteam">[${RM_esc(b.teacher)}T] <span class="rtype" style="background:#fde68a">${b.type==="행사"?"학원 행사":"시험기간 "+RM_esc(b.type)}</span>${b.suggested?'<span class="rtype" style="background:#fee2e2">방 미확정</span>':''}</div><div class="rteam">${RM_fmt(b.start)}~${RM_fmt(b.end)}</div></div>`;
+      else if(b.kind==="temp") html+=`<div class="rblk temp ${b.conflict?"conflict":""}" style="${pos}"><div class="rt">${RM_esc(b.name)}</div><div class="rteam">${b.teacher?`[${RM_esc(b.teacher)}T] `:""}<span class="rtype" style="background:#fde68a">${RM_esc(RM_tempLabel(b.type))}</span>${b.suggested?'<span class="rtype" style="background:#fee2e2">방 미확정</span>':''}</div><div class="rteam">${RM_fmt(b.start)}~${RM_fmt(b.end)}</div></div>`;
       else { const col=SUBJ_COLOR[b.subj]||"#e5e7eb", role=b.role?`<span class="rtype" style="background:#fde68a">${b.role}</span>`:"", ovd=b.overridden?`<span class="rtype" style="background:#bae6fd">이날만 지정</span>`:""; html+=`<div class="rblk ${b.conflict?"conflict":""}${b.off?" off":""}" style="${pos};background:${col}"><div class="rt">${RM_esc(b.name)}</div><div class="rteam">[${RM_esc(b.teacher)}T] <span class="rtype">${b.type}</span>${role}${ovd}</div><div class="rteam">${RM_fmt(b.start)}~${RM_fmt(b.end)}</div></div>`; }
     });
     html+=`</div>`;

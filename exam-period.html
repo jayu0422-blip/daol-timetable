@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>시험기간 강의실 일정표</title>
-<!-- 시험기간(2학기 1차 9/20~10/16 …)은 요일이 아니라 날짜마다 다르다.
-     이 페이지는 하루씩: 그 날 요일의 정규 시간표 + 직보(빗금) + 휴강(흐림) + 이날만 강의실 지정.
-     저장은 전부 Supabase ops_calendar(kind=memo) — 대시보드 「시험기간 임시 일정표」와 같은 데이터. -->
+<title>월간 시간표</title>
+<!-- 요일별 시간표가 기본, 이 페이지는 달 단위로 날짜마다 달라지는 것을 더한다.
+     하루씩: 그 날 요일의 정규 시간표 + 직전보강·보강·설명회(빗금) + 휴강(흐림) + 이날만 강의실 지정.
+     저장은 전부 Supabase ops_calendar(kind=memo) — 대시보드 「월간 시간표」와 같은 데이터. 주소는 즐겨찾기 때문에 그대로 둔다. -->
 <style>
 :root{--navy:#1e3a5f;--line:#e5e7eb;--muted:#6b7280;--brand:#c9a227}
 *{box-sizing:border-box}
@@ -58,13 +58,17 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 .btn-print:hover{filter:brightness(1.12)}
 .btn-add{border:1px solid #b8901d;background:var(--brand);color:#1f2430;border-radius:9px;font:inherit;font-size:13px;font-weight:800;padding:7px 14px;cursor:pointer}
 .btn-add:hover{filter:brightness(1.08)}
+.mnav{margin-bottom:10px}
+.mnav .xo-mnav{gap:8px}
+.mnav .xo-mnav b{font-size:16px;font-weight:900;color:var(--navy);min-width:112px}
+.mnav .xo-mnav button{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:8px}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;align-items:start}
 .side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
 .dch em{font-style:normal;color:#b91c1c;font-weight:900}
 @media (max-width:1100px){.cols{grid-template-columns:1fr}.side{position:static;max-height:none}}
 @media print{
   @page{ size:A4 landscape; margin:6mm }
-  .top,.dates,.legend,#editor,.noprint,.panel>.muted,.side,.xp-alert,.xp-pred{display:none!important}
+  .top,.dates,.mnav,.legend,#editor,.noprint,.panel>.muted,.side,.xp-alert,.xp-pred{display:none!important}
   .cols{display:block}
   body{background:#fff}.wrap{max-width:none;padding:0;margin:0}
   .panel{border:0;box-shadow:none;padding:0;margin:0}
@@ -78,22 +82,23 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 </head>
 <body>
 <div class="top">
-  <h1>📝 시험기간 강의실 일정표</h1>
+  <h1>📅 월간 시간표</h1>
   <span class="sub" id="periodSub">불러오는 중…</span>
-  <button class="btn" id="printAll">🖨️ 전체 인쇄 (날짜별 한 장씩)</button>
+  <button class="btn" id="printAll">🖨️ 이 달 전체 인쇄 (날짜별 한 장씩)</button>
   <a href="admin.html">← 운영자 대시보드</a>
 </div>
 <div class="wrap">
   <div class="panel">
+    <div class="mnav" id="mnav"></div>
     <div class="legend">
       <span><i style="background:#dbeafe;border-color:#93c5fd"></i>시험 시작일</span>
       <span><i style="background:#ffedd5;border-color:#fdba74"></i>시험 중</span>
       <span><i style="background:#fce7f3;border-color:#f9a8d4"></i>시험 종료일</span>
-      <span><i style="background:repeating-linear-gradient(135deg,#fef3c7 0 3px,#fde68a 3px 6px);border:1px dashed #d97706"></i>임시 수업(직보 등)</span>
+      <span><i style="background:repeating-linear-gradient(135deg,#fef3c7 0 3px,#fde68a 3px 6px);border:1px dashed #d97706"></i>추가 수업(직전보강·보강·설명회)</span>
       <span><i style="background:#e5e7eb;opacity:.4"></i>그 날 휴강</span>
       <span><i style="background:#e0f2fe;border-color:#bae6fd"></i>이날만 강의실 지정</span>
       <span><i style="outline:2px solid #dc2626;outline-offset:-2px"></i>같은 방 겹침</span>
-      <span class="muted">날짜를 누르면 그 날만의 표가 뜹니다. 아래 표에서 강의실·휴강·임시 수업을 바로 고치면 즉시 저장되고 대시보드에도 같이 반영됩니다.</span>
+      <span class="muted">요일별 시간표가 날짜마다 자동으로 깔립니다. 날짜를 누르고 강의실·휴강·추가 수업을 고치면 바로 저장되고, 복도 TV에도 1분 안에 반영됩니다.</span>
     </div>
     <div class="dates" id="dates" style="margin-top:10px"></div>
   </div>
@@ -107,9 +112,9 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=72ddcbd2"></script>
 <script src="schedule-cal.js?v=b0250ad9"></script>
-<script src="exam-ops.js?v=bd98cc6e"></script>
-<script src="rooms.js?v=ae055b28"></script>
-<script src="exam-prep.js?v=8c2fbd90"></script>
+<script src="exam-ops.js?v=3a00773f"></script>
+<script src="rooms.js?v=67fe65d9"></script>
+<script src="exam-prep.js?v=1975c757"></script>
 <script>
 /* rooms.js 가 기대하는 전역 */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -140,20 +145,26 @@ async function load(){
   await XO.load();
   XP.init({ sb, XO, rooms: CLASS_ROOMS, orderByPref, getCourses: ()=>DATA, onChange: ()=>renderAll() });
   await XP.load();
-  const P = XO.period(), t = todayISO();
-  sel = (t>=P.start && t<=P.end) ? t : P.start;
+  pickDay();
   renderAll();
 }
-
-function termLabel(P){ return P.term==="1차지필" ? "2학기 1차(중간)" : (P.term==="2차지필" ? "2학기 2차(기말)" : (P.term||"시험")); }
+function pickDay(){ const P = XO.period(), t = todayISO(); sel = (t>=P.start && t<=P.end) ? t : P.start; }
+/* 달 이동 — 시험 과목도 달에 맞춰 다시 읽는다 */
+async function goMonth(ym){
+  sel = null;
+  try{ await XO.setMonth(ym); await XP.load(); }
+  catch(err){ alert("달을 옮기지 못했습니다: "+err.message); }
+  pickDay(); renderAll();
+}
 
 function renderDates(){
   const P = XO.period(), ds = XO.datesIn(P), t = todayISO();
-  document.getElementById("periodSub").textContent = `${termLabel(P)} · ${md(P.start)}(${dowOf(P.start)}) ~ ${md(P.end)}(${dowOf(P.end)}) · 하루씩 따로 배정`;
+  document.getElementById("periodSub").textContent = `${P.label} · 요일별 시간표 위에 날짜별 일정을 더합니다`;
+  document.getElementById("mnav").innerHTML = XO.monthNavHTML();
   document.getElementById("dates").innerHTML = ds.map(d=>{
     const dw=dowOf(d), hn=XO.holidayOf(d), ex=XO.examsOf(d), n=XO.entriesOn(d).filter(r=>XO.typeOf(r)!=="배정").length, pend=XP.pendingCount(d);
     const cls=["dch", sel===d?"on":"", (dw==="일"||dw==="토")?"wk":"", hn?"holi":"", d===t?"today":""].filter(Boolean).join(" ");
-    return `<button class="${cls}" data-d="${d}">${md(d)} (${dw})${pend?` <em title="내일 시험 — 직전보강 강의실 입력 필요">🔔${pend}</em>`:""}<small>${hn?esc(hn):(ex.length?`시험 ${ex.length}`:"")}${n?` · 임시 ${n}`:""}${(!hn&&!ex.length&&!n)?"—":""}</small></button>`;
+    return `<button class="${cls}" data-d="${d}">${md(d)} (${dw})${pend?` <em title="내일 시험 — 직전보강 강의실 입력 필요">🔔${pend}</em>`:""}<small>${hn?esc(hn):(ex.length?`시험 ${ex.length}`:"")}${n?` · 일정 ${n}`:""}${(!hn&&!ex.length&&!n)?"—":""}</small></button>`;
   }).join("");
 }
 
@@ -163,14 +174,14 @@ function dayHeaderHTML(d, A){
     ${hn?`<span class="holi-b">🔴 ${esc(hn)}</span>`:""}
     ${A.allOff?`<span class="alloff">전체 휴강일 — '정규'로 살린 반만 수업</span>`:""}
     ${ex.map(e=>`<span class="ex ${e.kind}" title="${esc(e.subj||"")}">${esc(shortSchool(e.school))}${e.grade&&e.grade!=="전체"?" "+esc(e.grade.replace("학년","")):""} <i>${KIND[e.kind]}${e.total>1?` ${e.nth}/${e.total}`:""}</i></span>`).join("")}
-    <span class="stat">정규 ${A.items.length}개 · 휴강 ${A.items.filter(i=>i.off).length} · 임시 ${A.temps.length}건 · <b class="${(A.items.some(i=>i.conflict)||A.temps.some(b=>b.conflict))?"bad":""}">겹침 ${A.items.filter(i=>i.conflict).length+A.temps.filter(b=>b.conflict).length}건</b></span>
-    <button class="btn-add noprint" data-new="${d}" title="이 날짜에 직전보강·휴강·행사 등을 새로 넣습니다">＋ 이 날 직보·일정 추가</button>
+    <span class="stat">정규 ${A.items.length}개 · 휴강 ${A.items.filter(i=>i.off).length} · 추가 ${A.temps.length}건 · <b class="${(A.items.some(i=>i.conflict)||A.temps.some(b=>b.conflict))?"bad":""}">겹침 ${A.items.filter(i=>i.conflict).length+A.temps.filter(b=>b.conflict).length}건</b></span>
+    <button class="btn-add noprint" data-new="${d}" title="이 날짜에 직전보강·보강·휴강·설명회를 새로 넣습니다">＋ 이 날 일정 추가</button>
     <button class="btn-print noprint" data-printday="${d}" title="이 날짜만 가로 A4 한 장으로 인쇄합니다">🖨️ 이 날짜만 인쇄</button>
   </div>`;
 }
 
 function gridFor(d, A){
-  return dayGridHTML({ day:A.day, title:`2026 다올105 · ${md(d)} (${A.day}) 시험기간 강의실 배정`, items:A.items, temps:A.temps });
+  return dayGridHTML({ day:A.day, title:`${d.slice(0,4)} 다올105 · ${md(d)} (${A.day}) 강의실 배정`, items:A.items, temps:A.temps });
 }
 
 const roomSel = (cur, extra) => `<select data-room ${extra||""}><option value="">자동</option>${CLASS_ROOMS.map(r=>`<option value="${r.key}" ${r.key===cur?"selected":""}>${r.label}</option>`).join("")}</select>`;
@@ -198,7 +209,7 @@ function editorHTML(d, A){
     const cf = A.items.filter(x=>!x.off && x.room===b.room && x.s.start<b.end && b.start<x.s.end).concat(A.temps.filter(x=>x!==b && x.room===b.room && x.start<b.end && b.start<x.end));
     h += `<tr class="${cf.length?"cf":""}" data-tid="${b.id}">
       <td><b>${esc(b.teacher||"")}</b></td>
-      <td>${b.type==="행사"?esc(b.name||b.school||""):esc(b.school||"")+" "+esc(b.subj||"")} <span class="tg temp">${b.type==="행사"?"학원 행사":"시험기간 "+esc(b.type)}</span></td>
+      <td>${b.type==="행사"||b.type==="보강"?esc(b.name||b.school||""):esc(b.school||"")+" "+esc(b.subj||"")} <span class="tg temp">${esc(RM_tempLabel(b.type))}</span></td>
       <td>${fmt(b.start)}~${fmt(b.end)}${b.endGuessed?' <span class="muted">(종료 미정)</span>':""}</td>
       <td>${roomSel(b.suggested?"":b.room, `data-kind="temp"`)} ${b.suggested?`<span class="muted">제안: ${esc(roomLabel(b.room))}</span>`:""}</td>
       <td><button class="rowbtn" data-edit="${b.id}">수정</button></td>
@@ -209,8 +220,8 @@ function editorHTML(d, A){
   /* 표(temps)에 안 들어간 나머지 항목 — 휴강·정규·보류·메모 + 시각이 없는 직보(예: '5(화) 미강고1' 처럼 시각 미정) */
   const tempIds = new Set(A.temps.map(b=>b.id));
   const others = XO.entriesOn(d).filter(r=>XO.typeOf(r)!=="배정" && !tempIds.has(r.id) && !XO.body(r).course_id);
-  h += `<div class="memo-list">${others.length?`<div class="muted" style="margin-bottom:4px">이 날의 메모·휴강·정규유지·보류·시각 미정 직보 (대시보드 임시 일정표와 같은 항목 — 「수정」은 대시보드에서)</div>`+others.map(r=>XO.entryOneHTML(r)).join(""):""}</div>`;
-  h += `<button class="add" data-new="${d}">+ 이 날 일정 추가 (직보·휴강·정규·보류·메모)</button>`;
+  h += `<div class="memo-list">${others.length?`<div class="muted" style="margin-bottom:4px">이 날의 메모·휴강·정규유지·보류·시각 미정 직전보강 (「수정」은 대시보드 월간 시간표에서)</div>`+others.map(r=>XO.entryOneHTML(r)).join(""):""}</div>`;
+  h += `<button class="add" data-new="${d}">+ 이 날 일정 추가 (직전보강·보강·휴강·설명회)</button>`;
   return h;
 }
 
@@ -231,6 +242,7 @@ function renderSide(){
 }
 function renderAll(){ renderDates(); renderDay(); renderSide(); }
 
+document.getElementById("mnav").addEventListener("click", e=>{ const b=e.target.closest("[data-month]"); if(!b) return; const k=+b.dataset.month; goMonth(k ? XO.shiftYM(XO.period().ym, k) : null); });
 document.getElementById("dates").addEventListener("click", e=>{ const b=e.target.closest("[data-d]"); if(!b) return; sel=b.dataset.d; renderAll(); document.getElementById("dayPanel").scrollIntoView({behavior:"smooth",block:"start"}); });
 document.getElementById("dayPanel").addEventListener("change", async e=>{
   const tr=e.target.closest("tr"); if(!tr) return;

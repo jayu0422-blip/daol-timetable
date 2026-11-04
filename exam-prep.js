@@ -144,7 +144,7 @@ window.DaolExamPrep = (function () {
   /* 손으로 넣는 직보의 기본 시간. 영어(원장 지시 2026-11-04): 시험 첫날이면 전날 17시, 시험 도중이면 전날 13시. 그 외 과목은 기본틀 첫 칸. */
   function prepSlot(D, units, subj) {
     const first = u => !examUnits().some(x => x.school === u.school && x.grade === u.grade && x.d < u.d && x.d >= addDays(u.d, -14));
-    if (subj === "영어") return units.some(first) ? [1020, 1260] : [780, 1020];
+    if (subj === "영어") return units.some(first) ? [1020, 1200] : [780, 960];
     return (["토", "일"].indexOf(dowOf(D)) >= 0 ? WINDOWS.we : WINDOWS.wk)[0];
   }
   /* 🔔 목록의 「직보 넣기」 — 반·강사·과목·시간·빈 방을 채운 입력창을 연다. 저장은 원장이 확인하고 누른다 */

@@ -135,6 +135,7 @@ async function pull(){
     ROSTER = tt||[];
     XO.init({ sb, teachers:ROSTER, rooms:CLASS_ROOMS, assignDay, orderByPref,
               getCourses: ()=>DATA, onChange: ()=>paint() });
+    if(PIN && XO.setView) XO.setView(PIN.slice(0,7));
     await XO.load();
     dot.classList.remove("off");
     paint();

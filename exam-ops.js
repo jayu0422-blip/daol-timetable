@@ -1,4 +1,4 @@
-/* 다올105 — 시험기간 임시 일정표 (직보·휴강·정규유지·보류)
+/* 다올105 — 월간 시간표 (요일 기본표 위에 날짜별 직전보강·보강·휴강·설명회를 더한다)
  *
  * 왜 따로 두나: 평소 시간표는 "요일" 단위인데 시험기간은 "날짜" 단위로 움직인다.
  *   (윤슬중3 직보 9/21(월) 14시, 은가람중2 10/3(토) 휴강 …) 날짜별 임시 일정을 요일 시간표 위에
@@ -9,7 +9,7 @@
  *   body = JSON {"t":"직보|휴강|정규|보류|메모","memo":"…"}
  *
  * 쓰는 곳:
- *   admin.html 대시보드 맨 아래 「시험기간 임시 일정표」 — DaolExamOps.mountTable(el)
+ *   admin.html 대시보드 맨 아래 「월간 시간표」 — DaolExamOps.mountTable(el)
  *   admin.html 요일별·강의실 탭 배너 + 날짜별 덧입히기 — DaolExamOps.mountDayBanner(el, day), blocksFor(date, roomKey)
  *   ops-cal.js 월간 일정표 — kind=memo 행을 그대로 읽어 "임시 N" 배지·상세에 보여준다
  *
@@ -17,9 +17,12 @@
  */
 window.DaolExamOps = (function () {
   const DOW = ["일", "월", "화", "수", "목", "금", "토"];
-  const TYPES = ["직보", "휴강", "정규", "보류", "메모", "배정", "행사"];
-  const TYPE_HELP = { 직보: "시험 직전 보강 — 시간·강의실 필요", 휴강: "그 날 그 반 수업 없음", 정규: "공휴일·연휴여도 평소대로 수업",
-                      보류: "아직 결정 안 됨(원장 확인)", 메모: "그 날 전체 안내(예: 추석 연휴 전체 휴강)", 배정: "그 날만 이 반의 강의실을 바꿈(전체 일정표에서 지정)", 행사: "설명회 등 학원 행사 — 적은 이름 그대로 표에 표시(시간·강의실 필요)" };
+  const TYPES = ["직보", "보강", "휴강", "행사", "정규", "보류", "메모", "배정"];
+  const TYPE_LABEL = { 직보: "직전보강", 행사: "설명회·행사" };
+  const typeLabel = t => TYPE_LABEL[t] || t;
+  const TEMP_TYPES = ["직보", "보강", "정규", "보류", "행사"];   // 시간표에 블록으로 올라가는 종류
+  const TYPE_HELP = { 직보: "시험 직전 보강 — 시간·강의실 필요", 보강: "쉰 수업을 대신해 다른 날 여는 수업 — 수업일지에 칸이 생김(시간·강의실 필요)", 휴강: "그 날 그 반 수업 없음", 정규: "공휴일·연휴여도 평소대로 수업",
+                      보류: "아직 결정 안 됨(원장 확인)", 메모: "그 날 전체 안내(예: 추석 연휴 전체 휴강)", 배정: "그 날만 이 반의 강의실을 바꿈(전체 일정표에서 지정)", 행사: "설명회 등 학원 행사 — 적은 이름 그대로 표에 표시, 수업일지에는 안 잡힘(시간·강의실 필요)" };
   let dep = null, rows = [], host = null, bannerHost = null, bannerDay = null, booted = false;
 
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -43,10 +46,25 @@ window.DaolExamOps = (function () {
       return { term: c.term, start: iso(s.getFullYear(), s.getMonth() + 1, s.getDate()), end: c.days[c.days.length - 1] };
     }).sort((a, b) => a.start < b.start ? -1 : 1);
   }
-  function period() {
-    const cs = clusters(), t = todayISO();
-    if (!cs.length) return { term: "", start: "2026-09-20", end: "2026-10-16" };
-    return cs.find(c => c.end >= t) || cs[cs.length - 1];
+  /* ---------- 보고 있는 달: 기본은 오늘이 속한 달, ◀▶로 옮긴다 ---------- */
+  let viewYM = null;
+  function monthOf(ym) {
+    const y = +ym.slice(0, 4), m = +ym.slice(5, 7);
+    return { ym, term: "", start: iso(y, m, 1), end: iso(y, m, new Date(y, m, 0).getDate()), label: y + "년 " + m + "월" };
+  }
+  function period() { return monthOf(viewYM || todayISO().slice(0, 7)); }
+  function shiftYM(ym, n) { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); return iso(d.getFullYear(), d.getMonth() + 1, 1).slice(0, 7); }
+  function addD(d, n) { const p = d.split("-").map(Number), x = new Date(p[0], p[1] - 1, p[2] + n); return iso(x.getFullYear(), x.getMonth() + 1, x.getDate()); }
+  function setView(ym) { viewYM = ym || null; }
+  async function setMonth(ym) {
+    viewYM = ym || null;
+    await load();
+    if (overlayDate && (overlayDate < period().start || overlayDate > period().end)) { overlayDate = null; if (dep.onOverlay) dep.onOverlay(null); }
+    render(); if (dep.onChange) dep.onChange();
+  }
+  function monthNavHTML() {
+    const P = period(), now = todayISO().slice(0, 7);
+    return '<span class="xo-mnav"><button data-month="-1">◀ 이전 달</button><b>' + P.label + '</b><button data-month="1">다음 달 ▶</button>' + (P.ym === now ? '' : '<button data-month="0">이번 달</button>') + '</span>';
   }
   function datesIn(P) {
     const out = []; const d = new Date(P.start); const e = new Date(P.end);
@@ -82,6 +100,13 @@ window.DaolExamOps = (function () {
   }
   const entriesOn = d => rows.filter(r => r.d === d);
   const roomLabel = k => { const r = (dep.rooms || []).find(x => x.key === k); return r ? r.label : (k || ""); };
+  /* 표에 쓰는 이름: 설명회·보강은 적은 수업명 그대로, 나머지는 반+과목+종류 */
+  function tempName(r) {
+    const t = typeOf(r);
+    if (t === "행사") return r.school || r.subjects || "행사";
+    if (t === "보강") return r.school || r.subjects || "보강";
+    return [r.school, r.subjects, typeLabel(t)].filter(Boolean).join(" ");
+  }
 
   /* ---------- 강의실 겹침 ----------
      그 날짜의 요일 정규 시간표(assignDay)와 같은 방·겹치는 시간이면 충돌.
@@ -175,11 +200,11 @@ window.DaolExamOps = (function () {
 
   /* 요일 그리드에 덧입힐 블록 — 그 날짜 임시 일정 중 시간이 있는 것 */
   function blocksFor(d, roomKey) {
-    return entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류", "행사"].indexOf(typeOf(r)) >= 0).map(r => {
+    return entriesOn(d).filter(r => timeOf(r).start != null && TEMP_TYPES.indexOf(typeOf(r)) >= 0).map(r => {
       const rm = r.room || suggestRoom(r, true);
       const t = timeOf(r);
       return { room: rm, start: t.start, end: t.end, type: typeOf(r), teacher: r.who, school: r.school, subj: r.subjects,
-               name: typeOf(r) === "행사" ? (r.school || r.subjects || "행사") : [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), conflict: conflictsOf(r, rm).length > 0, suggested: !r.room };
+               name: tempName(r), conflict: conflictsOf(r, rm).length > 0, suggested: !r.room };
     }).filter(b => !roomKey || b.room === roomKey);
   }
   /* 그 날짜에 휴강으로 잡힌 강좌 id 집합 (그리드에서 흐리게) */
@@ -217,10 +242,10 @@ window.DaolExamOps = (function () {
       const off = (allOff && !keepIds.has(it.c.id)) || offIds.has(it.c.id);
       return { c: it.c, s: it.s, room: ov || it.room, autoRoom: it.room, overridden: !!ov, roomRole: it.roomRole, off, conflict: false };
     });
-    const temps = entriesOn(d).filter(r => timeOf(r).start != null && ["직보", "정규", "보류", "행사"].indexOf(typeOf(r)) >= 0).map(r => {
+    const temps = entriesOn(d).filter(r => timeOf(r).start != null && TEMP_TYPES.indexOf(typeOf(r)) >= 0).map(r => {
       const t = timeOf(r);
       return { id: r.id, room: r.room || suggestRoom(r, true), start: t.start, end: t.end, type: typeOf(r), teacher: r.who, school: r.school, subj: r.subjects,
-               name: typeOf(r) === "행사" ? (r.school || r.subjects || "행사") : [r.school, r.subjects, typeOf(r)].filter(Boolean).join(" "), suggested: !r.room, conflict: false, bad: t.bad, endGuessed: t.endGuessed };
+               name: tempName(r), suggested: !r.room, conflict: false, bad: t.bad, endGuessed: t.endGuessed };
     });
     /* 겹침 재계산 — 휴강인 반은 방을 비운 것으로 본다 */
     const live = items.filter(it => !it.off).map(it => ({ ref: it, room: it.room, s: it.s }))
@@ -257,8 +282,9 @@ window.DaolExamOps = (function () {
   /* ---------- 저장 ---------- */
   async function load() {
     if (!dep || !dep.sb) { rows = []; return; }
+    /* 앞뒤 달까지 읽는다 — TV 내일 보기가 월말에 안 끊기고, admin 진행표 대조(offMismatch)가 다른 달도 본다 */
     const P = period();
-    const { data, error } = await dep.sb.from("ops_calendar").select("*").eq("kind", "memo").gte("d", P.start).lte("d", P.end).order("d");
+    const { data, error } = await dep.sb.from("ops_calendar").select("*").eq("kind", "memo").gte("d", addD(P.start, -35)).lte("d", addD(P.end, 62)).order("d");
     rows = error ? [] : (data || []);
   }
   async function save(o) {
@@ -301,6 +327,10 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
 .xo-t.t휴강{background:#fee2e2;color:#991b1b;border-color:#fecaca}.xo-t.t정규{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
 .xo-t.t보류{background:#f1f5f9;color:#475569;border-color:#cbd5e1}.xo-t.t메모{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
 .xo-t.t배정{background:#e0f2fe;color:#075985;border-color:#bae6fd}
+.xo-t.t보강{background:#ffedd5;color:#9a3412;border-color:#fdba74}.xo-t.t행사{background:#fce7f3;color:#9d174d;border-color:#f9a8d4}
+.xo-mnav{display:inline-flex;align-items:center;gap:6px}.xo-mnav b{min-width:92px;text-align:center}
+.xo-mnav button{border:1px solid #cbd5e1;background:#fff;border-radius:7px;font:inherit;font-size:11.5px;padding:3px 8px;cursor:pointer;color:#31405a}
+.xo-mnav button:hover{background:#f7f9fc}
 .xo-b{flex:1;min-width:0;line-height:1.4}
 .xo-b .rm{font-weight:800;color:#1e3a5f}.xo-b .rm.sg{color:#92400e}
 .xo-b .cf{display:block;color:#b91c1c;font-weight:700;font-size:11.5px}
@@ -361,7 +391,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
         ? '<div class="memo" style="color:#92400e">→ 학교 혼합반 ' + hits.weak.length + '개: ' + esc(hits.weak.map(c => c.course_name).join(" / ")) + ' <b>(다른 학교 학생은 수업하므로 강의실은 그대로 잡아 둠)</b></div>'
         : '<div class="memo" style="color:#b91c1c;font-weight:700">⚠ 일치하는 강좌 없음 — 반 표기를 확인하세요 (예: 윤슬중3 · 미강고1 · 중3)</div>'));
     return '<div class="xo-e' + (cf.length ? ' c' : '') + '" data-id="' + esc(r.id) + '">' +
-      '<span class="xo-t t' + esc(t) + '">' + esc(t) + '</span>' +
+      '<span class="xo-t t' + esc(t) + '">' + esc(typeLabel(t)) + '</span>' +
       '<div class="xo-b"><b>' + esc(r.who || "") + '</b> ' + esc(r.school || "") + (r.subjects ? ' <span style="color:#64748b">' + esc(r.subjects) + '</span>' : '') +
       (time ? ' · ' + esc(time) : '') +
       (rm ? ' → <span class="rm' + (r.room ? '' : ' sg') + '">' + esc(roomLabel(rm)) + (r.room ? '' : ' (자동 제안 · 확정 필요)') + '</span>' : (hasTime ? ' → <span class="rm sg">빈 방 없음</span>' : '')) +
@@ -379,13 +409,13 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     const P = period(), t = todayISO();
     const ds = datesIn(P);
     let nE = 0, nC = 0, nS = 0;
-    rows.forEach(r => { nE++; const rm = r.room || suggestRoom(r, true); if (rm && conflictsOf(r, rm).length) nC++; if (!r.room && timeOf(r).start != null) nS++; });
-    let h = '<div class="xo-sum"><span>' + esc(P.term || "시험") + ' 기간 <b>' + mdOf(P.start) + '(' + dowOf(P.start) + ') ~ ' + mdOf(P.end) + '(' + dowOf(P.end) + ')</b> <span style="color:#94a3b8">(시험 묶음이 끝나면 다음 묶음으로 자동 전환)</span></span>' +
-      '<span>임시 일정 <b>' + nE + '건</b></span>' +
+    rows.filter(r => r.d >= P.start && r.d <= P.end).forEach(r => { nE++; const rm = r.room || suggestRoom(r, true); if (rm && conflictsOf(r, rm).length) nC++; if (!r.room && timeOf(r).start != null) nS++; });
+    let h = '<div class="xo-sum">' + monthNavHTML() +
+      '<span>날짜별 일정 <b>' + nE + '건</b></span>' +
       '<span class="' + (nC ? 'bad' : '') + '">강의실 겹침 <b>' + nC + '건</b></span>' +
       '<span class="' + (nS ? 'bad' : '') + '">강의실 미확정 <b>' + nS + '건</b></span>' +
       '<span style="margin-left:auto"><button class="xo-add" data-new="' + esc(t >= P.start && t <= P.end ? t : P.start) + '">+ 일정 추가</button></span></div>';
-    h += '<div class="xo-wrap"><table class="xo"><thead><tr><th>날짜</th><th>지필평가</th><th>임시 일정 (직보·휴강·정규유지) → 강의실</th></tr></thead><tbody>';
+    h += '<div class="xo-wrap"><table class="xo"><thead><tr><th>날짜</th><th>지필평가</th><th>날짜별 일정 (직전보강·보강·휴강·설명회) → 강의실</th></tr></thead><tbody>';
     ds.forEach(d => {
       const dow = dowOf(d), hn = holidayOf(d), ex = examsOf(d), es = entriesOn(d);
       const cls = [dow === "일" || dow === "토" ? "wk" : "", hn ? "holi" : "", d === t ? "today" : ""].filter(Boolean).join(" ");
@@ -395,7 +425,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     });
     h += '</tbody></table></div>';
     h += '<div class="xo-legend"><span><i class="xo-ex start" style="padding:0 5px">시작</i>시험 시작일</span><span><i class="xo-ex mid" style="padding:0 5px">시험중</i>시험 중(일찍 하교)</span><span><i class="xo-ex end" style="padding:0 5px">종료</i>시험 종료일</span>' +
-      '<span><i class="xo-t" style="padding:0 5px">직보</i>직전보강 — 시간·강의실 필요</span><span><i class="xo-t t휴강" style="padding:0 5px">휴강</i>그 날 그 반 수업 없음</span><span><i class="xo-t t정규" style="padding:0 5px">정규</i>연휴여도 평소대로</span>' +
+      '<span><i class="xo-t" style="padding:0 5px">직전보강</i>시험 전날 보강</span><span><i class="xo-t t보강" style="padding:0 5px">보강</i>쉰 수업을 대신하는 수업</span><span><i class="xo-t t행사" style="padding:0 5px">설명회·행사</i>수업일지에 안 잡힘</span><span><i class="xo-t t휴강" style="padding:0 5px">휴강</i>그 날 그 반 수업 없음</span><span><i class="xo-t t정규" style="padding:0 5px">정규</i>연휴여도 평소대로</span>' +
       '<span>강의실이 <b style="color:#92400e">자동 제안</b>이면 아직 저장 안 된 것 — [확정]을 눌러야 요일 강의실표에 고정됩니다.</span></div>';
     host.innerHTML = h;
   }
@@ -408,14 +438,14 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     const ds = datesOfDow(day);
     if (!ds.length) { bannerHost.innerHTML = ""; return; }
     if (overlayDate && dowOf(overlayDate) !== day) overlayDate = null;
-    let h = '<div class="xo-ban"><b>시험기간 ' + mdOf(P.start) + ' ~ ' + mdOf(P.end) + ' 강의실 배정</b> — ' + day + '요일에 해당하는 날짜를 누르면 그 날 임시 일정(직보·휴강)을 아래 표에 덧입혀 보여줍니다. ' +
-      '<span style="color:#92400e">빗금 블록 = 임시 수업, 흐린 블록 = 그 날 휴강</span>' +
+    let h = '<div class="xo-ban"><b>월간 시간표</b> ' + monthNavHTML() + ' — 이 표는 기본 시간표입니다. ' + day + '요일 날짜를 누르면 그 날 일정(직전보강·보강·휴강)을 아래 표에 덧입혀 보여줍니다. ' +
+      '<span style="color:#92400e">빗금 블록 = 추가 수업, 흐린 블록 = 그 날 휴강</span>' +
       '<div class="dates"><span class="dch' + (!overlayDate ? ' on' : '') + '" data-ov="">평소 시간표</span>' +
-      ds.map(d => { const n = entriesOn(d).length, hn = holidayOf(d); return '<span class="dch' + (overlayDate === d ? ' on' : '') + '" data-ov="' + d + '">' + mdOf(d) + (hn ? ' <small>' + esc(hn) + '</small>' : '') + (n ? ' <small>임시 ' + n + '</small>' : '') + '</span>'; }).join("") + '</div>';
+      ds.map(d => { const n = entriesOn(d).length, hn = holidayOf(d); return '<span class="dch' + (overlayDate === d ? ' on' : '') + '" data-ov="' + d + '">' + mdOf(d) + (hn ? ' <small>' + esc(hn) + '</small>' : '') + (n ? ' <small>일정 ' + n + '</small>' : '') + '</span>'; }).join("") + '</div>';
     if (overlayDate) {
       const es = entriesOn(overlayDate), hn = holidayOf(overlayDate);
       h += '<ul>' + (hn ? '<li class="c">' + esc(hn) + ' — 공휴일. 정규 수업은 원장 지시가 있을 때만(“정규” 항목) 진행합니다.</li>' : '') +
-        (es.length ? es.map(r => '<li>' + entryHTML(r, { noAct: true }).replace(/^<div class="xo-e[^>]*>/, '<div class="xo-e" style="border:0;background:none;padding:0;margin:0">') + '</li>').join("") : '<li>이 날 임시 일정 없음 — 평소 시간표대로.</li>') + '</ul>';
+        (es.length ? es.map(r => '<li>' + entryHTML(r, { noAct: true }).replace(/^<div class="xo-e[^>]*>/, '<div class="xo-e" style="border:0;background:none;padding:0;margin:0">') + '</li>').join("") : '<li>이 날 추가 일정 없음 — 평소 시간표대로.</li>') + '</ul>';
     }
     h += '</div>';
     bannerHost.innerHTML = h;
@@ -430,12 +460,12 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     const teachers = (dep.teachers || []).map(t => t.name);
     const roomsOpt = (dep.rooms || []).map(x => '<option value="' + esc(x.key) + '"' + (r && r.room === x.key ? ' selected' : '') + '>' + esc(x.label) + '</option>').join("");
     const back = document.createElement("div"); back.className = "xo-back";
-    back.innerHTML = '<div class="xo-modal"><div class="hd"><span>' + (r ? '임시 일정 수정' : '임시 일정 추가') + '</span><button data-x>✕</button></div>' +
+    back.innerHTML = '<div class="xo-modal"><div class="hd"><span>' + (r ? '일정 수정' : '일정 추가') + '</span><button data-x>✕</button></div>' +
       '<div class="bd">' +
       '<label>날짜<input type="date" name="d" value="' + esc(r ? r.d : d) + '"></label>' +
-      '<label>유형<select name="t">' + TYPES.map(x => '<option' + ((r ? typeOf(r) : (p.t || "직보")) === x ? ' selected' : '') + '>' + x + '</option>').join("") + '</select></label>' +
+      '<label>종류<select name="t">' + TYPES.map(x => '<option value="' + x + '"' + ((r ? typeOf(r) : (p.t || "직보")) === x ? ' selected' : '') + '>' + typeLabel(x) + '</option>').join("") + '</select></label>' +
       '<label>강사<select name="who"><option value="">(전체/없음)</option>' + teachers.map(n => '<option' + (who0 === n ? ' selected' : '') + '>' + esc(n) + '</option>').join("") + '</select></label>' +
-      '<label>반 (학교+학년)<input name="school" placeholder="예: 윤슬중3 · 미강고1" value="' + esc(school0 || "") + '"></label>' +
+      '<label>수업명 (자유 입력)<input name="school" placeholder="예: 미강중3 영어 보강 · 윤슬중3 · 설명회 1부" value="' + esc(school0 || "") + '"></label>' +
       '<label>과목<input name="subjects" placeholder="예: 국어" value="' + esc(subj0 || "") + '"></label>' +
       '<label>강의실<select name="room"><option value="">자동 제안</option>' + roomsOpt + '</select></label>' +
       '<label>시작<input type="time" name="s" step="600" value="' + (tm.start != null ? fmt(tm.start) : "") + '"></label>' +
@@ -460,7 +490,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
       let msg = mdOf(o.d) + "(" + dowOf(o.d) + ")" + (hn ? " · 🔴 " + hn : "") + (ex.length ? " · 시험: " + ex.map(e => shortSchool(e.school) + " " + KIND[e.kind]).join(", ") : "");
       msg += " · " + TYPE_HELP[o.t];
       const P = period();
-      if (o.d < P.start || o.d > P.end) msg += "\n⚠ 이 표의 기간(" + mdOf(P.start) + "~" + mdOf(P.end) + ") 밖 날짜 — 저장은 되지만 이 표·강의실 겹침 검사에는 안 잡히고 월간 일정표에서만 보입니다.";
+      if (o.d < P.start || o.d > P.end) msg += "\n다른 달 날짜입니다 — 저장한 뒤 그 달로 넘어가면 보입니다.";
       const s0 = q("s").value, e0 = q("e").value;
       if (s0 && e0 && toMin(e0) <= toMin(s0)) { hint.className = "hint bad"; hint.textContent = msg + "\n⚠ 종료 시각이 시작보다 빠르거나 같습니다."; return; }
       const fake = { id: o.id, d: o.d, who: o.who, school: o.school, subjects: o.subjects, slots: o.slots, room: o.room, body: JSON.stringify({ t: o.t }) };
@@ -470,12 +500,12 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
              : (hits.weak.length ? "\n→ 학교 혼합반 " + hits.weak.length + "개: " + hits.weak.map(c => c.course_name).join(" / ") + " (다른 학교 학생은 수업하므로 강의실은 그대로 잡아 둡니다)"
              : "\n⚠ 일치하는 강좌 없음 — 반 표기를 확인하세요 (예: 윤슬중3 · 미강고1 · 중3). 이대로 저장하면 휴강이 강의실 계산에 반영되지 않습니다.");
       }
-      if (["직보", "정규", "보류", "행사"].indexOf(o.t) >= 0 && timeOf(fake).start != null) {
+      if (TEMP_TYPES.indexOf(o.t) >= 0 && timeOf(fake).start != null) {
         const rm = o.room || suggestRoom(fake, true);
         const cf = rm ? conflictsOf(fake, rm) : [];
         msg += "\n강의실: " + (rm ? roomLabel(rm) + (o.room ? "" : " (자동 제안)") : "빈 방 없음");
         if (cf.length) { hint.className = "hint bad"; hint.textContent = msg + "\n⚠ 겹침: " + cf.map(c => c.name + " [" + c.teacher + "] " + fmt(c.start) + "~" + fmt(c.end)).join(" / "); return; }
-      } else if (o.t === "직보" && timeOf(fake).start == null) msg += "\n직보는 시작 시각을 넣어야 강의실 겹침을 확인할 수 있습니다.";
+      } else if (["직보", "보강", "행사"].indexOf(o.t) >= 0 && timeOf(fake).start == null) msg += "\n시작 시각을 넣어야 강의실 겹침을 확인할 수 있습니다.";
       hint.className = "hint"; hint.textContent = msg;
     }
     hint.style.whiteSpace = "pre-line";
@@ -490,13 +520,11 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
       if (e.target.closest("[data-save]")) {
         const o = draft();
         if (!o.d) return alert("날짜를 고르세요.");
-        if (o.t !== "메모" && !o.who) return alert("강사를 고르세요.");
-        if (["직보", "휴강", "정규", "보류"].indexOf(o.t) >= 0 && !o.school) return alert("반(학교+학년)을 적어주세요. 예: 윤슬중3");
-        if (o.t === "직보" && !o.slots) return alert("직보는 시작 시각이 필요합니다.");
+        if (["메모", "행사"].indexOf(o.t) < 0 && !o.who) return alert("강사를 고르세요.");
+        if (["직보", "보강", "휴강", "정규", "보류", "행사"].indexOf(o.t) >= 0 && !o.school) return alert("수업명을 적어주세요. 예: 윤슬중3 · 설명회 1부");
+        if (["직보", "보강", "행사"].indexOf(o.t) >= 0 && !o.slots) return alert(typeLabel(o.t) + "은 시작 시각이 필요합니다.");
         const s1 = q("s").value, e1 = q("e").value;
         if (s1 && e1 && toMin(e1) <= toMin(s1)) return alert("종료 시각이 시작보다 빠르거나 같습니다. 종료 시각을 고쳐주세요.");
-        const P = period();
-        if ((o.d < P.start || o.d > P.end) && !confirm("이 표의 기간(" + mdOf(P.start) + "~" + mdOf(P.end) + ") 밖 날짜입니다.\n저장은 되지만 이 표와 강의실 겹침 검사에는 잡히지 않습니다(월간 일정표에는 보임). 그래도 저장할까요?")) return;
         if (o.t === "휴강" && o.who && !matchedCourses({ d: o.d, who: o.who, school: o.school }).any.length &&
             !confirm("'" + o.school + "' 과 일치하는 " + o.who + " 선생님 강좌가 없습니다.\n이대로 저장하면 휴강이 강의실 계산에 반영되지 않습니다. 그래도 저장할까요?")) return;
         try { await save(o); back.remove(); } catch (err) { alert("저장 실패: " + err.message); }
@@ -507,6 +535,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
   /* ---------- 이벤트 ---------- */
   function wire(el) {
     el.addEventListener("click", async e => {
+      const mn = e.target.closest("[data-month]"); if (mn) { const k = +mn.dataset.month; try { await setMonth(k ? shiftYM(period().ym, k) : null); } catch (err) { alert("달을 옮기지 못했습니다: " + err.message); } return; }
       const n = e.target.closest("[data-new]"); if (n) { openForm(null, n.dataset.new); return; }
       const ed = e.target.closest("[data-edit]"); if (ed) { const r = rows.find(x => x.id === ed.dataset.edit); if (r) openForm(r); return; }
       const fx = e.target.closest("[data-fix]"); if (fx) { const r = rows.find(x => x.id === fx.dataset.fix); if (!r) return; try { await save({ id: r.id, d: r.d, t: typeOf(r), who: r.who, school: r.school, subjects: r.subjects, slots: r.slots, room: fx.dataset.room, memo: body(r).memo, course_id: body(r).course_id, course_ids: body(r).course_ids }); } catch (err) { alert("저장 실패: " + err.message); } return; }
@@ -519,7 +548,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
   function init(o) { dep = o; css(); }
   async function mountTable(el) {
     if (!el) return; host = el; css();
-    if (!booted) { booted = true; host.innerHTML = '<div style="padding:18px;color:#5F6B80;font-size:13px">시험기간 임시 일정표 불러오는 중…</div>'; await load(); wire(host); }
+    if (!booted) { booted = true; host.innerHTML = '<div style="padding:18px;color:#5F6B80;font-size:13px">월간 시간표 불러오는 중…</div>'; await load(); wire(host); }
     renderTable();
   }
   async function mountDayBanner(el, day) {
@@ -528,7 +557,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     if (!bannerHost._wired) { wire(bannerHost); bannerHost._wired = true; }
     renderBanner();
   }
-  return { init, mountTable, mountDayBanner, load, render, period, clusters, datesIn, entriesOn, blocksFor, offCourseIds, allOffThatDay, keepCourseIds,
+  return { init, mountTable, mountDayBanner, load, render, period, setView, setMonth, shiftYM, monthNavHTML, typeLabel, clusters, datesIn, entriesOn, blocksFor, offCourseIds, allOffThatDay, keepCourseIds,
            entriesHTML, entryOneHTML, examsOf, holidayOf, conflictsOf, suggestRoom, assignForDate, setRoomOverride, setOff, setTempRoom, typeOf, body, openForm, remove, wire,
            get overlayDate() { return overlayDate; }, get rows() { return rows; } };
 })();

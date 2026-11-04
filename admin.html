@@ -794,7 +794,7 @@ table.dash td b{color:var(--navy)}
     </div>
 
     <div class="panel" style="padding:0;overflow:hidden;margin-top:16px" id="examOpsPanel">
-      <div class="ph"><h2>시험기간 임시 일정표</h2>
+      <div class="ph"><h2>월간 시간표</h2>
         <span class="rtx">직보·휴강·정규유지를 <b>날짜별</b>로 잡고, 그 요일 정규 시간표와 <b>강의실이 겹치는지</b> 바로 확인 · 요일별·강의실 탭에서 날짜를 누르면 덧입혀 보임</span></div>
       <div id="examOps"></div>
     </div>
@@ -1184,9 +1184,9 @@ table.dash td b{color:var(--navy)}
 <script src="consult-slots.js?v=309f1c68"></script>
 <script src="academic.js?v=c0032fba"></script>
 <script src="schedule-cal.js?v=b0250ad9"></script>
-<script src="ops-cal.js?v=9c323e07"></script>
-<script src="exam-ops.js?v=bd98cc6e"></script>
-<script src="rooms.js?v=ae055b28"></script>
+<script src="ops-cal.js?v=4eb7cf6e"></script>
+<script src="exam-ops.js?v=3a00773f"></script>
+<script src="rooms.js?v=67fe65d9"></script>
 <script>
 /* 수행도 체크표 화면 — 선생님 서버에서 불러온다(사본을 이 공개 저장소에 두지 않음). 로컬 검증 때만 ?chkapi=로컬 서버 */
 (function(){
@@ -1279,7 +1279,7 @@ async function loadData(){
   }
   renderDash();
   buildTeacherChips();
-  /* 시험기간 임시 일정표 — 정규 시간표(assignDay)와 강의실 겹침을 대조한다 */
+  /* 월간 시간표 — 정규 시간표(assignDay)와 강의실 겹침을 대조한다 */
   if(window.DaolExamOps){
     DaolExamOps.init({ sb: useSupa ? sb : null, teachers: ROSTER, rooms: CLASS_ROOMS, assignDay, orderByPref, getCourses: ()=>DATA,
       onChange: ()=>{ if(window.DaolOpsCal) DaolOpsCal.reload(); if(document.getElementById("daySheet").innerHTML.includes("rgrid")) renderDay(); },
@@ -2404,10 +2404,9 @@ document.getElementById("autoFeeBtn").addEventListener("click",async()=>{
 const DAY_LIST=["월","화","수","목","금","토","일"];
 let selDay="월";
 /* 강의실 자동배정 규칙·그리드는 rooms.js 로 옮겼다 (2026-09-20) — exam-period.html 과 공유 */
-function examTermLabel(){ const P=window.DaolExamOps?DaolExamOps.period():null; if(!P) return "시험기간"; return (P.term==="1차지필"?"2-1 중간":(P.term==="2차지필"?"2-2 기말":P.term))+"(임시)"; }
 function buildDayChips(){
   document.getElementById("dayChips").innerHTML=DAY_LIST.map(d=>`<span class="chip ${d===selDay?"on":""}" data-d="${d}">${d}</span>`).join("")
-    + `<a class="chip xchip" href="exam-period.html" target="_blank" title="시험기간 날짜별 강의실표 — 9/20~시험 끝까지 하루씩, 강의실·휴강을 날짜별로 조정">📝 ${examTermLabel()} ↗</a>`;
+    + `<a class="chip xchip" href="exam-period.html" target="_blank" title="달력처럼 날짜별 강의실표 — 요일별 시간표 위에 직전보강·보강·휴강·설명회를 더합니다">📅 월간 시간표 ↗</a>`;
 }
 document.getElementById("dayChips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(!c) return; selDay=c.dataset.d; buildDayChips(); renderDay(); });
 function loadH2C(){ return new Promise((res,rej)=>{ if(window.html2canvas) return res(); const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"; s.onload=res; s.onerror=rej; document.body.appendChild(s); }); }
@@ -2438,11 +2437,11 @@ document.getElementById("dayList").addEventListener("change", async e=>{
 });
 function renderDay(){
   const {items,unparsed}=assignDay(selDay);
-  /* 시험기간 덧입히기 — 배너에서 날짜를 고르면 그 날 실제 배정(임시 빗금·휴강 흐림·이날만 지정)을 그린다 */
+  /* 날짜 덧입히기 — 배너에서 날짜를 고르면 그 날 실제 배정(임시 빗금·휴강 흐림·이날만 지정)을 그린다 */
   const XO = window.DaolExamOps || null;
   if(XO) XO.mountDayBanner(document.getElementById("examOpsBanner"), selDay);
   const ovDate = XO ? XO.overlayDate : null;
-  const ovLabel = ovDate ? ` · ${+ovDate.slice(5,7)}/${+ovDate.slice(8,10)} 시험기간 임시 배정` : "";
+  const ovLabel = ovDate ? ` · ${+ovDate.slice(5,7)}/${+ovDate.slice(8,10)} 날짜별 배정` : "";
   const A = (XO && ovDate) ? XO.assignForDate(ovDate) : null;
   const tempAll = A ? A.temps : [];
   let html=dayGridHTML({day:selDay, title:`2026 다올105 · ${selDay}요일 시간표 (강의실 배정)${ovLabel}`, items: A ? A.items : items, temps: tempAll});

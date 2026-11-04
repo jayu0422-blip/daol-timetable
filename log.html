@@ -41,6 +41,7 @@ body{margin:0;font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;back
 .t-클{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
 .t-정클{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
 .t-보{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.t-보강{background:#ffedd5;color:#9a3412;border-color:#fdba74}
 .t-휴{background:#fee2e2;color:#991b1b;border-color:#fecaca}
 .cb{padding:11px 13px;display:grid;gap:8px}
 .f{display:grid;gap:3px}
@@ -179,7 +180,7 @@ function buildList(){
     if(TEACHER && c.teacher!==TEACHER) return;
     const kind = marksOf(c,ym)[DAY];
     const offRow = ops.find(o=>o.t==="휴강" && o.course_id===c.id);
-    const memoRow = ops.find(o=>(o.t==="직보"||o.t==="정규"||o.t==="보류") && o.course_id===c.id);
+    const memoRow = ops.find(o=>(o.t==="직보"||o.t==="보강"||o.t==="정규"||o.t==="보류") && o.course_id===c.id);
     if(!kind && !offRow && !memoRow) return;
     out.push({ id:"c:"+c.id, course_id:c.id, teacher:c.teacher, name:c.course_name, grade:c.grade,
       kind: offRow ? "휴" : (kind||"정"), slot: slotText(c,dow),
@@ -187,12 +188,12 @@ function buildList(){
       extra: (offRow?("원장 휴강 "+(offRow.memo||"")):"") || (memoRow?(memoRow.t+" "+(memoRow.memo||"")):"") });
   });
   /* 강좌에 못 붙는 임시 수업(직보 등)도 카드로 */
-  ops.filter(o=>!o.course_id && (o.t==="직보"||o.t==="정규"||o.t==="보류")).forEach((o,i)=>{
+  ops.filter(o=>!o.course_id && (o.t==="직보"||o.t==="보강"||o.t==="정규"||o.t==="보류")).forEach((o,i)=>{
     if(TEACHER && o.who!==TEACHER) return;
-    out.push({ id:"o:"+DAY+":"+i, course_id:null, teacher:o.who, name:[o.school,o.subjects].filter(Boolean).join(" ")||"임시 수업",
-      grade:"", kind: o.t==="직보"?"보":"정", slot:(o.slots||"").replace("-","~"), plan:"", extra:o.t+" "+(o.memo||"") });
+    out.push({ id:"o:"+DAY+":"+i, course_id:null, teacher:o.who, name:(o.t==="보강"?o.school:[o.school,o.subjects].filter(Boolean).join(" "))||"임시 수업",
+      grade:"", kind: o.t==="직보"?"보":(o.t==="보강"?"보강":"정"), slot:(o.slots||"").replace("-","~"), plan:"", extra:o.t+" "+(o.memo||"") });
   });
-  const ord = {"보":0,"정":1,"정클":2,"클":3,"휴":4};
+  const ord = {"보":0,"보강":0,"정":1,"정클":2,"클":3,"휴":4};
   out.sort((a,b)=> (ord[a.kind]-ord[b.kind]) || String(a.slot).localeCompare(String(b.slot)) || String(a.name).localeCompare(String(b.name),"ko"));
   return out;
 }
@@ -238,7 +239,7 @@ function render(){
     return `<div class="card ${L.done?"done":""} ${it.kind==="휴"?"off":""}" data-id="${esc(it.id)}">
       <div class="ch">
         <span class="nm">${esc(it.name)}</span>
-        <span class="tag t-${esc(it.kind)}">${it.kind==="보"?"직전보강":it.kind==="휴"?"휴강":it.kind==="클"?"클리닉":it.kind==="정클"?"수업+클리닉":"수업"}</span>
+        <span class="tag t-${esc(it.kind)}">${it.kind==="보"?"직전보강":it.kind==="보강"?"보강":it.kind==="휴"?"휴강":it.kind==="클"?"클리닉":it.kind==="정클"?"수업+클리닉":"수업"}</span>
         ${it.slot?`<span class="tm">${esc(it.slot)}</span>`:""}
         <span class="who">${esc(it.teacher||"")}${it.grade?" · "+esc(it.grade):""}</span>
         ${it.extra?`<span class="who" style="color:#b45309">· ${esc(it.extra)}</span>`:""}

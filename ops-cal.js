@@ -596,7 +596,7 @@ textarea.oc-in{min-height:62px;resize:vertical;line-height:1.5}
         (e.note ? '<div class="oc-xnote">⚠ ' + esc(e.note) + '</div>' : '');
     }).join("") + '</div>';
     const tmp = byDay(d, "memo");
-    if (tmp.length) sch += '<div class="oc-note"><b>임시 일정</b> <span style="font-weight:400;color:#64748b">(시험기간 직보·휴강 — 대시보드 「시험기간 임시 일정표」에서 편집)</span><br>' +
+    if (tmp.length) sch += '<div class="oc-note"><b>임시 일정</b> <span style="font-weight:400;color:#64748b">(직전보강·보강·휴강 — 대시보드 「월간 시간표」에서 편집)</span><br>' +
       tmp.map(r => '<span class="oc-tm t-' + esc(memoType(r)) + '">' + esc(memoType(r)) + '</span> ' + esc(memoLine(r))).join("<br>") + '</div>';
     if (ac.length) sch += '<div class="oc-note"><b>학사일정</b> · ' +
       ac.map(e => esc(e.school + " " + e.title)).join(" / ") + '</div>';
