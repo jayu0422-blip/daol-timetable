@@ -56,6 +56,8 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 .btn-print{margin-left:auto;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:9px;
   font:inherit;font-size:13px;font-weight:800;padding:7px 14px;cursor:pointer}
 .btn-print:hover{filter:brightness(1.12)}
+.btn-add{border:1px solid #b8901d;background:var(--brand);color:#1f2430;border-radius:9px;font:inherit;font-size:13px;font-weight:800;padding:7px 14px;cursor:pointer}
+.btn-add:hover{filter:brightness(1.08)}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;align-items:start}
 .side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
 .dch em{font-style:normal;color:#b91c1c;font-weight:900}
@@ -105,9 +107,9 @@ table.ed .cf{color:#b91c1c;font-weight:700;font-size:11.5px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=72ddcbd2"></script>
 <script src="schedule-cal.js?v=b0250ad9"></script>
-<script src="exam-ops.js?v=db6b9148"></script>
+<script src="exam-ops.js?v=bd98cc6e"></script>
 <script src="rooms.js?v=ae055b28"></script>
-<script src="exam-prep.js?v=cfb2f69e"></script>
+<script src="exam-prep.js?v=8c2fbd90"></script>
 <script>
 /* rooms.js 가 기대하는 전역 */
 const GRADE_ORDER = ["중1","중2","중3","중등공통","고1","고2","고3/수능"];
@@ -162,6 +164,7 @@ function dayHeaderHTML(d, A){
     ${A.allOff?`<span class="alloff">전체 휴강일 — '정규'로 살린 반만 수업</span>`:""}
     ${ex.map(e=>`<span class="ex ${e.kind}" title="${esc(e.subj||"")}">${esc(shortSchool(e.school))}${e.grade&&e.grade!=="전체"?" "+esc(e.grade.replace("학년","")):""} <i>${KIND[e.kind]}${e.total>1?` ${e.nth}/${e.total}`:""}</i></span>`).join("")}
     <span class="stat">정규 ${A.items.length}개 · 휴강 ${A.items.filter(i=>i.off).length} · 임시 ${A.temps.length}건 · <b class="${(A.items.some(i=>i.conflict)||A.temps.some(b=>b.conflict))?"bad":""}">겹침 ${A.items.filter(i=>i.conflict).length+A.temps.filter(b=>b.conflict).length}건</b></span>
+    <button class="btn-add noprint" data-new="${d}" title="이 날짜에 직전보강·휴강·행사 등을 새로 넣습니다">＋ 이 날 직보·일정 추가</button>
     <button class="btn-print noprint" data-printday="${d}" title="이 날짜만 가로 A4 한 장으로 인쇄합니다">🖨️ 이 날짜만 인쇄</button>
   </div>`;
 }
@@ -242,6 +245,7 @@ document.getElementById("dayPanel").addEventListener("change", async e=>{
 });
 document.getElementById("dayPanel").addEventListener("click", e=>{
   const pd=e.target.closest("[data-printday]"); if(pd){ printDays([pd.dataset.printday]); return; }
+  const qk=e.target.closest("[data-xpquick]"); if(qk){ XP.openAdd(qk.dataset.xpquick, qk.dataset.xpkey); return; }
   const sk=e.target.closest("[data-xpskip]"); if(sk){ sk.disabled=true; XP.toggleSkip(sk.dataset.xpskip, sk.dataset.xpkey).then(renderAll).catch(err=>{ alert(err.message); renderAll(); }); return; }
   const pr=e.target.closest("[data-xppred]"); if(pr){ predOn = predOn===pr.dataset.xppred ? null : pr.dataset.xppred; renderDay(); return; }
   const ap=e.target.closest("[data-xpapply]"); if(ap){

@@ -33,13 +33,13 @@ window.DaolExamOps = (function () {
   const todayISO = () => { const n = new Date(); return iso(n.getFullYear(), n.getMonth() + 1, n.getDate()); };
 
   /* ---------- 기간: 시험 묶음(1차지필 9·10월 / 2차지필 11·12월) 중 오늘이 속하거나 다음에 오는 것.
-     첫 시험 하루 전 ~ 마지막 시험일. 묶음이 끝나면 자동으로 다음 묶음으로 넘어간다. ---------- */
+     첫 시험 일주일 전(직전 주말 보강까지 넣을 수 있게) ~ 마지막 시험일. 묶음이 끝나면 자동으로 다음 묶음으로 넘어간다. ---------- */
   function clusters() {
     const S = window.DaolScheduleCal, ex = (S && S.EXAMS) || [], Y = (S && S.YEAR) || 2026;
     const by = {};
     ex.forEach(e => { const k = e.term; (by[k] = by[k] || { term: k, days: [] }).days.push(...e.days.map(d => iso(Y, e.month, d))); });
     return Object.values(by).map(c => {
-      c.days.sort(); const s = new Date(c.days[0]); s.setDate(s.getDate() - 1);
+      c.days.sort(); const s = new Date(c.days[0]); s.setDate(s.getDate() - 7);
       return { term: c.term, start: iso(s.getFullYear(), s.getMonth() + 1, s.getDate()), end: c.days[c.days.length - 1] };
     }).sort((a, b) => a.start < b.start ? -1 : 1);
   }
@@ -251,7 +251,7 @@ window.DaolExamOps = (function () {
   /* 임시 수업(직보 등)의 강의실 지정 */
   async function setTempRoom(id, roomKey) {
     const r = rows.find(x => x.id === id); if (!r) return;
-    await save({ id: r.id, d: r.d, t: typeOf(r), who: r.who, school: r.school, subjects: r.subjects, slots: r.slots, room: roomKey || "", memo: body(r).memo, course_id: body(r).course_id });
+    await save({ id: r.id, d: r.d, t: typeOf(r), who: r.who, school: r.school, subjects: r.subjects, slots: r.slots, room: roomKey || "", memo: body(r).memo, course_id: body(r).course_id, course_ids: body(r).course_ids });
   }
 
   /* ---------- 저장 ---------- */
@@ -263,6 +263,7 @@ window.DaolExamOps = (function () {
   }
   async function save(o) {
     const bodyObj = { t: o.t, memo: o.memo || "" }; if (o.course_id) bodyObj.course_id = o.course_id;
+    if (o.course_ids && o.course_ids.length) bodyObj.course_ids = o.course_ids;
     const row = { d: o.d, kind: "memo", who: o.who || null, school: o.school || null, subjects: o.subjects || null,
                   slots: o.slots || null, room: o.room || null, body: JSON.stringify(bodyObj) };
     if (o.id) { const { error } = await dep.sb.from("ops_calendar").update(row).eq("id", o.id); if (error) throw error; }
@@ -421,22 +422,25 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
   }
 
   /* ---------- 입력 폼 ---------- */
-  function openForm(r, d) {
-    const b = r ? body(r) : {}; const tm = r ? timeOf(r) : { start: null, end: null };
+  /* p(선택) = 새 항목 미리 채우기 {t, who, school, subjects, slots, memo, course_id, course_ids} — 🔔 목록의 「직보 넣기」가 쓴다 */
+  function openForm(r, d, p) {
+    p = p || {};
+    const b = r ? body(r) : {}; const tm = r ? timeOf(r) : (p.slots ? timeOf(p) : { start: null, end: null });
+    const who0 = r ? r.who : p.who, school0 = r ? r.school : p.school, subj0 = r ? r.subjects : p.subjects, memo0 = r ? b.memo : p.memo;
     const teachers = (dep.teachers || []).map(t => t.name);
     const roomsOpt = (dep.rooms || []).map(x => '<option value="' + esc(x.key) + '"' + (r && r.room === x.key ? ' selected' : '') + '>' + esc(x.label) + '</option>').join("");
     const back = document.createElement("div"); back.className = "xo-back";
     back.innerHTML = '<div class="xo-modal"><div class="hd"><span>' + (r ? '임시 일정 수정' : '임시 일정 추가') + '</span><button data-x>✕</button></div>' +
       '<div class="bd">' +
       '<label>날짜<input type="date" name="d" value="' + esc(r ? r.d : d) + '"></label>' +
-      '<label>유형<select name="t">' + TYPES.map(x => '<option' + ((r ? typeOf(r) : "직보") === x ? ' selected' : '') + '>' + x + '</option>').join("") + '</select></label>' +
-      '<label>강사<select name="who"><option value="">(전체/없음)</option>' + teachers.map(n => '<option' + (r && r.who === n ? ' selected' : '') + '>' + esc(n) + '</option>').join("") + '</select></label>' +
-      '<label>반 (학교+학년)<input name="school" placeholder="예: 윤슬중3 · 미강고1" value="' + esc(r ? r.school : "") + '"></label>' +
-      '<label>과목<input name="subjects" placeholder="예: 국어" value="' + esc(r ? r.subjects : "") + '"></label>' +
+      '<label>유형<select name="t">' + TYPES.map(x => '<option' + ((r ? typeOf(r) : (p.t || "직보")) === x ? ' selected' : '') + '>' + x + '</option>').join("") + '</select></label>' +
+      '<label>강사<select name="who"><option value="">(전체/없음)</option>' + teachers.map(n => '<option' + (who0 === n ? ' selected' : '') + '>' + esc(n) + '</option>').join("") + '</select></label>' +
+      '<label>반 (학교+학년)<input name="school" placeholder="예: 윤슬중3 · 미강고1" value="' + esc(school0 || "") + '"></label>' +
+      '<label>과목<input name="subjects" placeholder="예: 국어" value="' + esc(subj0 || "") + '"></label>' +
       '<label>강의실<select name="room"><option value="">자동 제안</option>' + roomsOpt + '</select></label>' +
       '<label>시작<input type="time" name="s" step="600" value="' + (tm.start != null ? fmt(tm.start) : "") + '"></label>' +
       '<label>종료<input type="time" name="e" step="600" value="' + (tm.end != null && !tm.endGuessed ? fmt(tm.end) : "") + '"></label>' +
-      '<label class="w">메모<textarea name="memo" placeholder="예: 원장 전달 — 26(토) 정규수업 유지">' + esc(b.memo || "") + '</textarea></label>' +
+      '<label class="w">메모<textarea name="memo" placeholder="예: 원장 전달 — 26(토) 정규수업 유지">' + esc(memo0 || "") + '</textarea></label>' +
       '<div class="hint" id="xoHint"></div>' +
       '</div><div class="ft">' + (r ? '<button class="d" data-del>삭제</button>' : '') + '<button data-x>취소</button><button class="p" data-save>저장</button></div></div>';
     document.body.appendChild(back);
@@ -445,8 +449,10 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     function draft() {
       const s = q("s").value, e = q("e").value;
       return { id: r ? r.id : null, d: q("d").value, t: q("t").value, who: q("who").value, school: q("school").value.trim(), subjects: q("subjects").value.trim(),
-               slots: s ? (s + (e ? "-" + e : "")) : "", room: q("room").value, memo: q("memo").value.trim(), course_id: r ? body(r).course_id : undefined };
+               slots: s ? (s + (e ? "-" + e : "")) : "", room: q("room").value, memo: q("memo").value.trim(),
+               course_id: r ? body(r).course_id : p.course_id, course_ids: r ? body(r).course_ids : p.course_ids };
     }
+    if (!r && p.who && p.slots) q("room").value = suggestRoom({ d, who: p.who, slots: p.slots }, true);   // 미리 채운 직보는 빈 방까지 골라 둔다(원장이 바꿀 수 있음)
     function refresh() {
       const o = draft();
       if (!o.d) { hint.className = "hint bad"; hint.textContent = "날짜를 고르세요."; return; }
@@ -503,7 +509,7 @@ table.xo td.dt.sun b{color:#b91c1c}table.xo td.dt.sat b{color:#1d4ed8}
     el.addEventListener("click", async e => {
       const n = e.target.closest("[data-new]"); if (n) { openForm(null, n.dataset.new); return; }
       const ed = e.target.closest("[data-edit]"); if (ed) { const r = rows.find(x => x.id === ed.dataset.edit); if (r) openForm(r); return; }
-      const fx = e.target.closest("[data-fix]"); if (fx) { const r = rows.find(x => x.id === fx.dataset.fix); if (!r) return; try { await save({ id: r.id, d: r.d, t: typeOf(r), who: r.who, school: r.school, subjects: r.subjects, slots: r.slots, room: fx.dataset.room, memo: body(r).memo }); } catch (err) { alert("저장 실패: " + err.message); } return; }
+      const fx = e.target.closest("[data-fix]"); if (fx) { const r = rows.find(x => x.id === fx.dataset.fix); if (!r) return; try { await save({ id: r.id, d: r.d, t: typeOf(r), who: r.who, school: r.school, subjects: r.subjects, slots: r.slots, room: fx.dataset.room, memo: body(r).memo, course_id: body(r).course_id, course_ids: body(r).course_ids }); } catch (err) { alert("저장 실패: " + err.message); } return; }
       const dl = e.target.closest("[data-del]"); if (dl) { if (!confirm("이 임시 일정을 지울까요?")) return; try { await remove(dl.dataset.del); } catch (err) { alert("삭제 실패: " + err.message); } return; }
       const ov = e.target.closest("[data-ov]"); if (ov) { overlayDate = ov.dataset.ov || null; renderBanner(); if (dep.onOverlay) dep.onOverlay(overlayDate); return; }
     });

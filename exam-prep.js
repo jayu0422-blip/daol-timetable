@@ -141,6 +141,20 @@ window.DaolExamPrep = (function () {
   }
   const isPending = x => !x.done && !x.skip;
   const pendingCount = D => needsOn(D).list.filter(isPending).length;
+  /* 손으로 넣는 직보의 기본 시간. 영어(원장 지시 2026-11-04): 시험 첫날이면 전날 17시, 시험 도중이면 전날 13시. 그 외 과목은 기본틀 첫 칸. */
+  function prepSlot(D, units, subj) {
+    const first = u => !examUnits().some(x => x.school === u.school && x.grade === u.grade && x.d < u.d && x.d >= addDays(u.d, -14));
+    if (subj === "영어") return units.some(first) ? [1020, 1260] : [780, 1020];
+    return (["토", "일"].indexOf(dowOf(D)) >= 0 ? WINDOWS.we : WINDOWS.wk)[0];
+  }
+  /* 🔔 목록의 「직보 넣기」 — 반·강사·과목·시간·빈 방을 채운 입력창을 연다. 저장은 원장이 확인하고 누른다 */
+  function openAdd(D, key) {
+    const x = needsOn(D).list.find(n => n.key === key); if (!x) return;
+    const subj = courseSubj(x.c), s = prepSlot(D, x.units, subj);
+    dep.XO.openForm(null, D, { t: "직보", who: x.c.teacher, school: x.labels.join("·"), subjects: subj, slots: fmt(s[0]) + "-" + fmt(s[1]),
+      memo: "시험 직보 — 시험 " + x.units.map(u => md(u.d) + " " + unitLabel(u) + " " + (u.subjects || "과목 미정")).join(" / "),
+      course_id: x.c.id, course_ids: x.courses.map(c => c.id) });
+  }
   const errMsg = e => /kind_chk|check constraint/i.test((e && e.message) || "") ? "시험 과목 저장 칸이 아직 없습니다 — Supabase SQL 1줄 실행이 필요합니다." : ((e && e.message) || String(e));
   async function toggleSkip(D, key) {
     const r = skipRow(D, key);
@@ -282,7 +296,7 @@ window.DaolExamPrep = (function () {
       <td><b>${esc(x.c.teacher)}</b> ${x.courses.map(c => esc(c.course_name)).join(" + ")}${x.mixed ? ' <span class="xp-mix" title="강좌명에 학교가 없는 반 — 그 학교 학생이 있으면 직보">혼합반</span>' : ""}</td>
       <td>${x.units.map(u => `${esc(unitLabel(u))} <span class="xp-s ${u.stage}">${u.subjects ? esc(u.subjects) : "과목 미정"}</span>`).join("<br>")}</td>
       <td>${x.done ? `✓ 입력됨 ${esc(x.done.slots || "")} ${esc(roomLabel(x.done.room))}` : x.skip ? "직보 안 함" : `<span class="xp-st ${x.stage}">${x.stage === "확정" ? "확정 — 입력 필요" : x.stage === "가안" ? "가안(2주 전 과목)" : "예측(과목 미정)"}</span>`}</td>
-      <td>${x.done ? "" : `<button class="xp-b sm" data-xpskip="${esc(D)}" data-xpkey="${esc(x.key)}">${x.skip ? "되돌리기" : "직보 안 함"}</button>`}</td></tr>`).join("") + `</tbody></table>`;
+      <td>${x.done ? "" : `${x.skip ? "" : `<button class="xp-b sm p" data-xpquick="${esc(D)}" data-xpkey="${esc(x.key)}">＋ 직보 넣기</button> `}<button class="xp-b sm" data-xpskip="${esc(D)}" data-xpkey="${esc(x.key)}">${x.skip ? "되돌리기" : "직보 안 함"}</button>`}</td></tr>`).join("") + `</tbody></table>`;
     if (pend.length) {
       h += `<div class="xp-btns"><button class="xp-b" data-xppred="${D}">${showPred ? "예측 닫기" : "🧩 직보 넣은 강의실 예측 보기"}</button>`;
       if (showPred) h += `<button class="xp-b p" data-xpapply="${D}">✅ 이 배치 적용 (저장)</button>`;
@@ -396,6 +410,6 @@ table.xp-it td.w2 input:not([type]){border-color:#f59e0b;background:#fffbeb}tabl
   }
 
   function init(o) { dep = o; css(); }
-  return { init, load, examUnits, needsOn, pendingCount, toggleSkip, isApplying, predict, applyPrediction, calendarHTML, dayAlertHTML, predictHTML, inputHTML, onInput, onAdd,
+  return { init, load, examUnits, needsOn, pendingCount, toggleSkip, openAdd, isApplying, predict, applyPrediction, calendarHTML, dayAlertHTML, predictHTML, inputHTML, onInput, onAdd,
            get ready() { return ready; } };
 })();
