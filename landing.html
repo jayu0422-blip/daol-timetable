@@ -235,6 +235,19 @@ const SC={국어:"#d9799f",영어:"#4a72c6",수학:"#d08036",과학:"#7a5fc0",�
 /* 주간 표(그리드) — 학년별 시간표와 동일 팔레트·규칙 */
 const SUBJ_COLOR={국어:"#fbcfe8",영어:"#bfdbfe",수학:"#fed7aa",과학:"#ddd6fe",사회:"#bbf7d0",기타:"#e5e7eb"};
 const SUBJ_BORDER={국어:"#db2777",영어:"#2563eb",수학:"#ea580c",과학:"#7c3aed",사회:"#16a34a",기타:"#6b7280"};
+/* 같은 과목에 월수금반·화목토반이 함께 있으면 화목토반은 이웃 색으로 칠한다(2026-11-18 원장 「색이 약간 달라야 덜 헷갈려」) */
+const SUBJ_COLOR_ALT={국어:"#f5d0fe",영어:"#a5f3fc",수학:"#fde68a",과학:"#c7d2fe",사회:"#99f6e4",기타:"#e5e7eb"};
+const SUBJ_BORDER_ALT={국어:"#a21caf",영어:"#0891b2",수학:"#d97706",과학:"#4f46e5",사회:"#0d9488",기타:"#6b7280"};
+function dayGroup(c){
+  const n=c.course_name||"";
+  if(/화목토/.test(n)) return "화목토";
+  if(/월수금/.test(n)) return "월수금";
+  const ds=[...new Set(parseDayTimes(c.schedule_text).map(s=>s.day))];
+  if(!ds.length) return null;
+  if(ds.every(d=>"화목토".includes(d))) return "화목토";
+  if(ds.every(d=>"월수금".includes(d))) return "월수금";
+  return null;
+}
 const MATH_UNITS=[
   {re:/공통\s*수학\s*2|공수\s*2/, label:"공통수학2", color:"#6d28d9"},
   {re:/공통\s*수학\s*1|공수\s*1/, label:"공통수학1", color:"#1d4ed8"},
@@ -505,9 +518,15 @@ function render(courses,teachers){
     if(midEng) kind=midEngKind(s.day);
     byDay[s.day].push({...s, kind, subj:c.subject, teacher:c.teacher,
       detail: notesFor(c.session_notes,s.day,s.start) || (midEng?midEngDetail(s.day):""),
-      unit:mathUnit(c), special:isSpecial(c), endAt:courseEnd(c),
+      unit:mathUnit(c), special:isSpecial(c), endAt:courseEnd(c), grp:dayGroup(c),
       on:NOW.includes(c.subject)||targets.includes(c.subject)});
   }));
+  /* 월수금반과 화목토반이 둘 다 있는 과목만 색을 나눈다 */
+  const SPLIT=new Set(SUBJECT_ORDER.filter(s=>{
+    const gs=new Set(mine.filter(c=>c.subject===s&&parseDayTimes(c.schedule_text).length).map(dayGroup));
+    return gs.has("월수금")&&gs.has("화목토");
+  }));
+  const altOf=b=>b.grp==="화목토"&&SPLIT.has(b.subj);
   if(DAY_LIST.some(d=>byDay[d].length)){
     const anyConf=targets.some(sub=>mine.filter(c=>c.subject===sub).some(c=>parseDayTimes(c.schedule_text).some(s=>busy.some(b=>ovl(s,b)))));
     const START=9*60, END=22*60, PX=0.9, H=(END-START)*PX;
@@ -543,7 +562,8 @@ function render(courses,teachers){
         const top=(st-START)*PX, hh=Math.max((en-st)*PX,34);
         const L=b.lane/b.cols*100, W=100/b.cols;
         const clinic=b.kind!=="수업";
-        const col=SUBJ_COLOR[b.subj]||"#e5e7eb", bcol=SUBJ_BORDER[b.subj]||"#6b7280";
+        const alt=altOf(b);
+        const col=(alt?SUBJ_COLOR_ALT:SUBJ_COLOR)[b.subj]||"#e5e7eb", bcol=(alt?SUBJ_BORDER_ALT:SUBJ_BORDER)[b.subj]||"#6b7280";
         const box=clinic
           ? `background:repeating-linear-gradient(135deg,${col} 0 7px,#ffffff 7px 14px);border:1.5px dashed ${bcol}`
           : `background:${col};border:1px solid rgba(0,0,0,.12)`;
@@ -562,7 +582,10 @@ function render(courses,teachers){
     g+=`</div></div>`;
     const used=[...new Set(DAY_LIST.flatMap(d=>byDay[d].map(x=>x.subj)).filter(Boolean))];
     const gunits=MATH_UNITS.filter(u=>DAY_LIST.some(d=>byDay[d].some(b=>b.unit&&b.unit.label===u.label)));
-    g+=`<div class="gg-legend">${used.map(s=>`<span class="k"><span class="gg-sw" style="background:${SUBJ_COLOR[s]||'#e5e7eb'}"></span>${esc(s)}</span>`).join("")}
+    const sw=(s,alt)=>`<span class="gg-sw" style="background:${(alt?SUBJ_COLOR_ALT:SUBJ_COLOR)[s]||'#e5e7eb'}"></span>`;
+    g+=`<div class="gg-legend">${used.map(s=>SPLIT.has(s)
+      ? `<span class="k">${sw(s,false)}${esc(s)} 월수금반</span><span class="k">${sw(s,true)}${esc(s)} 화목토반</span>`
+      : `<span class="k">${sw(s,false)}${esc(s)}</span>`).join("")}
       <span class="k"><span class="gg-sw" style="background:repeating-linear-gradient(135deg,${SUBJ_COLOR['영어']} 0 4px,#fff 4px 8px);border:1.5px dashed ${SUBJ_BORDER['영어']}"></span>관리·클리닉(빗금)</span>
       ${gunits.length?`<span class="k">수학 단원: ${gunits.map(u=>`<span class="gunit" style="background:${u.color};margin-left:3px">${u.label}</span>`).join("")}</span>`:""}
       <span class="k" style="opacity:.45"><span class="gg-sw" style="background:#e5e7eb;border:1px solid #cbd0d8"></span>안내 대상 외</span></div></div>`;
@@ -594,8 +617,12 @@ function render(courses,teachers){
 
   document.getElementById("app").innerHTML=h;
   document.title=`다올105 ${GRADE} 과목 안내`;
-  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }),{threshold:.12});
-  document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+  /* threshold 는 0 이어야 한다: 과목 칸은 휴대폰에서 8,000px 넘게 길어 12% 조건을 영영 못 채우고
+     통째로 투명하게 남았다(2026-11-18 학부모 「시간표만 나온다」). 관찰기가 없는 브라우저는 바로 보여 준다. */
+  const io="IntersectionObserver" in window
+    ? new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }),{threshold:0})
+    : null;
+  document.querySelectorAll(".reveal").forEach(el=>io?io.observe(el):el.classList.add("in"));
 }
 
 (async function(){
